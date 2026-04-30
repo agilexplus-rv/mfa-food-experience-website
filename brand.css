@@ -1,0 +1,263 @@
+/* Malta Food Experience — brand tokens */
+:root {
+  /* Greens — pulled from brand cover */
+  --mfe-green-900: #1f3a30;
+  --mfe-green-800: #2c4a3e;
+  --mfe-green-700: #355648;
+  --mfe-green-600: #4a6e5d;
+  --mfe-green-300: #b8c9bf;
+  --mfe-green-100: #e3ebe5;
+
+  /* Warm accents from the logo flame + line work */
+  --mfe-terra-600: #c45a3a;
+  --mfe-terra-500: #d97757;
+  --mfe-terra-400: #e8a07f;
+
+  --mfe-gold-600: #c89a3a;
+  --mfe-gold-500: #d8b665;
+  --mfe-gold-300: #ecd9a5;
+
+  /* Cream / paper */
+  --mfe-cream-50: #faf6ee;
+  --mfe-cream-100: #f4ede0;
+  --mfe-cream-200: #ebe1cc;
+  --mfe-cream-300: #ddcfb0;
+
+  /* Ink */
+  --mfe-ink-900: #1a1f1c;
+  --mfe-ink-700: #3d423f;
+  --mfe-ink-500: #6b716d;
+  --mfe-ink-300: #a8aca9;
+
+  /* Type */
+  --mfe-serif: "Fraunces", "Playfair Display", Georgia, serif;
+  --mfe-sans: "Plus Jakarta Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --mfe-mono: "JetBrains Mono", ui-monospace, "SF Mono", monospace;
+
+  /* Radii */
+  --mfe-r-sm: 6px;
+  --mfe-r-md: 12px;
+  --mfe-r-lg: 20px;
+  --mfe-r-xl: 28px;
+
+  /* Shadow */
+  --mfe-shadow-sm: 0 1px 2px rgba(31, 58, 48, 0.06), 0 2px 6px rgba(31, 58, 48, 0.04);
+  --mfe-shadow-md: 0 6px 18px rgba(31, 58, 48, 0.08), 0 2px 6px rgba(31, 58, 48, 0.05);
+  --mfe-shadow-lg: 0 24px 60px -20px rgba(31, 58, 48, 0.25);
+}
+
+/* Reset + base */
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  font-family: var(--mfe-sans);
+  color: var(--mfe-ink-900);
+  background: var(--mfe-cream-50);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+button { font-family: inherit; }
+
+/* Photo placeholders — warm tonal gradients with mono label */
+.mfe-photo {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, var(--mfe-cream-200), var(--mfe-cream-300));
+  isolation: isolate;
+}
+.mfe-photo::before {
+  content: "";
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(circle at 30% 30%, rgba(216, 182, 101, 0.45), transparent 55%),
+    radial-gradient(circle at 75% 70%, rgba(196, 90, 58, 0.30), transparent 50%),
+    repeating-linear-gradient(45deg, rgba(255,255,255,0.06) 0 8px, transparent 8px 16px);
+  z-index: 0;
+}
+.mfe-photo > .mfe-photo-label {
+  position: absolute;
+  left: 12px; bottom: 10px;
+  font-family: var(--mfe-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(31, 58, 48, 0.7);
+  background: rgba(250, 246, 238, 0.7);
+  backdrop-filter: blur(6px);
+  padding: 4px 8px;
+  border-radius: 999px;
+  z-index: 1;
+}
+
+/* Variant tints for placeholders */
+.mfe-photo--olive::before {
+  background:
+    radial-gradient(circle at 30% 30%, rgba(74, 110, 93, 0.55), transparent 55%),
+    radial-gradient(circle at 75% 70%, rgba(216, 182, 101, 0.45), transparent 50%),
+    repeating-linear-gradient(45deg, rgba(255,255,255,0.05) 0 8px, transparent 8px 16px);
+}
+.mfe-photo--cheese::before {
+  background:
+    radial-gradient(circle at 30% 30%, rgba(236, 217, 165, 0.85), transparent 55%),
+    radial-gradient(circle at 75% 70%, rgba(216, 182, 101, 0.55), transparent 60%),
+    repeating-linear-gradient(45deg, rgba(255,255,255,0.06) 0 8px, transparent 8px 16px);
+}
+.mfe-photo--bread::before {
+  background:
+    radial-gradient(circle at 30% 30%, rgba(232, 160, 127, 0.65), transparent 55%),
+    radial-gradient(circle at 75% 70%, rgba(196, 90, 58, 0.40), transparent 55%),
+    repeating-linear-gradient(45deg, rgba(255,255,255,0.05) 0 8px, transparent 8px 16px);
+}
+.mfe-photo--honey::before {
+  background:
+    radial-gradient(circle at 30% 30%, rgba(216, 182, 101, 0.7), transparent 55%),
+    radial-gradient(circle at 75% 70%, rgba(232, 160, 127, 0.5), transparent 55%),
+    repeating-linear-gradient(45deg, rgba(255,255,255,0.06) 0 8px, transparent 8px 16px);
+}
+.mfe-photo--sea::before {
+  background:
+    radial-gradient(circle at 30% 30%, rgba(53, 86, 72, 0.6), transparent 55%),
+    radial-gradient(circle at 75% 70%, rgba(74, 110, 93, 0.5), transparent 55%),
+    repeating-linear-gradient(45deg, rgba(255,255,255,0.05) 0 8px, transparent 8px 16px);
+}
+.mfe-photo--wine::before {
+  background:
+    radial-gradient(circle at 30% 30%, rgba(127, 50, 56, 0.55), transparent 55%),
+    radial-gradient(circle at 75% 70%, rgba(196, 90, 58, 0.40), transparent 55%),
+    repeating-linear-gradient(45deg, rgba(255,255,255,0.05) 0 8px, transparent 8px 16px);
+}
+.mfe-photo--harvest::before {
+  background:
+    radial-gradient(circle at 30% 30%, rgba(216, 182, 101, 0.6), transparent 55%),
+    radial-gradient(circle at 75% 70%, rgba(74, 110, 93, 0.45), transparent 55%),
+    repeating-linear-gradient(45deg, rgba(255,255,255,0.05) 0 8px, transparent 8px 16px);
+}
+.mfe-photo--coast::before {
+  background:
+    radial-gradient(circle at 30% 30%, rgba(165, 195, 175, 0.7), transparent 55%),
+    radial-gradient(circle at 75% 70%, rgba(216, 182, 101, 0.45), transparent 55%),
+    repeating-linear-gradient(45deg, rgba(255,255,255,0.06) 0 8px, transparent 8px 16px);
+}
+
+/* Mark — simplified version of the bowl-with-flame logo */
+.mfe-mark {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: inherit;
+}
+.mfe-mark__circle {
+  width: 36px; height: 36px;
+  border-radius: 999px;
+  border: 1.5px solid currentColor;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+.mfe-mark__wordmark {
+  display: flex;
+  flex-direction: column;
+  line-height: 1;
+}
+.mfe-mark__wordmark .mfe-mark__top {
+  font-family: var(--mfe-sans);
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  font-size: 13px;
+}
+.mfe-mark__wordmark .mfe-mark__bottom {
+  font-family: var(--mfe-sans);
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  font-size: 9px;
+  margin-top: 3px;
+  color: var(--mfe-terra-500);
+}
+
+/* Buttons */
+.mfe-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 22px;
+  border-radius: 999px;
+  font-family: var(--mfe-sans);
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: 0.02em;
+  border: 1px solid transparent;
+  cursor: pointer;
+  text-decoration: none;
+  transition: transform 0.15s ease, background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+.mfe-btn:hover { transform: translateY(-1px); }
+.mfe-btn--primary {
+  background: var(--mfe-green-800);
+  color: var(--mfe-cream-50);
+}
+.mfe-btn--primary:hover { background: var(--mfe-green-900); }
+.mfe-btn--terra {
+  background: var(--mfe-terra-500);
+  color: var(--mfe-cream-50);
+}
+.mfe-btn--terra:hover { background: var(--mfe-terra-600); }
+.mfe-btn--ghost {
+  background: transparent;
+  color: var(--mfe-green-800);
+  border-color: var(--mfe-green-800);
+}
+.mfe-btn--ghost:hover { background: var(--mfe-green-800); color: var(--mfe-cream-50); }
+.mfe-btn--ghost-cream {
+  background: transparent;
+  color: var(--mfe-cream-50);
+  border-color: rgba(250, 246, 238, 0.5);
+}
+.mfe-btn--ghost-cream:hover { background: var(--mfe-cream-50); color: var(--mfe-green-900); }
+
+/* Eyebrow tag */
+.mfe-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--mfe-mono);
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--mfe-terra-600);
+}
+.mfe-eyebrow::before {
+  content: "";
+  width: 22px; height: 1px;
+  background: currentColor;
+  display: inline-block;
+}
+
+/* Section title */
+.mfe-h-display {
+  font-family: var(--mfe-serif);
+  font-weight: 500;
+  font-size: clamp(40px, 5vw, 76px);
+  line-height: 1.04;
+  letter-spacing: -0.02em;
+  color: var(--mfe-green-900);
+  margin: 0;
+}
+.mfe-h-section {
+  font-family: var(--mfe-serif);
+  font-weight: 500;
+  font-size: clamp(28px, 3.4vw, 48px);
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+  color: var(--mfe-green-900);
+  margin: 0;
+}
+
+/* Italic accent */
+.mfe-italic { font-style: italic; color: var(--mfe-terra-600); }
+
+/* Subtle hairline */
+.mfe-hr {
+  border: 0; border-top: 1px solid var(--mfe-cream-300);
+}

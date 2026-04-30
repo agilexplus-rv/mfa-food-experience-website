@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Malta Food Experience</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="A public initiative by the Malta Food Agency — six weeks of free public tastings featuring ġbejna tan-nagħaġ, cold-pressed olive oil, sourdough ħobż and the harvest that defines our table." />
+  <link rel="icon" href="assets/malta-food-logo-transparent.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="brand.css" />
+  <style>
+    @media (max-width: 960px) {
+      .mfe-desktop-nav { display: none !important; }
+      .mfe-mobile-hamburger { display: inline-flex !important; }
+      .mfe-mobile-drawer { display: flex !important; }
+      .mfe-hero-grid { grid-template-columns: 1fr !important; }
+      .mfe-cards-grid { grid-template-columns: 1fr !important; }
+      .mfe-news-grid { grid-template-columns: 1fr !important; }
+      .mfe-booking-grid { grid-template-columns: 1fr !important; }
+      .mfe-footer-grid { grid-template-columns: 1fr 1fr !important; gap: 32px !important; }
+      .mfe-session-row { grid-template-columns: 1fr !important; gap: 8px !important; }
+      .mfe-hero-cluster { height: 320px !important; margin-top: 24px; }
+      .mfe-hero-strip { grid-template-columns: 1fr 1fr !important; gap: 24px !important; }
+    }
+    @media (max-width: 720px) {
+      .mfe-h-display { font-size: 44px !important; }
+      .mfe-hero-display { font-size: 56px !important; line-height: 1 !important; }
+      .mfe-footer-grid { grid-template-columns: 1fr !important; }
+    }
+    iframe { background: var(--mfe-cream-100); }
+    @keyframes mfe-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+  </style>
+</head>
+<body data-screen-label="Malta Food Experience">
+  <div id="root"></div>
+
+  <script crossorigin src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js"></script>
+
+  <script type="text/babel" data-presets="react" src="brand-mark.jsx"></script>
+  <script type="text/babel" data-presets="react" src="site-chrome.jsx"></script>
+  <script type="text/babel" data-presets="react" src="page-home.jsx"></script>
+  <script type="text/babel" data-presets="react" src="page-about.jsx"></script>
+  <script type="text/babel" data-presets="react" src="page-news.jsx"></script>
+  <script type="text/babel" data-presets="react" src="page-booking.jsx"></script>
+  <script type="text/babel" data-presets="react" src="page-contact.jsx"></script>
+
+  <script type="text/babel" data-presets="react">
+    const { SiteNav, SiteFooter, HomePage, AboutPage, NewsPage, BookingPage, ContactPage } = window;
+
+    const App = () => {
+      const [page, setPageRaw] = React.useState(() => {
+        const h = (window.location.hash || "").replace("#", "");
+        return ["home", "about", "news", "booking", "contact"].includes(h) ? h : "home";
+      });
+      const [lang, setLang] = React.useState("en");
+
+      const setPage = React.useCallback((p) => {
+        setPageRaw(p);
+        window.location.hash = p;
+        window.scrollTo({ top: 0, behavior: "instant" });
+      }, []);
+
+      React.useEffect(() => {
+        const onHash = () => {
+          const h = (window.location.hash || "").replace("#", "");
+          if (["home", "about", "news", "booking", "contact"].includes(h)) {
+            setPageRaw(h);
+            window.scrollTo({ top: 0, behavior: "instant" });
+          }
+        };
+        window.addEventListener("hashchange", onHash);
+        return () => window.removeEventListener("hashchange", onHash);
+      }, []);
+
+      let content;
+      switch (page) {
+        case "about": content = <AboutPage setPage={setPage} lang={lang} />; break;
+        case "news": content = <NewsPage setPage={setPage} lang={lang} />; break;
+        case "booking": content = <BookingPage setPage={setPage} lang={lang} />; break;
+        case "contact": content = <ContactPage setPage={setPage} lang={lang} />; break;
+        default: content = <HomePage setPage={setPage} lang={lang} />;
+      }
+
+      return (
+        <div data-screen-label={`Malta Food · ${page}`}>
+          <SiteNav page={page} setPage={setPage} lang={lang} setLang={setLang} />
+          {content}
+          <SiteFooter lang={lang} setPage={setPage} />
+        </div>
+      );
+    };
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+  </script>
+</body>
+</html>
