@@ -1,7 +1,7 @@
 import Link from 'next/link'
 
-import type { EventAvailability } from '@/lib/availability'
-import { formatPrice } from '@/lib/availability'
+import type { EventAvailability } from '@/lib/availability-types'
+import { formatPrice } from '@/lib/availability-types'
 
 /**
  * EventCard — single upcoming event in a service grid.

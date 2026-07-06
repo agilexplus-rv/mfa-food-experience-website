@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react'
 
 import { EventCard } from './EventCard'
 import { MonthFilter, type MonthOption } from './MonthFilter'
-import type { EventAvailability } from '@/lib/availability'
+import type { EventAvailability } from '@/lib/availability-types'
 
 /**
  * EventGrid — client wrapper that holds the active month filter and
