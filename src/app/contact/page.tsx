@@ -56,9 +56,9 @@ export default function ContactPage() {
 
           {/*
             Static form posts to the current URL. The server action stub
-            (src/app/contact/actions.ts) is imported there once submission is
-            wired in Phase 2. For now this renders an accessible, brand-styled
-            form with a note about the pending wiring.
+            (src/app/contact/actions.ts) is the intended target once submission
+            is wired in Phase 2. For now this renders an accessible,
+            brand-styled form with a note about the pending wiring.
           */}
           <form action="/contact" method="post" className="mt-6 space-y-5">
             {/* Name */}
