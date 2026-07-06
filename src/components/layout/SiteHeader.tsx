@@ -1,4 +1,6 @@
 import { Logo } from "@/components/brand/Logo"
+import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher"
+import { MobileNav } from "@/components/layout/MobileNav"
 import Link from "next/link"
 
 const NAV_LINKS = [
@@ -19,7 +21,7 @@ export function SiteHeader() {
           <Logo variant="inverted" size="lg" className="!p-0" />
         </Link>
 
-        {/* Navigation — placeholder; real links come in Phase 1 */}
+        {/* Navigation — desktop only, hidden below md (<960px) */}
         <nav className="hidden items-center gap-1 md:flex">
           {NAV_LINKS.map((link) => (
             <Link
@@ -32,14 +34,12 @@ export function SiteHeader() {
           ))}
         </nav>
 
-        {/* EN | MT language switcher placeholder — Phase 1.1 */}
-        <div className="flex items-center gap-1">
-          <span className="rounded-full bg-soft-beige px-3 py-1 text-xs font-bold text-lunar-green">
-            EN
-          </span>
-          <span className="rounded-full border border-soft-beige/30 px-3 py-1 text-xs font-semibold text-soft-beige/60">
-            MT
-          </span>
+        <div className="flex items-center gap-2">
+          {/* EN | MT language switcher — functional per ADR-006 */}
+          <LanguageSwitcher />
+
+          {/* Hamburger menu — mobile only, hidden at md and above */}
+          <MobileNav />
         </div>
       </div>
     </header>
