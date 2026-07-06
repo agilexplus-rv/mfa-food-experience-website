@@ -2,6 +2,14 @@ import { withPayload } from '@payloadcms/next/withPayload'
 import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
+  serverExternalPackages: [
+    'nodemailer',
+    '@payloadcms/email-nodemailer',
+    'payload',
+    '@payloadcms/db-sqlite',
+    '@payloadcms/db-postgres',
+  ],
+
   // Output encoding + CSP headers per ADR-008 C2
   async headers() {
     return [
