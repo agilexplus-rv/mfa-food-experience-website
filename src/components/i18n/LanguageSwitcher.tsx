@@ -119,7 +119,11 @@ export function LanguageSwitcher() {
   }, [widgetReady])
 
   // Programmatically trigger a language change on the hidden GT <select>.
+  // Also sets document.documentElement.lang so <html lang> reflects the
+  // active language client-side (best-effort; GT may override it).
   const applyLanguage = useCallback((target: Lang) => {
+    document.documentElement.lang = target
+
     if (target === "en") {
       const select = document.querySelector<HTMLSelectElement>(
         "#google_translate_element select",
