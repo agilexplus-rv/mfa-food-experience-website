@@ -5,10 +5,14 @@ export const AuditLog: CollectionConfig = {
   admin: {
     useAsTitle: 'id',
   },
+  access: {
+    create: () => true,
+    read: ({ req: { user } }) => (user as { role?: string } | null)?.role === 'admin',
+    update: () => false,
+    delete: () => false,
+  },
   fields: [
-    {
-      name: 'action',
-      type: 'select',
+    { name: 'action', type: 'select',
       options: [
         { label: 'Create', value: 'create' },
         { label: 'Update', value: 'update' },
@@ -19,23 +23,9 @@ export const AuditLog: CollectionConfig = {
       ],
       required: true,
     },
-    {
-      name: 'actor',
-      type: 'relationship',
-      relationTo: 'users',
-      required: true,
-    },
-    {
-      name: 'collection',
-      type: 'text',
-    },
-    {
-      name: 'documentId',
-      type: 'text',
-    },
-    {
-      name: 'detail',
-      type: 'textarea',
-    },
+    { name: 'actor', type: 'relationship', relationTo: 'users', required: true },
+    { name: 'collection', type: 'text' },
+    { name: 'documentId', type: 'text' },
+    { name: 'detail', type: 'textarea' },
   ],
 }

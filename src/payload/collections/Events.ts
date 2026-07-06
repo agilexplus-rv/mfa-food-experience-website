@@ -5,6 +5,17 @@ export const Events: CollectionConfig = {
   admin: {
     useAsTitle: 'title',
   },
+  access: {
+    create: ({ req: { user } }) => (user as { role?: string } | null)?.role === 'admin',
+    // Admin/door_staff: read all (door_staff needs event context for check-in)
+    // Public: read only scheduled events
+    read: ({ req: { user } }) => {
+      if (user) return true
+      return { status: { equals: 'scheduled' } }
+    },
+    update: ({ req: { user } }) => (user as { role?: string } | null)?.role === 'admin',
+    delete: ({ req: { user } }) => (user as { role?: string } | null)?.role === 'admin',
+  },
   fields: [
     {
       name: 'service',

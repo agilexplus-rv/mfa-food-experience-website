@@ -5,6 +5,29 @@ export const Bookings: CollectionConfig = {
   admin: {
     useAsTitle: 'reference',
   },
+  access: {
+    // Public: create their own booking (cart/checkout flow).
+    // Admin/door_staff: create is also allowed for manual bookings.
+    create: () => true,
+    read: ({ req: { user } }) => {
+      const u = user as { role?: string } | null
+      // Admin: read all
+      if (u?.role === 'admin') return true
+      // Door-staff: read bookings for check-in (need event/service context)
+      if (u?.role === 'door_staff') return true
+      // Public: no read access — bookings are private
+      return false
+    },
+    update: ({ req: { user } }) => {
+      const u = user as { role?: string } | null
+      // Admin: full update
+      if (u?.role === 'admin') return true
+      // Door-staff: allowed at base level (field-level restriction in hook)
+      if (u?.role === 'door_staff') return true
+      return false
+    },
+    delete: ({ req: { user } }) => (user as { role?: string } | null)?.role === 'admin',
+  },
   fields: [
     {
       name: 'reference',
@@ -92,4 +115,26 @@ export const Bookings: CollectionConfig = {
       },
     },
   ],
+  hooks: {
+    beforeChange: [
+      // Field-level restriction: door_staff can only update checkedInAt + status (for check-in).
+      // This hook prevents door_staff from modifying financial, personal, or cancellation fields.
+      ({ data, req, operation }) => {
+        const user = req.user as { role?: string } | null
+        if (user?.role === 'door_staff' && operation === 'update') {
+          // Only allow updating check-in fields
+          const allowedFields = ['checkedInAt', 'checkInStaff', 'status']
+          const disallowed = Object.keys(data || {}).filter(
+            (k) => !allowedFields.includes(k)
+          )
+          if (disallowed.length > 0) {
+            throw new Error(
+              `Door staff cannot modify: ${disallowed.join(', ')}. Only check-in fields (checkedInAt, checkInStaff, status) are permitted.`
+            )
+          }
+        }
+        return data
+      },
+    ],
+  },
 }

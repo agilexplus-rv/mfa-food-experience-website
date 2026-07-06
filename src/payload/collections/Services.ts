@@ -5,6 +5,17 @@ export const Services: CollectionConfig = {
   admin: {
     useAsTitle: 'name',
   },
+  access: {
+    create: ({ req: { user } }) => (user as { role?: string } | null)?.role === 'admin',
+    // Admin/door_staff: read all (door_staff needs service context for check-in)
+    // Public: read only visible services
+    read: ({ req: { user } }) => {
+      if (user) return true
+      return { visible: { equals: true } }
+    },
+    update: ({ req: { user } }) => (user as { role?: string } | null)?.role === 'admin',
+    delete: ({ req: { user } }) => (user as { role?: string } | null)?.role === 'admin',
+  },
   fields: [
     {
       name: 'name',

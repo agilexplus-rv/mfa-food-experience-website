@@ -5,6 +5,15 @@ export const SeatHolds: CollectionConfig = {
   admin: {
     useAsTitle: 'id',
   },
+  access: {
+    // Public: create for cart hold during booking flow
+    create: () => true,
+    // Admin: read all seat holds (for monitoring/debugging)
+    // Door-staff: none (per ADR-008 C6 — no need to see cart state)
+    read: ({ req: { user } }) => (user as { role?: string } | null)?.role === 'admin',
+    update: ({ req: { user } }) => (user as { role?: string } | null)?.role === 'admin',
+    delete: ({ req: { user } }) => (user as { role?: string } | null)?.role === 'admin',
+  },
   fields: [
     {
       name: 'event',
