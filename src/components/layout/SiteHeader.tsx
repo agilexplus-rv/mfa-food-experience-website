@@ -3,9 +3,11 @@ import Link from "next/link"
 
 const NAV_LINKS = [
   { label: "Home", href: "/" },
-  { label: "Classes", href: "#" },
-  { label: "Tastings", href: "#" },
-  { label: "Book Now", href: "#" },
+  { label: "Experiences", href: "/services" },
+  { label: "Classes", href: "/services/classes" },
+  // "Tastings" intentionally omitted from nav — Tastings.visible=false
+  // per FR-1.2; its route returns the "not available" state (FR-1.3).
+  { label: "Book Now", href: "/services" },
 ]
 
 export function SiteHeader() {
