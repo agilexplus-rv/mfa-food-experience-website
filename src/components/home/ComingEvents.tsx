@@ -35,20 +35,9 @@ export async function ComingEvents() {
     })),
   )
 
-  if (events.length === 0) {
-    return (
-      <section className="bg-soft-beige px-6 py-16">
-        <div className="mx-auto max-w-6xl text-center">
-          <h2 className="font-black text-3xl tracking-tight text-lunar-green sm:text-4xl">
-            Coming Events
-          </h2>
-          <p className="mt-4 text-lg text-lunar-green/70">
-            No upcoming events right now. Please check back soon.
-          </p>
-        </div>
-      </section>
-    )
-  }
+  // Hide the section entirely when there are no upcoming events
+  // (consistent with LatestNews — no "no events" message shown).
+  if (events.length === 0) return null
 
   return (
     <section className="bg-soft-beige px-6 py-16">
