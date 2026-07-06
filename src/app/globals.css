@@ -17,9 +17,13 @@
   --color-text: var(--color-lunar-green);
   --color-text-light: #6B7F74;
   --color-border: #D4C8B8;
+
+  /* Typography — Montserrat via next/font */
+  --font-sans: var(--font-montserrat), ui-sans-serif, system-ui, sans-serif;
 }
 
 body {
   background-color: var(--color-background);
   color: var(--color-text);
+  font-family: var(--font-sans);
 }

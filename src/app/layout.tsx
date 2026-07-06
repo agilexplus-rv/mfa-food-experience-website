@@ -1,4 +1,6 @@
 import type { Metadata } from "next"
+import { montserrat } from "@/lib/fonts"
+import { SiteHeader } from "@/components/layout/SiteHeader"
 import "./globals.css"
 
 export const metadata: Metadata = {
@@ -12,8 +14,11 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className="h-full antialiased">
-      <body className="min-h-full flex flex-col">{children}</body>
+    <html lang="en" className={`h-full antialiased ${montserrat.variable}`}>
+      <body className="min-h-full flex flex-col">
+        <SiteHeader />
+        <main className="flex-1">{children}</main>
+      </body>
     </html>
   )
 }
