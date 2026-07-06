@@ -1,0 +1,25 @@
+@import "tailwindcss";
+
+@theme {
+  /* Brand palette — Malta Food Experience */
+  --color-lunar-green: #33483D;
+  --color-terracotta: #C9643D;
+  --color-matte-gold: #B8974D;
+  --color-soft-beige: #F9F4EF;
+
+  /* Semantic tokens */
+  --color-primary: var(--color-lunar-green);
+  --color-primary-light: #4A6B59;
+  --color-secondary: var(--color-terracotta);
+  --color-accent: var(--color-matte-gold);
+  --color-background: var(--color-soft-beige);
+  --color-surface: #FFFFFF;
+  --color-text: var(--color-lunar-green);
+  --color-text-light: #6B7F74;
+  --color-border: #D4C8B8;
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-text);
+}
