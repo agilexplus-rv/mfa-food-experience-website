@@ -16,7 +16,7 @@ export function Hero() {
       </p>
 
       <a
-        href="#"
+        href="/services"
         className="mt-10 inline-flex items-center gap-2 rounded-lg bg-terracotta px-8 py-4 text-base font-bold text-soft-beige transition-colors hover:bg-terracotta/85 focus:outline-2 focus:outline-offset-2 focus:outline-terracotta"
       >
         Book an Event
