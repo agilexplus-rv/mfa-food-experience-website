@@ -53,13 +53,30 @@ export default function AdminThemeStyles() {
           font-family: var(--font-sans, 'Montserrat', ui-sans-serif, system-ui, sans-serif);
         }
 
-        /* Primary buttons (Login, Save, etc.) use the brand primary color */
+        /* Primary buttons (Login, Save, etc.) match the public site's
+           primary CTA pattern exactly (see e.g. src/components/home/
+           Hero.tsx's "Book an Event" button: rounded-lg, bold, soft-beige
+           text, hover-to-85%-opacity via color-mix), but in Lunar Green
+           rather than the site's Terracotta -- an admin/operational
+           surface intentionally uses the primary (not accent) brand
+           color to read as distinct from the public-facing marketing
+           CTAs, per PRODUCT.md's brand-continuity principle. */
         .btn--style-primary {
           --theme-success-500: #33483D;
           background: #33483D;
+          color: #F9F4EF;
+          border-radius: 0.5rem;
+          font-weight: 700;
+          padding: 0.875rem 1.5rem;
+          transition: background-color 150ms ease;
+          border: none;
         }
         .btn--style-primary:hover {
-          background: #4A6B59;
+          background: color-mix(in srgb, #33483D 85%, transparent);
+        }
+        .btn--style-primary .btn__content,
+        .btn--style-primary .btn__label {
+          color: #F9F4EF;
         }
 
         /* Text-safe terracotta: the decorative brand terracotta (#C9643D)
