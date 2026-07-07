@@ -1,3 +1,4 @@
+import { cache } from 'react'
 import { getPayload } from 'payload'
 import type { Payload } from 'payload'
 import config from '@payload-config'
@@ -66,22 +67,16 @@ export async function listVisibleServices(): Promise<ServiceSummary[]> {
  * services resolve (we then render the not-available state in the page).
  * Returns `null` if no service exists at this slug at all (404).
  */
-export async function getServiceBySlug(
+export const getServiceBySlug = cache(async function getServiceBySlug(
   slug: string,
 ): Promise<ServiceDetail | null> {
   const p = await payload()
-  let res
-  try {
-    res = await p.find({
-      collection: 'services',
-      where: { slug: { equals: slug } },
-      limit: 1,
-      overrideAccess: true,
-    })
-  } catch (err) {
-    console.error('[services/queries] Failed to fetch service by slug:', err)
-    return null
-  }
+  const res = await p.find({
+    collection: 'services',
+    where: { slug: { equals: slug } },
+    limit: 1,
+    overrideAccess: true,
+  })
   if (res.docs.length === 0) return null
   const s = res.docs[0] as ServiceDetail
   return {
@@ -92,13 +87,13 @@ export async function getServiceBySlug(
     order: s.order ?? 0,
     imageryUrl: s.imageryUrl,
   }
-}
+})
 
 /**
  * Fetch upcoming scheduled events for a service, plus their availability.
  * Only future dates (>= today) are returned, sorted ascending.
  */
-export async function getServiceEvents(serviceId: string | number): Promise<ServiceEvents> {
+export const getServiceEvents = cache(async function getServiceEvents(serviceId: string | number): Promise<ServiceEvents> {
   const p = await payload()
   const startOfToday = new Date()
   startOfToday.setHours(0, 0, 0, 0)
@@ -131,4 +126,4 @@ export async function getServiceEvents(serviceId: string | number): Promise<Serv
     })),
   )
   return { events, availability }
-}
+})
