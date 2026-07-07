@@ -7,6 +7,7 @@ import config from '@payload-config'
 import { getAvailability } from '@/lib/availability'
 import { BookingForm } from '@/components/booking/BookingForm'
 import { formatPrice } from '@/lib/availability-types'
+import { getCancellationPolicy } from '@/lib/policies/cancellation'
 
 export const dynamic = 'force-dynamic'
 
@@ -65,6 +66,10 @@ function formatTimeRange(startIso: string, endIso: string): string {
  * summary, collects attendee details + optional coupon, acquires a
  * seat hold on mount (via the client BookingForm component), and hands
  * off to Stripe Checkout on submit ("Pay now" per EU Legal D.5).
+ *
+ * Also fetches the CancellationPolicy Global to surface the
+ * Article 6(1)(k) withdrawal-right disclosure directly in the
+ * booking flow (EU Legal Action #5).
  */
 export default async function BookEventPage({ params }: PageProps) {
   const { id } = await params
@@ -72,6 +77,10 @@ export default async function BookEventPage({ params }: PageProps) {
   if (!event) notFound()
 
   const availability = await getAvailability(event.id)
+
+  // Fetch cancellation policy for the withdrawal-right disclosure
+  // and to know whether cancellations are enabled at all.
+  const cancellationPolicy = await getCancellationPolicy().catch(() => null)
 
   return (
     <section className="mx-auto max-w-4xl px-6 py-16">
@@ -127,6 +136,8 @@ export default async function BookEventPage({ params }: PageProps) {
             eventId={event.id}
             pricePerPerson={event.pricePerPerson}
             maxSeats={Math.min(20, availability.remaining)}
+            withdrawalRightDisclosure={cancellationPolicy?.withdrawalRightDisclosure ?? null}
+            cancellationEnabled={cancellationPolicy?.enabled ?? true}
           />
         )}
       </div>

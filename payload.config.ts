@@ -18,6 +18,7 @@ import { Testimonials } from './src/payload/collections/Testimonials'
 import { NewsItems } from './src/payload/collections/NewsItems'
 import { Policies } from './src/payload/collections/Policies'
 import { AuditLog } from './src/payload/collections/AuditLog'
+import { CancellationPolicy } from './src/payload/globals/CancellationPolicy'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -81,6 +82,9 @@ export default buildConfig({
     NewsItems,
     Policies,
     AuditLog,
+  ],
+  globals: [
+    CancellationPolicy,
   ],
   db: dbAdapter,
   email: nodemailerAdapter({
