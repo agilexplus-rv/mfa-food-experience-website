@@ -22,6 +22,11 @@ import { AuditLog } from './src/payload/collections/AuditLog'
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 
+// DB selection is driven entirely by DATABASE_URL's scheme:
+//   postgres(ql)://...                   -> Postgres (production)
+//   libsql://... | https://...-turso.io  -> hosted libSQL (demo/preview, persists across deploys)
+//   file:./payload.db (default)          -> local SQLite file (local dev only; NOT safe on Vercel,
+//                                           whose filesystem is ephemeral/read-only at runtime)
 const dbAdapter = process.env.DATABASE_URL?.startsWith('postgres')
   ? postgresAdapter({
       pool: {
@@ -31,6 +36,8 @@ const dbAdapter = process.env.DATABASE_URL?.startsWith('postgres')
   : sqliteAdapter({
       client: {
         url: process.env.DATABASE_URL || 'file:./payload.db',
+        // Only needed for hosted libSQL (Turso); local file:// URLs ignore it.
+        authToken: process.env.DATABASE_AUTH_TOKEN || undefined,
       },
     })
 
