@@ -99,6 +99,22 @@ export default function AdminThemeStyles() {
         .login__form .field-type {
           margin-bottom: 16px;
         }
+
+        /* Safety net: ensure Payload/Sonner's toast notification region
+           always renders fixed to the viewport, regardless of document
+           flow/height changes introduced by the .template-minimal flex
+           centering above. Without this, a toast (e.g. "incorrect email
+           or password") can render far down an artificially-tall page
+           and be invisible without scrolling -- a real, confirmed P0
+           bug found during design review (2026-07-07 critique). */
+        section[aria-label="Notifications alt+T"] {
+          position: fixed !important;
+          bottom: 24px !important;
+          right: 24px !important;
+          left: auto !important;
+          top: auto !important;
+          z-index: 9999 !important;
+        }
       }
     `}</style>
   )
