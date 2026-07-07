@@ -23,10 +23,24 @@ import { useCallback, useEffect, useRef, useState } from "react"
  *
  * Session persistence (FR-10.3): a `lang` cookie (SameSite=Lax, Secure)
  * stores the selected language; the switcher restores it on mount.
+ *
+ * Activation mechanism:
+ * Google's Website Translator widget exposes a hidden `<select class="goog-te-combo">`
+ * that in theory can be driven programmatically by setting `.value` and dispatching a
+ * `change` event. In practice this is unreliable across Google Translate script
+ * versions/CDN builds — the event handler GT actually listens for is an internal one
+ * attached after the widget's own iframes finish booting, and a synthetic `change`
+ * event frequently fires before that, or against an already-stale listener. The
+ * documented-reliable alternative (used by most production integrations) is the
+ * `googtrans` cookie: GT reads `googtrans=/{from}/{to}` during widget initialisation
+ * and auto-applies the translation itself — no fragile DOM event needed. Switching
+ * language therefore sets/clears that cookie and reloads the page so the widget
+ * re-initialises against the new cookie value.
  */
 
 const CONSENT_COOKIE = "translate_consent"
 const LANG_COOKIE = "lang"
+const GOOGTRANS_COOKIE = "googtrans"
 const GT_SCRIPT_SRC =
   "https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"
 
@@ -37,12 +51,16 @@ function getCookie(name: string): string | null {
   const match = document.cookie
     .split("; ")
     .find((row) => row.startsWith(`${name}=`))
-  return match ? match.split("=")[1] : null
+  return match ? decodeURIComponent(match.split("=").slice(1).join("=")) : null
 }
 
 function setCookie(name: string, value: string, days: number): void {
   const expires = new Date(Date.now() + days * 864e5).toUTCString()
-  document.cookie = `${name}=${value}; expires=${expires}; path=/; SameSite=Lax; Secure`
+  document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/; SameSite=Lax; Secure`
+}
+
+function deleteCookie(name: string): void {
+  document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; SameSite=Lax; Secure`
 }
 
 declare global {
@@ -63,99 +81,78 @@ declare global {
   }
 }
 
+/** Load the Google Translate widget script + instantiate the element (once per page load). */
+function loadWidget(widgetDiv: HTMLElement): Promise<void> {
+  return new Promise((resolve) => {
+    window.googleTranslateElementInit = () => {
+      if (window.google?.translate?.TranslateElement) {
+        new window.google.translate.TranslateElement(
+          {
+            pageLanguage: "en",
+            includedLanguages: "en,mt",
+            autoDisplay: false,
+          },
+          widgetDiv,
+        )
+      }
+      resolve()
+    }
+
+    const scriptBase = GT_SCRIPT_SRC.split("?")[0]
+    if (!document.querySelector(`script[src^="${scriptBase}"]`)) {
+      const script = document.createElement("script")
+      script.src = GT_SCRIPT_SRC
+      script.async = true
+      script.onerror = () => resolve()
+      document.head.appendChild(script)
+    } else {
+      // Script tag already present (e.g. fast client nav) — GT re-runs its
+      // global init callback on its own once its internal state is ready.
+      resolve()
+    }
+  })
+}
+
 export function LanguageSwitcher() {
   const [lang, setLang] = useState<Lang>("en")
   const [showConsent, setShowConsent] = useState(false)
   const [consentGiven, setConsentGiven] = useState(false)
-  const [widgetReady, setWidgetReady] = useState(false)
   const widgetDivRef = useRef<HTMLDivElement>(null)
 
-  // Restore language + consent from cookies on mount.
+  // Restore language + consent from cookies on mount. If MT was previously
+  // active, the `googtrans` cookie is already set from the prior session,
+  // so simply loading the widget script causes GT to auto-translate.
   useEffect(() => {
     const savedConsent = getCookie(CONSENT_COOKIE) === "true"
     const savedLang = getCookie(LANG_COOKIE) as Lang | null
     setConsentGiven(savedConsent)
-    if (savedConsent && savedLang === "mt") {
+    if (savedConsent && savedLang === "mt" && widgetDivRef.current) {
       setLang("mt")
-      void loadWidget().then(() => applyLanguage("mt"))
+      document.documentElement.lang = "mt"
+      void loadWidget(widgetDivRef.current)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Load the Google Translate widget script (once).
-  const loadWidget = useCallback((): Promise<void> => {
-    return new Promise((resolve) => {
-      if (widgetReady) {
-        resolve()
-        return
-      }
-      window.googleTranslateElementInit = () => {
-        if (window.google?.translate?.TranslateElement && widgetDivRef.current) {
-          new window.google.translate.TranslateElement(
-            {
-              pageLanguage: "en",
-              includedLanguages: "en,mt",
-              autoDisplay: false,
-            },
-            widgetDivRef.current,
-          )
-          setWidgetReady(true)
-        }
-        resolve()
-      }
-
-      const scriptBase = GT_SCRIPT_SRC.split("?")[0]
-      if (!document.querySelector(`script[src^="${scriptBase}"]`)) {
-        const script = document.createElement("script")
-        script.src = GT_SCRIPT_SRC
-        script.async = true
-        script.onerror = () => resolve()
-        document.head.appendChild(script)
-      } else {
-        window.googleTranslateElementInit?.()
-        resolve()
-      }
-    })
-  }, [widgetReady])
-
-  // Programmatically trigger a language change on the hidden GT <select>.
-  // Also sets document.documentElement.lang so <html lang> reflects the
-  // active language client-side (best-effort; GT may override it).
-  const applyLanguage = useCallback((target: Lang) => {
-    document.documentElement.lang = target
-
-    if (target === "en") {
-      const select = document.querySelector<HTMLSelectElement>(
-        "#google_translate_element select",
-      )
-      if (select) {
-        select.value = "en"
-        select.dispatchEvent(new Event("change", { bubbles: true }))
-      }
-      return
+  const activate = useCallback((target: Lang) => {
+    setCookie(LANG_COOKIE, target, 365)
+    if (target === "mt") {
+      setCookie(GOOGTRANS_COOKIE, "/en/mt", 365)
+    } else {
+      deleteCookie(GOOGTRANS_COOKIE)
     }
-
-    const trySelect = () => {
-      const select = document.querySelector<HTMLSelectElement>(
-        "#google_translate_element select",
-      )
-      if (select) {
-        select.value = "mt"
-        select.dispatchEvent(new Event("change", { bubbles: true }))
-      } else {
-        setTimeout(trySelect, 200)
-      }
-    }
-    trySelect()
+    // GT only picks up the googtrans cookie during its own initialisation,
+    // so a full reload is the reliable way to apply the change in both
+    // directions (mt->en and en->mt).
+    window.location.reload()
   }, [])
 
   const handleSelect = useCallback(
     (target: Lang) => {
-      setLang(target)
-      setCookie(LANG_COOKIE, target, 1)
+      if (target === lang) return
 
       if (target === "en") {
-        applyLanguage("en")
+        activate("en")
         return
       }
 
@@ -164,17 +161,16 @@ export function LanguageSwitcher() {
         return
       }
 
-      void loadWidget().then(() => applyLanguage("mt"))
+      activate("mt")
     },
-    [consentGiven, loadWidget, applyLanguage],
+    [lang, consentGiven, activate],
   )
 
   const handleAccept = useCallback(() => {
     setCookie(CONSENT_COOKIE, "true", 365)
-    setConsentGiven(true)
     setShowConsent(false)
-    void loadWidget().then(() => applyLanguage("mt"))
-  }, [loadWidget, applyLanguage])
+    activate("mt")
+  }, [activate])
 
   const handleDecline = useCallback(() => {
     setShowConsent(false)

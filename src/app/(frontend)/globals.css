@@ -22,8 +22,18 @@
   --font-sans: var(--font-montserrat), ui-sans-serif, system-ui, sans-serif;
 }
 
+html {
+  /* Prevent the mobile nav drawer (translated off-screen via
+     translate-x-full when closed) from creating horizontal
+     document overflow / a spurious horizontal scrollbar on
+     narrow viewports. */
+  overflow-x: hidden;
+}
+
 body {
   background-color: var(--color-background);
   color: var(--color-text);
   font-family: var(--font-sans);
+  overflow-x: hidden;
+  width: 100%;
 }

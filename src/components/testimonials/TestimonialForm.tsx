@@ -2,8 +2,8 @@
 
 import { useActionState } from 'react'
 
-import type { TestimonialSubmissionResult } from '@/app/testimonials/actions'
-import { submitTestimonial } from '@/app/testimonials/actions'
+import type { TestimonialSubmissionResult } from '@/app/(frontend)/testimonials/actions'
+import { submitTestimonial } from '@/app/(frontend)/testimonials/actions'
 
 export interface EventOption {
   id: string

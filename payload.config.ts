@@ -67,6 +67,12 @@ export default buildConfig({
   email: nodemailerAdapter({
     defaultFromAddress: process.env.FROM_EMAIL || 'noreply@foodagency.mt',
     defaultFromName: process.env.FROM_NAME || 'Malta Food Experience',
+    // Demo environment has no real SMTP credentials; skip the transport
+    // verification handshake so it doesn't spam Vercel logs with
+    // "Invalid login: 535" warnings on every boot. This is purely cosmetic --
+    // verifyTransport() failures are already caught internally by
+    // @payloadcms/email-nodemailer and never crash the app.
+    skipVerify: true,
     transportOptions: {
       host: process.env.SMTP_HOST || 'localhost',
       port: Number(process.env.SMTP_PORT) || 1025,
