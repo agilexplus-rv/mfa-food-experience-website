@@ -60,7 +60,10 @@ export default buildConfig({
         '@/components/admin/AdminThemeStyles#default',
         '@/components/admin/AdminPasswordReveal#default',
       ],
-      header: ['@/components/admin/AdminThemeStyles#default'],
+      header: [
+        '@/components/admin/AdminThemeStyles#default',
+        '@/components/admin/MfaSetupBanner#default',
+      ],
       graphics: {
         Logo: '@/components/admin/AdminLogo#default',
         Icon: '@/components/admin/AdminIcon#default',

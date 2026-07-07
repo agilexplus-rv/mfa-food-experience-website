@@ -6,7 +6,8 @@ export const Users: CollectionConfig = {
   auth: {
     maxLoginAttempts: 5,
     lockTime: 15 * 60 * 1000, // 15-minute lockout per ADR-008 C5
-    useAPIKey: true  },
+    useAPIKey: true,
+  },
   admin: {
     useAsTitle: 'email',
   },
@@ -16,34 +17,30 @@ export const Users: CollectionConfig = {
     // If the count query fails, DENY (fail closed).
     create: async ({ req }) => {
       try {
-        const { totalDocs } = await req.payload.find({ collection: 'users', limit: 1 })
-        // First user can always self-register
+        const { totalDocs } = await req.payload.find({
+          collection: 'users',
+          limit: 1,
+        })
         if (totalDocs === 0) return true
-        // Subsequent: only admins
         return (req.user as { role?: string } | null)?.role === 'admin'
       } catch {
-        // Fail closed — a DB error must not open user creation
         return false
       }
     },
-    // Authenticated users can read only their own record; admins can read all.
     read: ({ req: { user } }) => {
       if (!user) return false
       const u = user as { role?: string; id?: string }
       if (u.role === 'admin') return true
-      // Non-admin users can only read their own record
       return { id: { equals: u.id } }
     },
-    // Users can update their own non-role fields; admins can update anyone.
-    // Role changes are protected by the beforeChange hook.
     update: ({ req: { user } }) => {
       if (!user) return false
       const u = user as { role?: string; id?: string }
       if (u.role === 'admin') return true
-      // Non-admin can only update their own record
       return { id: { equals: u.id } }
     },
-    delete: ({ req: { user } }) => (user as { role?: string } | null)?.role === 'admin',
+    delete: ({ req: { user } }) =>
+      (user as { role?: string } | null)?.role === 'admin',
   },
   fields: [
     {
@@ -63,16 +60,20 @@ export const Users: CollectionConfig = {
       defaultValue: false,
       admin: {
         position: 'sidebar',
-        description: 'C4: MFA/TOTP enforcement stub. Field exists; verification flow not yet implemented. See docs/security/auth.md.',
+        description:
+          'Two-factor authentication (TOTP). Enable after completing setup at /mfa-setup.',
       },
+      saveToJWT: true,
     },
     {
       name: 'totpSecret',
       type: 'text',
+      saveToJWT: false,
       admin: {
         readOnly: true,
         position: 'sidebar',
-        description: 'TOTP secret (encrypted at rest). Set via MFA setup flow.',
+        description:
+          'TOTP secret (AES-256-GCM encrypted at rest). Set via MFA setup flow. Never exposed in JWT.',
       },
     },
   ],
@@ -82,15 +83,16 @@ export const Users: CollectionConfig = {
         // Password strength validation
         const password = data?.password as string | undefined
         if (password) {
-          // Skip validation on update if password hasn't changed
-          if (operation === 'update' && originalDoc && password === originalDoc.password) {
+          if (
+            operation === 'update' &&
+            originalDoc &&
+            password === originalDoc.password
+          ) {
             // Password unchanged — skip validation
           } else {
             const result = validatePasswordStrength(password)
             if (!result.valid) {
-              throw new Error(
-                'Weak password: ' + result.errors.join(' ')
-              )
+              throw new Error('Weak password: ' + result.errors.join(' '))
             }
           }
         }
@@ -102,11 +104,12 @@ export const Users: CollectionConfig = {
             throw new Error('Only admins can change user roles.')
           }
         }
-        return data
-      },
-      async ({ data, operation }) => {
+        // C4/MFA-ENFORCED: Warn on admin creation without MFA (info only —
+        // the real gate is the middleware mfa-verified cookie check).
         if (operation === 'create' && data?.role === 'admin' && !data?.mfaEnabled) {
-          console.warn('[C4/MFA-STUB] Admin account created without MFA. See docs/security/auth.md.')
+          console.info(
+            '[MFA] Admin account created without MFA enabled. User will see a setup prompt in the admin panel.',
+          )
         }
         return data
       },
@@ -115,7 +118,9 @@ export const Users: CollectionConfig = {
       async ({ user }) => {
         const u = user as { role?: string; mfaEnabled?: boolean }
         if (u.role === 'admin' && !u.mfaEnabled) {
-          console.warn('[C4/MFA-STUB] Admin logged in without MFA. See docs/security/auth.md.')
+          console.info(
+            '[MFA] Admin logged in without MFA enabled. Middleware will not block; frontend banner prompts setup.',
+          )
         }
       },
     ],

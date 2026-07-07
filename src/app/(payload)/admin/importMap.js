@@ -26,6 +26,7 @@ import AdminThemeStyles from '@/components/admin/AdminThemeStyles'
 import AdminLogo from '@/components/admin/AdminLogo'
 import AdminIcon from '@/components/admin/AdminIcon'
 import AdminPasswordReveal from '@/components/admin/AdminPasswordReveal'
+import MfaSetupBanner from '@/components/admin/MfaSetupBanner'
 
 /** @type import('payload').ImportMap */
 export const importMap = {
@@ -56,5 +57,6 @@ export const importMap = {
   "@/components/admin/AdminThemeStyles#default": AdminThemeStyles,
   "@/components/admin/AdminLogo#default": AdminLogo,
   "@/components/admin/AdminIcon#default": AdminIcon,
-  "@/components/admin/AdminPasswordReveal#default": AdminPasswordReveal
+  "@/components/admin/AdminPasswordReveal#default": AdminPasswordReveal,
+  "@/components/admin/MfaSetupBanner#default": MfaSetupBanner
 }
