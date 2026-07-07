@@ -38,7 +38,11 @@ function isAdminOnlyPath(pathname: string): boolean {
 }
 
 function isProtectedPath(pathname: string): boolean {
-  return pathname.startsWith('/admin') || pathname.startsWith('/check-in')
+  return (
+    pathname.startsWith('/admin') ||
+    pathname.startsWith('/scan') ||
+    pathname.startsWith('/dashboard')
+  )
 }
 
 // Minimal JWT payload extraction from Payload's cookie token.
@@ -89,6 +93,10 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  // Match all routes the middleware should run on
-  matcher: ['/admin/:path*', '/check-in/:path*'],
+  // Match all routes the middleware should run on.
+  // NOTE: the door-staff tools (scan page, bookings dashboard) live
+  // in the (check-in) route group at /scan and /dashboard -- route
+  // groups in parens are not part of the URL path, so the matcher
+  // targets those concrete paths directly.
+  matcher: ['/admin/:path*', '/scan/:path*', '/dashboard/:path*'],
 }

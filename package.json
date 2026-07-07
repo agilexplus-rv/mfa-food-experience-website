@@ -22,6 +22,8 @@
     "@payloadcms/next": "^3.85.2",
     "@payloadcms/richtext-lexical": "^3.85.2",
     "dotenv": "^17.4.2",
+    "html5-qrcode": "^2.3.8",
+    "jose": "5.10.0",
     "next": "^16.2.10",
     "otplib": "^13.4.1",
     "payload": "^3.85.2",
