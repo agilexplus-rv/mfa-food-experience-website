@@ -70,12 +70,18 @@ export async function getServiceBySlug(
   slug: string,
 ): Promise<ServiceDetail | null> {
   const p = await payload()
-  const res = await p.find({
-    collection: 'services',
-    where: { slug: { equals: slug } },
-    limit: 1,
-    overrideAccess: true,
-  })
+  let res
+  try {
+    res = await p.find({
+      collection: 'services',
+      where: { slug: { equals: slug } },
+      limit: 1,
+      overrideAccess: true,
+    })
+  } catch (err) {
+    console.error('[services/queries] Failed to fetch service by slug:', err)
+    return null
+  }
   if (res.docs.length === 0) return null
   const s = res.docs[0] as ServiceDetail
   return {

@@ -15,7 +15,7 @@ export const Bookings: CollectionConfig = {
       if (u?.role === 'admin') return true
       // Door-staff: read bookings for check-in (need event/service context)
       if (u?.role === 'door_staff') return true
-      // Public: no read access — bookings are private
+      // Public: no read access -- bookings are private
       return false
     },
     update: ({ req: { user } }) => {
@@ -112,6 +112,52 @@ export const Bookings: CollectionConfig = {
       relationTo: 'users',
       admin: {
         readOnly: true,
+      },
+    },
+    // --- Phase 2 booking/checkout engine additions ---
+    {
+      name: 'qrTokenHash',
+      type: 'text',
+      unique: true,
+      admin: {
+        readOnly: true,
+        position: 'sidebar',
+        description:
+          'SHA-256 hash of the single-use QR check-in token (ADR-003). The raw token is never stored -- it exists only transiently at issuance and in the confirmation email.',
+      },
+    },
+    {
+      name: 'dietaryNotes',
+      type: 'textarea',
+      admin: {
+        description:
+          'Optional, data-minimised dietary information (DPIA Sec 6 measure 5). Only collected with explicit consent -- see dietaryConsent.',
+      },
+    },
+    {
+      name: 'dietaryConsent',
+      type: 'checkbox',
+      defaultValue: false,
+      admin: {
+        description: 'Explicit consent to store dietary information, per ADR-008 DPIA measure 5.',
+      },
+    },
+    {
+      name: 'stripeCheckoutSessionId',
+      type: 'text',
+      admin: {
+        readOnly: true,
+        position: 'sidebar',
+        description: 'Stripe Checkout Session id (ADR-004).',
+      },
+    },
+    {
+      name: 'stripePaymentIntentId',
+      type: 'text',
+      admin: {
+        readOnly: true,
+        position: 'sidebar',
+        description: 'Stripe PaymentIntent id, set once payment succeeds (ADR-004, C7 amount re-verification trail).',
       },
     },
   ],

@@ -42,3 +42,11 @@ yarn-error.log*
 next-env.d.ts
 .vercel
 .env*
+
+# Local dev artifacts
+.db_token
+.payload_secret
+db_token_file.txt
+start.cjs
+start.mjs
+start_srv.sh
