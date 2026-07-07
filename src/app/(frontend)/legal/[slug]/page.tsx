@@ -12,6 +12,9 @@ const KNOWN_SLUGS = [
   "cancellation-policy",
   "customer-policy",
   "provider-info",
+  "privacy-notice",
+  "cookie-policy",
+  "accessibility-statement",
 ] as const
 
 export function generateStaticParams() {
