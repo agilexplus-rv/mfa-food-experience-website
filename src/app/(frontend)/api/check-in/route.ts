@@ -5,6 +5,7 @@ import config from '@payload-config'
 
 import { hashQrToken } from '@/lib/qr/token'
 import { verifySession } from '@/lib/rbac/verify-session'
+import { createRateLimiter, getClientIp } from '@/lib/rate-limit'
 
 let _payload: Payload | null = null
 async function payload(): Promise<Payload> {
@@ -20,31 +21,10 @@ async function payload(): Promise<Payload> {
  */
 
 // --- In-memory rate limiter (sliding window, per ADR-008 C9, C11) ---
-const rateLimitWindow = 60_000
-const rateLimitMax = 30
-const rateLimitMap = new Map<string, { count: number; resetAt: number }>()
-
-function checkRateLimit(key: string): boolean {
-  const now = Date.now()
-  const entry = rateLimitMap.get(key)
-  if (!entry || now > entry.resetAt) {
-    rateLimitMap.set(key, { count: 1, resetAt: now + rateLimitWindow })
-    return true
-  }
-  if (entry.count >= rateLimitMax) return false
-  entry.count++
-  return true
-}
-
-let lastCleanup = 0
-function maybeCleanupRateLimits() {
-  const now = Date.now()
-  if (now - lastCleanup < 300_000) return
-  lastCleanup = now
-  for (const [k, v] of rateLimitMap) {
-    if (now > v.resetAt) rateLimitMap.delete(k)
-  }
-}
+// 60 s window, 30 req/min per key. Two-tier: first per-IP (guards against a
+// single source hammering the endpoint with unauthenticated requests), then
+// per-user (limits how many scans one logged-in staff member can submit).
+const rateLimiter = createRateLimiter({ windowMs: 60_000, max: 30 })
 
 async function getAuthUser(
   req: NextRequest,
@@ -54,14 +34,11 @@ async function getAuthUser(
 }
 
 export async function POST(req: NextRequest) {
-  maybeCleanupRateLimits()
+  rateLimiter.maybeCleanup()
 
-  const ip =
-    req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
-    req.headers.get('x-real-ip') ||
-    '127.0.0.1'
+  const ip = getClientIp(req)
 
-  if (!checkRateLimit(ip)) {
+  if (!rateLimiter.check(ip)) {
     return NextResponse.json({ error: 'rate_limited' }, { status: 429 })
   }
 
@@ -77,7 +54,7 @@ export async function POST(req: NextRequest) {
   }
 
   const userKey = `${ip}:${currentUser.id}`
-  if (!checkRateLimit(userKey)) {
+  if (!rateLimiter.check(userKey)) {
     return NextResponse.json({ error: 'rate_limited' }, { status: 429 })
   }
 
