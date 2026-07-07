@@ -56,7 +56,10 @@ export default buildConfig({
       // every admin route (including the login view), overriding
       // Payload's documented --theme-* CSS variables. See
       // src/components/admin/AdminThemeStyles.tsx for the full mapping.
-      beforeLogin: ['@/components/admin/AdminThemeStyles#default'],
+      beforeLogin: [
+        '@/components/admin/AdminThemeStyles#default',
+        '@/components/admin/AdminPasswordReveal#default',
+      ],
       header: ['@/components/admin/AdminThemeStyles#default'],
       graphics: {
         Logo: '@/components/admin/AdminLogo#default',

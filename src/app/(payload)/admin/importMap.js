@@ -25,6 +25,7 @@ import { CollectionCards as CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1 } f
 import AdminThemeStyles from '@/components/admin/AdminThemeStyles'
 import AdminLogo from '@/components/admin/AdminLogo'
 import AdminIcon from '@/components/admin/AdminIcon'
+import AdminPasswordReveal from '@/components/admin/AdminPasswordReveal'
 
 /** @type import('payload').ImportMap */
 export const importMap = {
@@ -54,5 +55,6 @@ export const importMap = {
   "@payloadcms/next/rsc#CollectionCards": CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1,
   "@/components/admin/AdminThemeStyles#default": AdminThemeStyles,
   "@/components/admin/AdminLogo#default": AdminLogo,
-  "@/components/admin/AdminIcon#default": AdminIcon
+  "@/components/admin/AdminIcon#default": AdminIcon,
+  "@/components/admin/AdminPasswordReveal#default": AdminPasswordReveal
 }

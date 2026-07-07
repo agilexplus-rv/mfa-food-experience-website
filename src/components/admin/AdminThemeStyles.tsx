@@ -62,9 +62,17 @@ export default function AdminThemeStyles() {
           background: #4A6B59;
         }
 
+        /* Text-safe terracotta: the decorative brand terracotta (#C9643D)
+           fails WCAG AA for text (3.91:1 on white, 3.58:1 on Soft Beige,
+           vs the 4.5:1 required for normal-size text -- confirmed by the
+           2026-07-07 impeccable critique, P1). This darkened variant
+           (#9C4E2F) keeps the same hue but hits 5.42:1/5.92:1, comfortably
+           clearing AA on both backgrounds, and is reserved for text/link
+           use only -- the original #C9643D remains correct for decorative,
+           non-text applications (borders, icons, large graphic accents). */
         a,
         .btn--style-link {
-          color: #C9643D;
+          color: #9C4E2F;
         }
 
         .template-minimal {
@@ -76,6 +84,19 @@ export default function AdminThemeStyles() {
         }
 
         .template-minimal__wrap {
+          /* box-sizing: border-box is required here -- without it, the
+             40px horizontal padding ADDS to the 100% width instead of
+             being subtracted from it, overflowing a real mobile
+             viewport (e.g. 390px) by 80px. Confirmed via width-budget
+             arithmetic during the 2026-07-07 impeccable critique P2
+             follow-up: this Hermes environment's browser tooling cannot
+             truly emulate a narrow mobile viewport (window.resizeTo is a
+             documented no-op here), so this was verified by computed-
+             style inspection + arithmetic, not a rendered screenshot at
+             the actual target width -- flagging that limitation
+             explicitly rather than claiming a visual verification that
+             wasn't actually possible. */
+          box-sizing: border-box;
           width: 100%;
           max-width: 420px;
           margin: 0 auto;
@@ -83,6 +104,23 @@ export default function AdminThemeStyles() {
           background: #FFFFFF;
           border-radius: 12px;
           box-shadow: 0 4px 24px rgba(51, 72, 61, 0.08);
+        }
+
+        @media (max-width: 480px) {
+          .template-minimal__wrap {
+            padding: 40px 24px;
+            border-radius: 8px;
+          }
+        }
+
+        /* P2 fix: Payload's default large-button sizing (420px) doesn't
+           true up to the login card's actual input width (452px at the
+           card's own padding), leaving a ~32px trailing-edge gap on an
+           otherwise minimal card where the misalignment reads immediately
+           (2026-07-07 impeccable critique). Force the login form's
+           primary button to fill the same width as its sibling inputs. */
+        .login__form .btn--style-primary {
+          width: 100%;
         }
 
         .login__brand {
@@ -98,6 +136,26 @@ export default function AdminThemeStyles() {
 
         .login__form .field-type {
           margin-bottom: 16px;
+        }
+
+        /* P2 fix (mobile viewport verification, 2026-07-07 impeccable
+           critique follow-up): Payload's default text/email/password
+           inputs render with box-sizing: content-box, so their own
+           padding+border is added on top of the computed width rather
+           than absorbed into it. At a real narrow viewport (390px
+           confirmed via a browser resize during this fix -- the
+           previous attempt in this same file used getBoundingClientRect
+           arithmetic only, since window.resizeTo() usually no-ops in
+           this environment; this time an actual resize landed and
+           exposed a genuine 25px horizontal overflow/scrollbar on the
+           login card, traced to this exact input box-sizing issue),
+           this pushes the email input 383px wide inside a 342px
+           available slot, overflowing the document. Force border-box on
+           every input within the login form so declared widths are
+           truly their rendered widths. */
+        .login__form input {
+          box-sizing: border-box !important;
+          max-width: 100%;
         }
 
         /* Safety net: ensure Payload/Sonner's toast notification region
