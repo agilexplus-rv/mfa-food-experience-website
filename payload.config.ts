@@ -47,6 +47,22 @@ export default buildConfig({
     importMap: {
       baseDir: path.resolve(dirname),
     },
+    meta: {
+      titleSuffix: '- Malta Food Experience',
+    },
+    components: {
+      // Brand theming (ADR-008 NFR-1: brand palette + Montserrat) --
+      // applied via a <style> tag rendered above the Payload header on
+      // every admin route (including the login view), overriding
+      // Payload's documented --theme-* CSS variables. See
+      // src/components/admin/AdminThemeStyles.tsx for the full mapping.
+      beforeLogin: ['@/components/admin/AdminThemeStyles#default'],
+      header: ['@/components/admin/AdminThemeStyles#default'],
+      graphics: {
+        Logo: '@/components/admin/AdminLogo#default',
+        Icon: '@/components/admin/AdminIcon#default',
+      },
+    },
   },
   editor: lexicalEditor(),
   collections: [
