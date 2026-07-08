@@ -160,6 +160,15 @@ export const Bookings: CollectionConfig = {
         description: 'Stripe PaymentIntent id, set once payment succeeds (ADR-004, C7 amount re-verification trail).',
       },
     },
+    {
+      name: 'anonymisedAt',
+      type: 'date',
+      admin: {
+        readOnly: true,
+        position: 'sidebar',
+        description: 'Timestamp when PII fields were anonymised per data-retention policy (DPIA-6, DPIA-10). Null means not yet anonymised. The retention cron skips already-anonymised rows.',
+      },
+    },
   ],
   hooks: {
     beforeChange: [

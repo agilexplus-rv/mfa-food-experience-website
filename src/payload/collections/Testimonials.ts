@@ -27,5 +27,14 @@ export const Testimonials: CollectionConfig = {
       defaultValue: false,
       admin: { position: 'sidebar', description: 'Only approved testimonials are displayed publicly.' },
     },
+    {
+      name: 'anonymisedAt',
+      type: 'date',
+      admin: {
+        readOnly: true,
+        position: 'sidebar',
+        description: 'Timestamp when submitter PII was anonymised (DPIA-6). Set for rejected testimonials older than 30 days.',
+      },
+    },
   ],
 }
