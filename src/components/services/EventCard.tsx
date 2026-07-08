@@ -40,7 +40,7 @@ export interface EventCardProps {
 }
 
 function formatDay(dateIso: string): string {
-  const d = new Date(dateIso + 'T00:00:00')
+  const d = new Date(dateIso.slice(0, 10) + 'T00:00:00')
   if (Number.isNaN(d.getTime())) return dateIso
   return d.toLocaleDateString('en-MT', {
     weekday: 'short',

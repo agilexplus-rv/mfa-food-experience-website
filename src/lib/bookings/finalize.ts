@@ -213,7 +213,7 @@ export async function finalizeBookingFromStripeSession(session: {
     locationRef: string
   } | null
   if (eventInfo) {
-    const dateStr = new Date(eventInfo.date + 'T00:00:00').toLocaleDateString('en-MT', {
+    const dateStr = new Date(eventInfo.date.slice(0, 10) + 'T00:00:00').toLocaleDateString('en-MT', {
       weekday: 'long',
       day: 'numeric',
       month: 'long',

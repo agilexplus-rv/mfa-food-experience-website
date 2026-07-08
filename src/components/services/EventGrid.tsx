@@ -54,7 +54,7 @@ export function EventGrid({ events, availability, eventHref }: EventGridProps) {
     for (const e of sorted) {
       const k = monthKey(e.date)
       if (!seen.has(k)) {
-        const d = new Date(e.date + 'T00:00:00')
+        const d = new Date(e.date.slice(0, 10) + 'T00:00:00')
         const label = Number.isNaN(d.getTime()) ? k : MONTH_FMT.format(d)
         seen.set(k, label)
       }
