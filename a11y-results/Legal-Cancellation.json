@@ -1,0 +1,69 @@
+{
+  "label": "Legal-Cancellation",
+  "url": "https://mfa-food-experience-website.vercel.app/legal/cancellation-policy",
+  "totalViolations": 7,
+  "violationCounts": {
+    "critical": 0,
+    "serious": 7,
+    "moderate": 0,
+    "minor": 0
+  },
+  "violations": [
+    {
+      "id": "color-contrast",
+      "impact": "serious",
+      "description": "Elements must meet minimum color contrast ratio thresholds",
+      "helpUrl": "https://dequeuniversity.com/rules/axe/4.12/color-contrast?application=axe-puppeteer",
+      "wcagCriteria": [
+        "wcag2aa",
+        "wcag143"
+      ],
+      "nodeCount": 7,
+      "nodes": [
+        {
+          "html": "<span class=\"text-xs font-semibold uppercase tracking-wide text-matte-gold\">Legal</span>",
+          "target": ".border-lunar-green\\/20 > span",
+          "impact": "serious",
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.53 (foreground color: #b8974d, background color: #f9f4ef, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "html": "<h2 class=\"text-sm font-semibold uppercase tracking-wide text-matte-gold\">Your right of withdrawal</h2>",
+          "target": ".mt-12 > .tracking-wide",
+          "impact": "serious",
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.53 (foreground color: #b8974d, background color: #f9f4ef, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "html": "<p class=\"mt-3 text-sm text-lunar-green/70 leading-relaxed whitespace-pre-line\">",
+          "target": ".mt-3",
+          "impact": "serious",
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 4.01 (foreground color: #6e7c72, background color: #f9f4ef, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "html": "<h2 class=\"mb-1 text-xs font-bold uppercase tracking-wider text-matte-gold\">Explore</h2>",
+          "target": "nav[aria-label=\"Footer navigation\"] > .mb-1",
+          "impact": "serious",
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 3.54 (foreground color: #b8974d, background color: #33483d, font size: 9.0pt (12px), font weight: bold). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "html": "<h2 class=\"mb-1 text-xs font-bold uppercase tracking-wider text-matte-gold\">Legal</h2>",
+          "target": "nav[aria-label=\"Legal\"] > .mb-1",
+          "impact": "serious",
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 3.54 (foreground color: #b8974d, background color: #33483d, font size: 9.0pt (12px), font weight: bold). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "html": "<p class=\"text-xs text-soft-beige/60\">© <!-- -->2026<!-- --> Malta Food Agency. All rights reserved.</p>",
+          "target": ".text-soft-beige\\/60",
+          "impact": "serious",
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 4.4 (foreground color: #aaafa8, background color: #33483d, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "html": "<a class=\"font-semibold text-terracotta underline hover:text-terracotta/80\" href=\"/legal/cookie-policy\">Cookie Policy</a>",
+          "target": ".text-terracotta",
+          "impact": "serious",
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 3.57 (foreground color: #c9643d, background color: #f9f4ef, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+        }
+      ]
+    }
+  ],
+  "timestamp": "2026-07-08T09:54:04.334Z"
+}
