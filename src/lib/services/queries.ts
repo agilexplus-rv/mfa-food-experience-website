@@ -4,6 +4,8 @@ import type { Payload } from 'payload'
 import config from '@payload-config'
 
 import { getAvailabilityForEvents, type EventDoc, type EventAvailability } from '@/lib/availability'
+import { getMediaUrl, getExcerpt } from '@/lib/payload'
+import type { MediaRelation } from '@/payload-types'
 
 /**
  * Server-side service/event queries for the public pages.
@@ -28,7 +30,12 @@ export interface ServiceSummary {
   slug: string
   visible: boolean
   order: number
+  /** Resolved public URL for the imagery upload, or undefined if none. */
   imageryUrl?: string
+  /** Alt text from the imagery Media doc, or undefined. */
+  imageryAlt?: string
+  /** Plain-text excerpt from the richText description. */
+  description?: string
 }
 
 export interface ServiceDetail extends ServiceSummary {}
@@ -47,17 +54,28 @@ export async function listVisibleServices(): Promise<ServiceSummary[]> {
     where: { visible: { equals: true } },
     sort: 'order',
     limit: 100,
+    depth: 1, // populate the imagery upload relation so we can resolve its URL
     // Anonymous request → read access enforces visible=true; no override needed.
   })
-  return res.docs.map((d: unknown) => {
-    const s = d as ServiceSummary
+  return res.docs.map((doc: unknown) => {
+    const s = doc as {
+      id: string | number
+      name: string
+      slug: string
+      visible: boolean
+      order?: number
+      imagery?: MediaRelation
+      description?: unknown
+    }
     return {
       id: s.id,
       name: s.name,
       slug: s.slug,
       visible: true,
       order: s.order ?? 0,
-      imageryUrl: s.imageryUrl,
+      imageryUrl: getMediaUrl(s.imagery) ?? undefined,
+      imageryAlt: (typeof s.imagery === 'object' && s.imagery?.alt) || undefined,
+      description: getExcerpt(s.description, 280),
     }
   })
 }
@@ -78,14 +96,24 @@ export const getServiceBySlug = cache(async function getServiceBySlug(
     overrideAccess: true,
   })
   if (res.docs.length === 0) return null
-  const s = res.docs[0] as ServiceDetail
+  const s = res.docs[0] as {
+    id: string | number
+    name: string
+    slug: string
+    visible: boolean
+    order?: number
+    imagery?: MediaRelation
+    description?: unknown
+  }
   return {
     id: s.id,
     name: s.name,
     slug: s.slug,
     visible: Boolean(s.visible),
     order: s.order ?? 0,
-    imageryUrl: s.imageryUrl,
+    imageryUrl: getMediaUrl(s.imagery) ?? undefined,
+    imageryAlt: (typeof s.imagery === 'object' && s.imagery?.alt) || undefined,
+    description: getExcerpt(s.description, 280),
   }
 })
 

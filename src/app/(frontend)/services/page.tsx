@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
-import Link from 'next/link'
 
 import { listVisibleServices } from '@/lib/services/queries'
+import { ExperienceRow } from '@/components/services/ExperienceRow'
 import { Logo } from '@/components/brand/Logo'
 
 export const metadata: Metadata = {
@@ -40,26 +40,17 @@ export default async function ServicesIndexPage() {
           </p>
         </div>
       ) : (
-        <div className="mt-14 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-          {services.map((s) => (
-            <Link
+        <div className="mt-14 flex flex-col gap-8">
+          {services.map((s, i) => (
+            <ExperienceRow
               key={s.id}
-              href={`/services/${s.slug}`}
-              className="group flex flex-col items-start rounded-xl border border-border bg-surface p-8 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md focus:outline-2 focus:outline-offset-2 focus:outline-terracotta"
-            >
-              <span className="text-xs font-semibold uppercase tracking-wide text-matte-gold">
-                Experience
-              </span>
-              <h2 className="mt-3 text-2xl font-bold tracking-tight text-lunar-green group-hover:text-terracotta">
-                {s.name}
-              </h2>
-              <span className="mt-auto inline-flex items-center gap-1.5 pt-6 text-sm font-bold text-terracotta">
-                View upcoming dates
-                <span aria-hidden="true" className="transition-transform group-hover:translate-x-0.5">
-                  &rarr;
-                </span>
-              </span>
-            </Link>
+              name={s.name}
+              slug={s.slug}
+              description={s.description}
+              imageryUrl={s.imageryUrl}
+              imageryAlt={s.imageryAlt}
+              index={i}
+            />
           ))}
         </div>
       )}
