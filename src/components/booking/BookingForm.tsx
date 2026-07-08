@@ -22,10 +22,25 @@ export interface BookingFormProps {
   cancellationEnabled?: boolean
 }
 
+/** Cloudflare Turnstile site key. Exposed to the client as NEXT_PUBLIC_*. */
+const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY
+
 interface HoldState {
   id: string | number
   expiresAt: string
   seats: number
+}
+
+// Augment window for the Turnstile widget API
+declare global {
+  interface Window {
+    turnstile?: {
+      render: (container: HTMLElement, options: Record<string, unknown>) => string | undefined
+      reset: (widgetId?: string) => void
+      remove: (widgetId?: string) => void
+    }
+    turnstileToken?: string
+  }
 }
 
 function newSessionId(): string {
@@ -61,6 +76,7 @@ function formatCountdown(msRemaining: number): string {
  *
  * @at-compliance EU-Legal-5 (Art. 16(l) / 6(1)(k) withdrawal-right
  *   disclosure rendered directly on the booking page before payment)
+ * @at-compliance ADR-008 C16 (Cloudflare Turnstile bot mitigation)
  */
 export function BookingForm({ eventId, pricePerPerson, maxSeats, withdrawalRightDisclosure, cancellationEnabled }: BookingFormProps) {
   const sessionIdRef = useRef<string>(newSessionId())
@@ -81,6 +97,10 @@ export function BookingForm({ eventId, pricePerPerson, maxSeats, withdrawalRight
   const [policyAccepted, setPolicyAccepted] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
+
+  // Turnstile
+  const turnstileRef = useRef<HTMLDivElement>(null)
+  const turnstileWidgetId = useRef<string | undefined>(undefined)
 
   const acquireHold = useCallback(
     async (requestedSeats: number) => {
@@ -109,6 +129,57 @@ export function BookingForm({ eventId, pricePerPerson, maxSeats, withdrawalRight
     },
     [eventId],
   )
+
+  // Load Turnstile script + render widget on mount (only if site key is set).
+  useEffect(() => {
+    if (!TURNSTILE_SITE_KEY || !turnstileRef.current) return
+
+    const existingScript = document.querySelector('script[src="https://challenges.cloudflare.com/turnstile/v0/api.js"]')
+    if (!existingScript) {
+      const script = document.createElement('script')
+      script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js'
+      script.async = true
+      script.defer = true
+      document.head.appendChild(script)
+    }
+
+    const renderWidget = () => {
+      if (!turnstileRef.current || !window.turnstile) return
+      if (turnstileWidgetId.current) return // already rendered
+      try {
+        const id = window.turnstile.render(turnstileRef.current, {
+          sitekey: TURNSTILE_SITE_KEY,
+          callback: (token: string) => {
+            window.turnstileToken = token
+          },
+          'expired-callback': () => {
+            window.turnstileToken = undefined
+          },
+          'error-callback': () => {
+            window.turnstileToken = undefined
+          },
+        })
+        turnstileWidgetId.current = id
+      } catch {
+        // Widget render failed — degrade gracefully (checkout will skip verification
+        // or show bot_check_required depending on server config).
+      }
+    }
+
+    if (window.turnstile) {
+      renderWidget()
+    } else {
+      // Script hasn't loaded yet — wait for it
+      const onLoad = () => renderWidget()
+      window.addEventListener('load', onLoad)
+      // Also try after a short delay in case the script loads after window.onload
+      const timeout = setTimeout(renderWidget, 3000)
+      return () => {
+        window.removeEventListener('load', onLoad)
+        clearTimeout(timeout)
+      }
+    }
+  }, [])
 
   // Acquire the initial hold on mount.
   useEffect(() => {
@@ -215,6 +286,7 @@ export function BookingForm({ eventId, pricePerPerson, maxSeats, withdrawalRight
             dietaryConsent,
             couponCode: couponStatus.state === 'valid' ? couponCode.trim() : undefined,
             cancellationPolicyAccepted: true,
+            turnstileToken: window.turnstileToken,
           }),
         })
         const data = await res.json()
@@ -237,6 +309,8 @@ export function BookingForm({ eventId, pricePerPerson, maxSeats, withdrawalRight
             invalid_coupon: 'Your discount code is no longer valid — remove it and try again.',
             invalid_input: 'Please check the details you entered and try again.',
             stripe_error: 'We couldn\u2019t start the payment — please try again in a moment.',
+            bot_check_required: 'Please complete the security check below.',
+            bot_check_failed: 'Security check failed — please try again.',
           }
           setSubmitError(data.message ?? messages[data.error] ?? 'Something went wrong — please try again.')
           return
@@ -447,6 +521,14 @@ export function BookingForm({ eventId, pricePerPerson, maxSeats, withdrawalRight
           )}
         </span>
       </label>
+
+      {/* Cloudflare Turnstile — bot mitigation (ADR-008 C16).
+          Only rendered when the site key is configured. */}
+      {TURNSTILE_SITE_KEY && (
+        <div className="flex justify-center">
+          <div ref={turnstileRef} />
+        </div>
+      )}
 
       {/* Total + submit */}
       <div className="rounded-xl border border-border bg-surface p-6">

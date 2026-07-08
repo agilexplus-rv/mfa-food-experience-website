@@ -25,6 +25,8 @@ export const checkoutSchema = z.object({
   dietaryConsent: z.boolean().optional(),
   couponCode: z.string().trim().max(64).optional(),
   cancellationPolicyAccepted: z.literal(true),
+  /** Cloudflare Turnstile token from the client-side widget. Optional — not enforced when Turnstile is not configured. */
+  turnstileToken: z.string().max(2048).optional(),
 })
 export type CheckoutInput = z.infer<typeof checkoutSchema>
 
