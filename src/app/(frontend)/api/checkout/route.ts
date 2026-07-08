@@ -10,6 +10,7 @@ import { generateBookingReference } from '@/lib/bookings/reference'
 import { validateCoupon } from '@/lib/coupons/validate'
 import { getStripe, StripeNotConfiguredError } from '@/lib/stripe/client'
 import { serverUrl, holdDurationMinutes, isStripeConfigured } from '@/lib/env'
+import { createRateLimiter, getClientIp } from '@/lib/rate-limit'
 
 let _payload: Payload | null = null
 async function payload(): Promise<Payload> {
@@ -35,8 +36,25 @@ async function payload(): Promise<Payload> {
  *    sessionId (used later by the webhook to locate + delete the
  *    correct seat_hold).
  * 6. Returns { url } for the frontend to redirect to.
+ *
+ * @compliance ADR-008 C11 (rate limiting on booking endpoint).
  */
+
+// 60 s window, 10 req/min per IP. Each successful call creates a pending
+// booking row + a Stripe Checkout Session (both expensive), so the limit is
+// intentionally tighter than holds/coupons. A legitimate user retries only
+// on a transient Stripe error; 10/min comfortably covers that while
+// throttling scripted checkout spam.
+const rateLimiter = createRateLimiter({ windowMs: 60_000, max: 10 })
+
 export async function POST(req: NextRequest) {
+  rateLimiter.maybeCleanup()
+
+  const ip = getClientIp(req)
+  if (!rateLimiter.check(ip)) {
+    return NextResponse.json({ error: 'rate_limited' }, { status: 429 })
+  }
+
   let body: unknown
   try {
     body = await req.json()
