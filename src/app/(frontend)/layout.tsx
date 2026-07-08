@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import { montserrat } from "@/lib/fonts"
 import { SiteHeader } from "@/components/layout/SiteHeader"
 import { SiteFooter } from "@/components/layout/SiteFooter"
+import { CookieBanner } from "@/components/compliance/CookieBanner"
 import "./globals.css"
 
 export const metadata: Metadata = {
@@ -20,6 +21,7 @@ export default function RootLayout({
         <SiteHeader />
         <main className="flex-1">{children}</main>
         <SiteFooter />
+        <CookieBanner />
       </body>
     </html>
   )

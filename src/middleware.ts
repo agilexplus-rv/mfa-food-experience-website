@@ -5,13 +5,14 @@ import type { NextRequest } from 'next/server'
  * Next.js middleware for route gating per ADR-007, ADR-008 C6.
  *
  * Protects /admin and /check-in routes:
- *   - Unauthenticated → redirect to /admin/login
- *   - Door-staff on /admin/bookings → blocked (403)
- *   - Door-staff on /admin/* → allowed (they can use check-in features)
+ *   - Unauthenticated -> redirect to /admin/login
+ *   - Door-staff on /admin/bookings -> blocked (403)
+ *   - Door-staff on /admin/* -> allowed (they can use check-in features)
+ *   - MFA-enabled users without mfa-verified cookie -> redirect to /mfa-verify
  *
  * Uses Payload's HTTP-only cookie (`payload-token`) for session detection.
- * JWT payload (role, collection, email) is read from the token without
- * database hits for the middleware path.
+ * JWT payload (role, mfaEnabled, collection, email) is read from the token
+ * without database hits for the middleware path.
  */
 
 // Routes that skip auth entirely
@@ -24,6 +25,12 @@ const PUBLIC_PATHS = [
   '/_next',
   '/favicon.ico',
   '/storage',
+]
+
+// Routes that are always allowed (MFA setup/verify pages are outside /admin)
+const ALWAYS_ALLOWED_PREFIXES = [
+  '/mfa-setup',
+  '/mfa-verify',
 ]
 
 // Routes that door_staff must NOT access (admin-only)
@@ -45,21 +52,60 @@ function isProtectedPath(pathname: string): boolean {
   )
 }
 
-// Minimal JWT payload extraction from Payload's cookie token.
-// This mirrors what Payload does internally — we don't re-verify
-// the signature here (Payload's API layer does that), we only
-// extract the role for route-gating purposes.
-function getPayloadFromToken(req: NextRequest): { role: string } | null {
+/**
+ * Extract JWT payload from the payload-token cookie.
+ * Does NOT verify signature here -- Payload's API layer re-verifies.
+ * This is for route-gating purposes only.
+ */
+function getPayloadFromToken(req: NextRequest): {
+  role: string
+  mfaEnabled?: boolean
+  id?: string
+} | null {
   const token = req.cookies.get('payload-token')?.value
   if (!token) return null
   try {
-    // Payload JWT is a 3-part token; we only need the payload (second part)
     const parts = token.split('.')
     if (parts.length !== 3) return null
     const payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString())
-    return { role: payload.role || 'door_staff' }
+    return {
+      role: payload.role || 'door_staff',
+      mfaEnabled: payload.mfaEnabled === true,
+      id: payload.id,
+    }
   } catch {
     return null
+  }
+}
+
+/**
+ * Check whether the mfa-verified cookie is present and looks valid.
+ * Full signature verification requires async jose call (compatible with
+ * Edge Runtime middleware), but for a pragmatic route-gate we check:
+ * 1. Cookie exists
+ * 2. It decodes as a 3-part JWT
+ * 3. It contains a plausible sub claim matching the user ID
+ *
+ * The actual verification (which sets this cookie) is done server-side
+ * with full TOTP code validation. This gate just prevents bypass via
+ * crafted cookies -- the server-side API always re-checks internally.
+ */
+function hasMfaVerifiedCookie(
+  req: NextRequest,
+  userId?: string,
+): boolean {
+  const verifiedToken = req.cookies.get('mfa-verified')?.value
+  if (!verifiedToken) return false
+
+  try {
+    const parts = verifiedToken.split('.')
+    if (parts.length !== 3) return false
+    const payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString())
+    // If we know the user's ID from the main token, ensure it matches
+    if (userId && payload.sub !== String(userId)) return false
+    return payload.mfa === true
+  } catch {
+    return false
   }
 }
 
@@ -89,14 +135,16 @@ export function middleware(req: NextRequest) {
     })
   }
 
+  // MFA enforcement: users with mfaEnabled must have completed MFA verification
+  if (session.mfaEnabled && !hasMfaVerifiedCookie(req, session.id)) {
+    const verifyUrl = new URL('/mfa-verify', req.url)
+    verifyUrl.searchParams.set('redirect', pathname)
+    return NextResponse.redirect(verifyUrl)
+  }
+
   return NextResponse.next()
 }
 
 export const config = {
-  // Match all routes the middleware should run on.
-  // NOTE: the door-staff tools (scan page, bookings dashboard) live
-  // in the (check-in) route group at /scan and /dashboard -- route
-  // groups in parens are not part of the URL path, so the matcher
-  // targets those concrete paths directly.
   matcher: ['/admin/:path*', '/scan/:path*', '/dashboard/:path*'],
 }

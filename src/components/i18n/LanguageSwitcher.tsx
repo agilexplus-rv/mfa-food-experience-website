@@ -5,15 +5,24 @@ import { useCallback, useEffect, useRef, useState } from "react"
 /**
  * LanguageSwitcher — EN | MT pill toggle.
  *
- * Per ADR-006:
+ * Per ADR-006 and EU-Legal-8 / DPIA-8:
  * - User-activated only: the Google Translate widget script is NOT loaded
  *   on page load. It loads only after the user explicitly accepts the
- *   cookie-consent gate.
- * - On first click of "MT", an ePrivacy consent prompt appears.
- * - On Accept: the widget script loads, the page translates to Maltese,
- *   and a `translate_consent=true` cookie is set (no prompt on subsequent
- *   navigation within the session).
- * - On Decline: the page remains in English; no script loads.
+ *   CookieBanner consent ("all" level).
+ * - Consent is governed by the CookieBanner component
+ *   (src/components/compliance/CookieBanner.tsx). The consent state is
+ *   stored in localStorage under "mfa_cookie_consent".
+ * - If consent is "necessary" only: Google Translate is not loaded and
+ *   the MT pill shows the inline consent prompt on click, offering the
+ *   user a chance to upgrade their consent.
+ * - If consent is "all": Google Translate loads (widget script + cookies)
+ *   and the language pill toggles without re-prompting.
+ *
+ * Research: Google Translate widget loads a third-party script from
+ * translate.google.com and may set cookies (_ga, googtrans, NID, etc.).
+ * Under the ePrivacy Directive (2002/58/EC) as transposed in Malta via
+ * S.L. 440.01, this is NOT "strictly necessary" — prior informed consent
+ * IS required before the script loads. The CookieBanner gates this.
  *
  * Brand styling (NFR-1):
  * - Active language: Lunar Green fill, Soft Beige text.
@@ -38,9 +47,24 @@ import { useCallback, useEffect, useRef, useState } from "react"
  * re-initialises against the new cookie value.
  */
 
+// Consent for Google Translate is now governed by the CookieBanner component.
+// The CookieBanner stores consent in localStorage under "mfa_cookie_consent".
+// Values: "all" (GT is allowed) or "necessary" (GT is blocked).
+// We also keep translate_consent for backward compatibility with existing sessions.
 const CONSENT_COOKIE = "translate_consent"
 const LANG_COOKIE = "lang"
 const GOOGTRANS_COOKIE = "googtrans"
+
+/** Check if the user has given consent for Google Translate.
+ * Primary: localStorage mfa_cookie_consent === "all" (from CookieBanner).
+ * Fallback: translate_consent cookie (from previous LanguageSwitcher behaviour). */
+function hasConsent(): boolean {
+  if (typeof window === "undefined") return false
+  try {
+    if (localStorage.getItem("mfa_cookie_consent") === "all") return true
+  } catch { /* localStorage not available */ }
+  return getCookie(CONSENT_COOKIE) === "true"
+}
 const GT_SCRIPT_SRC =
   "https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"
 
@@ -119,14 +143,15 @@ export function LanguageSwitcher() {
   const [consentGiven, setConsentGiven] = useState(false)
   const widgetDivRef = useRef<HTMLDivElement>(null)
 
-  // Restore language + consent from cookies on mount. If MT was previously
-  // active, the `googtrans` cookie is already set from the prior session,
-  // so simply loading the widget script causes GT to auto-translate.
+  // Restore language + consent on mount. Checks CookieBanner consent
+  // (localStorage mfa_cookie_consent) as primary, falls back to translate_consent
+  // cookie. If MT was previously active, the `googtrans` cookie is already set
+  // from the prior session, so loading the widget script causes GT to auto-translate.
   useEffect(() => {
-    const savedConsent = getCookie(CONSENT_COOKIE) === "true"
+    const consented = hasConsent()
     const savedLang = getCookie(LANG_COOKIE) as Lang | null
-    setConsentGiven(savedConsent)
-    if (savedConsent && savedLang === "mt" && widgetDivRef.current) {
+    setConsentGiven(consented)
+    if (consented && savedLang === "mt" && widgetDivRef.current) {
       setLang("mt")
       document.documentElement.lang = "mt"
       void loadWidget(widgetDivRef.current)
@@ -167,6 +192,8 @@ export function LanguageSwitcher() {
   )
 
   const handleAccept = useCallback(() => {
+    // Update the CookieBanner's consent state so future visits reflect "all" consent
+    try { localStorage.setItem("mfa_cookie_consent", "all") } catch { /* ok */ }
     setCookie(CONSENT_COOKIE, "true", 365)
     setShowConsent(false)
     activate("mt")
