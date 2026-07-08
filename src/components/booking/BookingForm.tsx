@@ -9,6 +9,17 @@ export interface BookingFormProps {
   pricePerPerson: number
   /** Upper bound for the seats input — min(20, remaining availability). */
   maxSeats: number
+  /**
+   * Article 16(l) / 6(1)(k) withdrawal-right disclosure text, fetched
+   * server-side from the CancellationPolicy Global and passed as a prop.
+   * When null, the disclosure block is not rendered (policy unavailable).
+   */
+  withdrawalRightDisclosure?: string | null
+  /**
+   * Whether the CancellationPolicy Global's `enabled` flag is on.
+   * Controls the wording of the cancellation acknowledgement checkbox.
+   */
+  cancellationEnabled?: boolean
 }
 
 interface HoldState {
@@ -47,8 +58,11 @@ function formatCountdown(msRemaining: number): string {
  *    Stripe URL. Button text is "Pay now" per ADR-004 / EU Legal D.5.
  * 5. If the hold expires before submit, block submission and offer to
  *    re-acquire a fresh hold rather than silently failing at checkout.
+ *
+ * @at-compliance EU-Legal-5 (Art. 16(l) / 6(1)(k) withdrawal-right
+ *   disclosure rendered directly on the booking page before payment)
  */
-export function BookingForm({ eventId, pricePerPerson, maxSeats }: BookingFormProps) {
+export function BookingForm({ eventId, pricePerPerson, maxSeats, withdrawalRightDisclosure, cancellationEnabled }: BookingFormProps) {
   const sessionIdRef = useRef<string>(newSessionId())
   const [seats, setSeats] = useState(1)
   const [hold, setHold] = useState<HoldState | null>(null)
@@ -149,12 +163,12 @@ export function BookingForm({ eventId, pricePerPerson, maxSeats }: BookingFormPr
       const data = await res.json()
       if (!res.ok || !data.ok) {
         const messages: Record<string, string> = {
-          not_found: 'We don’t recognise this code.',
+          not_found: 'We don\u2019t recognise this code.',
           inactive: 'This code is no longer active.',
-          not_yet_valid: 'This code isn’t valid yet.',
+          not_yet_valid: 'This code isn\u2019t valid yet.',
           expired: 'This code has expired.',
           exhausted: 'This code has reached its usage limit.',
-          not_applicable_to_service: 'This code doesn’t apply to this experience.',
+          not_applicable_to_service: 'This code doesn\u2019t apply to this experience.',
           event_not_found: 'This code is not valid for this event.',
         }
         setCouponStatus({ state: 'invalid', message: messages[data.error] ?? 'This code is not valid for this event.' })
@@ -219,10 +233,10 @@ export function BookingForm({ eventId, pricePerPerson, maxSeats }: BookingFormPr
             seats_mismatch: 'The number of seats changed — please refresh and try again.',
             event_not_found: 'This event could not be found.',
             event_not_bookable: 'This event is no longer bookable.',
-            insufficient_seats: 'There aren’t enough seats left for this booking.',
+            insufficient_seats: 'There aren\u2019t enough seats left for this booking.',
             invalid_coupon: 'Your discount code is no longer valid — remove it and try again.',
             invalid_input: 'Please check the details you entered and try again.',
-            stripe_error: 'We couldn’t start the payment — please try again in a moment.',
+            stripe_error: 'We couldn\u2019t start the payment — please try again in a moment.',
           }
           setSubmitError(data.message ?? messages[data.error] ?? 'Something went wrong — please try again.')
           return
@@ -394,6 +408,18 @@ export function BookingForm({ eventId, pricePerPerson, maxSeats }: BookingFormPr
         )}
       </div>
 
+      {/* Article 16(l) / 6(1)(k) withdrawal-right disclosure —
+          surfaced directly on the booking page before payment,
+          per EU Consumer Rights Directive.
+          @at-compliance EU-Legal-5 */}
+      {withdrawalRightDisclosure && (
+        <div className="rounded-xl border border-matte-gold/30 bg-matte-gold/5 px-5 py-4 text-sm">
+          <p className="text-lunar-green/75 leading-relaxed">
+            {withdrawalRightDisclosure}
+          </p>
+        </div>
+      )}
+
       {/* Cancellation policy acknowledgement */}
       <label className="flex items-start gap-2.5 text-sm text-lunar-green">
         <input
@@ -404,11 +430,21 @@ export function BookingForm({ eventId, pricePerPerson, maxSeats }: BookingFormPr
           className="mt-0.5 h-4 w-4 rounded border-border text-terracotta focus:outline-2 focus:outline-offset-2 focus:outline-terracotta"
         />
         <span>
-          I have read and accept the{' '}
-          <a href="/legal/cancellation-policy" target="_blank" rel="noreferrer" className="font-semibold underline">
-            Cancellation Policy
-          </a>
-          .
+          {cancellationEnabled === false ? (
+            <>
+              I understand that this booking{' '}
+              <strong className="font-semibold text-terracotta">cannot be cancelled or refunded</strong>
+              {'. '}
+            </>
+          ) : (
+            <>
+              I have read and accept the{' '}
+              <a href="/legal/cancellation-policy" target="_blank" rel="noreferrer" className="font-semibold underline">
+                Cancellation Policy
+              </a>
+              {'. '}
+            </>
+          )}
         </span>
       </label>
 

@@ -4,6 +4,11 @@ import { getPayload } from "payload"
 import config from "@payload-config"
 import { convertLexicalToHTML } from "@payloadcms/richtext-lexical/html"
 import { montserrat } from "@/lib/fonts"
+import {
+  getCancellationPolicy,
+  formatTierLabel,
+  formatDaysBeforeLabel,
+} from "@/lib/policies/cancellation"
 
 export const revalidate = 60
 export const dynamic = "force-dynamic"
@@ -33,6 +38,13 @@ export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
   const { slug } = await params
+  if (slug === "cancellation-policy") {
+    return {
+      title: "Cancellation Policy — Malta Food Experience",
+      description:
+        "Our cancellation and refund terms for scheduled food experiences.",
+    }
+  }
   const policy = await getPolicyBySlug(slug)
   if (!policy) return { title: "Not found — Malta Food Experience" }
   return {
@@ -95,6 +107,14 @@ function escapeHtml(text: string): string {
 
 export default async function LegalPolicyPage({ params }: PageProps) {
   const { slug } = await params
+
+  // ── Cancellation-policy: render from the Global, not the collection ──
+  if (slug === "cancellation-policy") {
+    const policy = await getCancellationPolicy()
+    return <CancellationPolicyPage policy={policy} />
+  }
+
+  // ── Other known slugs: render from the Policies collection ──
   const policy = await getPolicyBySlug(slug)
   if (!policy) notFound()
 
@@ -130,6 +150,119 @@ export default async function LegalPolicyPage({ params }: PageProps) {
           <p className="mt-10 text-lunar-green/60">
             This policy document is being prepared. Please check back soon.
           </p>
+        )}
+      </section>
+    </main>
+  )
+}
+
+/**
+ * Cancellation policy rendered from the Payload Global.
+ *
+ * Brand-styled table: lunar-green #33483D, terracotta #C9643D,
+ * matte-gold #B8974D, soft-beige #F9F4EF, Montserrat.
+ *
+ * @at-compliance EU-Legal-3 (Cancellation Policy page)
+ * @at-compliance Art. 16(l) / 6(1)(k) withdrawal disclosure
+ */
+async function CancellationPolicyPage({
+  policy,
+}: {
+  policy: Awaited<ReturnType<typeof getCancellationPolicy>>
+}) {
+  return (
+    <main className={`${montserrat.variable} bg-soft-beige`}>
+      <section className="mx-auto max-w-3xl px-6 py-16">
+        <header className="border-b border-lunar-green/20 pb-6">
+          <span className="text-xs font-semibold uppercase tracking-wide text-matte-gold">
+            Legal
+          </span>
+          <h1 className="mt-2 font-black text-3xl tracking-tight text-lunar-green sm:text-4xl">
+            Cancellation Policy
+          </h1>
+        </header>
+
+        {/* Intro text — admin-editable free-text */}
+        {policy.introText && (
+          <p className="mt-10 text-lunar-green/80 leading-relaxed whitespace-pre-line">
+            {policy.introText}
+          </p>
+        )}
+
+        {!policy.enabled ? (
+          /* Cancellations disabled — clear message, no table */
+          <div className="mt-10 rounded-xl border border-dashed border-terracotta/30 bg-terracotta/5 px-6 py-8">
+            <p className="text-center text-lg font-semibold text-terracotta">
+              Cancellations are not currently accepted for this experience.
+            </p>
+            <p className="mt-2 text-center text-sm text-lunar-green/60">
+              Please contact us directly if you have questions about your booking.
+            </p>
+          </div>
+        ) : policy.tiers && policy.tiers.length > 0 ? (
+          /* Cancellation tiers table */
+          <div className="mt-10 overflow-hidden rounded-xl border border-lunar-green/15">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-lunar-green text-soft-beige">
+                  <th className="px-5 py-3.5 text-left font-semibold">
+                    Cancel at least
+                  </th>
+                  <th className="px-5 py-3.5 text-left font-semibold">
+                    Refund
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {policy.tiers.map((tier, i) => (
+                  <tr
+                    key={i}
+                    className={
+                      i % 2 === 0
+                        ? "bg-white"
+                        : "bg-soft-beige"
+                    }
+                  >
+                    <td className="px-5 py-3.5 text-lunar-green font-medium">
+                      {formatDaysBeforeLabel(tier.minDaysBeforeEvent)}
+                    </td>
+                    <td className="px-5 py-3.5 text-lunar-green font-semibold">
+                      {formatTierLabel(tier)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          /* Enabled but no tiers configured */
+          <p className="mt-10 text-lunar-green/60">
+            Cancellation terms are being finalised. Please check back soon.
+          </p>
+        )}
+
+        {/* Organiser cancellation */}
+        {policy.organiserCancellationText && (
+          <div className="mt-12 rounded-xl border border-matte-gold/30 bg-matte-gold/5 px-6 py-6">
+            <h2 className="text-lg font-bold text-lunar-green">
+              If we cancel the event
+            </h2>
+            <p className="mt-2 text-lunar-green/80 leading-relaxed whitespace-pre-line">
+              {policy.organiserCancellationText}
+            </p>
+          </div>
+        )}
+
+        {/* Withdrawal right disclosure — legally required */}
+        {policy.withdrawalRightDisclosure && (
+          <div className="mt-12 border-t border-lunar-green/15 pt-8">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-matte-gold">
+              Your right of withdrawal
+            </h2>
+            <p className="mt-3 text-sm text-lunar-green/70 leading-relaxed whitespace-pre-line">
+              {policy.withdrawalRightDisclosure}
+            </p>
+          </div>
         )}
       </section>
     </main>
