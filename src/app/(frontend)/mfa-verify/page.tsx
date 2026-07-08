@@ -123,6 +123,7 @@ function MfaVerifyForm() {
                 className="mfa-digit-input"
                 autoComplete="one-time-code"
                 autoFocus={i === 0}
+                aria-label={`Verification digit ${i + 1} of 6`}
               />
             ))}
           </div>

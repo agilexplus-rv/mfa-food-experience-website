@@ -1,0 +1,7 @@
+{
+  "label": "Legal: Cookie Policy",
+  "url": "https://mfa-food-experience-website.vercel.app/legal/cookie-policy",
+  "error": "Required \"window\" or \"document\" globals not defined and cannot be deduced from the context. Either set the globals before running or pass in a valid Element.",
+  "totalViolations": 0,
+  "violations": []
+}

@@ -37,3 +37,25 @@ body {
   overflow-x: hidden;
   width: 100%;
 }
+
+/* Skip-to-content link (WCAG 2.4.1 Bypass Blocks, Level A) */
+.skip-to-content {
+  position: absolute;
+  top: -100%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  padding: 8px 16px;
+  background: var(--color-lunar-green);
+  color: var(--color-soft-beige);
+  font-weight: 700;
+  font-size: 0.875rem;
+  border-radius: 0 0 6px 6px;
+  text-decoration: none;
+  transition: top 0.2s ease;
+}
+.skip-to-content:focus {
+  top: 0;
+  outline: 2px solid var(--color-matte-gold);
+  outline-offset: 2px;
+}
