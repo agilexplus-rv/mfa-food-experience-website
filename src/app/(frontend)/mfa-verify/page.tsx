@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { Suspense, useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 
-export default function MfaVerifyPage() {
+function MfaVerifyForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const redirectTo = searchParams.get('redirect') || '/admin'
@@ -140,6 +140,37 @@ export default function MfaVerifyPage() {
       </div>
       <style>{mfaStyles}</style>
     </div>
+  )
+}
+
+export default function MfaVerifyPage() {
+  return (
+    <Suspense fallback={
+      <div className="mfa-container">
+        <div className="mfa-card">
+          <div className="mfa-icon-wrap">
+            <svg
+              width="40"
+              height="40"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#33483D"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+            </svg>
+          </div>
+          <h1 className="mfa-title">Two-Factor Authentication</h1>
+          <p className="mfa-subtitle">Loading…</p>
+        </div>
+        <style>{mfaStyles}</style>
+      </div>
+    }>
+      <MfaVerifyForm />
+    </Suspense>
   )
 }
 
