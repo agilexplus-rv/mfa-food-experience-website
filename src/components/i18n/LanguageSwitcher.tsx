@@ -1,9 +1,22 @@
 "use client"
 
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 
 /**
  * LanguageSwitcher — EN | MT pill toggle.
+ *
+ * Safe to render multiple times simultaneously (e.g. once in SiteHeader
+ * for desktop, once inside MobileNav's drawer for mobile — both are
+ * always mounted in the DOM at once, just visibility-toggled via CSS, not
+ * actually unmounted at any breakpoint). This component only owns the
+ * pill buttons + cookie read/write; the actual Google Translate widget
+ * (hidden div + script load + TranslateElement instantiation) lives in a
+ * single singleton, GoogleTranslateWidgetHost, mounted once in the root
+ * layout (src/app/(frontend)/layout.tsx). See that file's doc comment for
+ * the regression this split fixes: two LanguageSwitcher instances used to
+ * each render their own `id="google_translate_element"` div, producing a
+ * duplicate-id DOM and a race on `window.googleTranslateElementInit` that
+ * broke the widget for both.
  *
  * Per ADR-006 and EU-Legal-8 / DPIA-8:
  * - User-activated only: the Google Translate widget script is NOT loaded
@@ -17,12 +30,6 @@ import { useCallback, useEffect, useRef, useState } from "react"
  *   user a chance to upgrade their consent.
  * - If consent is "all": Google Translate loads (widget script + cookies)
  *   and the language pill toggles without re-prompting.
- *
- * Research: Google Translate widget loads a third-party script from
- * translate.google.com and may set cookies (_ga, googtrans, NID, etc.).
- * Under the ePrivacy Directive (2002/58/EC) as transposed in Malta via
- * S.L. 440.01, this is NOT "strictly necessary" — prior informed consent
- * IS required before the script loads. The CookieBanner gates this.
  *
  * Brand styling (NFR-1):
  * - Active language: Lunar Green fill, Soft Beige text.
@@ -47,17 +54,10 @@ import { useCallback, useEffect, useRef, useState } from "react"
  * re-initialises against the new cookie value.
  */
 
-// Consent for Google Translate is now governed by the CookieBanner component.
-// The CookieBanner stores consent in localStorage under "mfa_cookie_consent".
-// Values: "all" (GT is allowed) or "necessary" (GT is blocked).
-// We also keep translate_consent for backward compatibility with existing sessions.
 const CONSENT_COOKIE = "translate_consent"
 const LANG_COOKIE = "lang"
 const GOOGTRANS_COOKIE = "googtrans"
 
-/** Check if the user has given consent for Google Translate.
- * Primary: localStorage mfa_cookie_consent === "all" (from CookieBanner).
- * Fallback: translate_consent cookie (from previous LanguageSwitcher behaviour). */
 function hasConsent(): boolean {
   if (typeof window === "undefined") return false
   try {
@@ -65,8 +65,6 @@ function hasConsent(): boolean {
   } catch { /* localStorage not available */ }
   return getCookie(CONSENT_COOKIE) === "true"
 }
-const GT_SCRIPT_SRC =
-  "https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"
 
 type Lang = "en" | "mt"
 
@@ -87,76 +85,23 @@ function deleteCookie(name: string): void {
   document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; SameSite=Lax; Secure`
 }
 
-declare global {
-  interface Window {
-    googleTranslateElementInit?: () => void
-    google?: {
-      translate?: {
-        TranslateElement?: new (
-          opts: {
-            pageLanguage: string
-            includedLanguages?: string
-            autoDisplay?: boolean
-          },
-          el: string | HTMLElement,
-        ) => void
-      }
-    }
-  }
-}
-
-/** Load the Google Translate widget script + instantiate the element (once per page load). */
-function loadWidget(widgetDiv: HTMLElement): Promise<void> {
-  return new Promise((resolve) => {
-    window.googleTranslateElementInit = () => {
-      if (window.google?.translate?.TranslateElement) {
-        new window.google.translate.TranslateElement(
-          {
-            pageLanguage: "en",
-            includedLanguages: "en,mt",
-            autoDisplay: false,
-          },
-          widgetDiv,
-        )
-      }
-      resolve()
-    }
-
-    const scriptBase = GT_SCRIPT_SRC.split("?")[0]
-    if (!document.querySelector(`script[src^="${scriptBase}"]`)) {
-      const script = document.createElement("script")
-      script.src = GT_SCRIPT_SRC
-      script.async = true
-      script.onerror = () => resolve()
-      document.head.appendChild(script)
-    } else {
-      // Script tag already present (e.g. fast client nav) — GT re-runs its
-      // global init callback on its own once its internal state is ready.
-      resolve()
-    }
-  })
-}
-
 export function LanguageSwitcher() {
   const [lang, setLang] = useState<Lang>("en")
   const [showConsent, setShowConsent] = useState(false)
   const [consentGiven, setConsentGiven] = useState(false)
-  const widgetDivRef = useRef<HTMLDivElement>(null)
 
   // Restore language + consent on mount. Checks CookieBanner consent
   // (localStorage mfa_cookie_consent) as primary, falls back to translate_consent
-  // cookie. If MT was previously active, the `googtrans` cookie is already set
-  // from the prior session, so loading the widget script causes GT to auto-translate.
+  // cookie. The actual widget (if MT was previously active) is loaded by the
+  // singleton GoogleTranslateWidgetHost, not here — this only sets local
+  // pill-highlight state to match.
   useEffect(() => {
     const consented = hasConsent()
     const savedLang = getCookie(LANG_COOKIE) as Lang | null
     setConsentGiven(consented)
-    if (consented && savedLang === "mt" && widgetDivRef.current) {
+    if (consented && savedLang === "mt") {
       setLang("mt")
-      document.documentElement.lang = "mt"
-      void loadWidget(widgetDivRef.current)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const activate = useCallback((target: Lang) => {
@@ -168,7 +113,9 @@ export function LanguageSwitcher() {
     }
     // GT only picks up the googtrans cookie during its own initialisation,
     // so a full reload is the reliable way to apply the change in both
-    // directions (mt->en and en->mt).
+    // directions (mt->en and en->mt). This also re-runs
+    // GoogleTranslateWidgetHost's mount effect against the new cookie
+    // value, regardless of which LanguageSwitcher instance was clicked.
     window.location.reload()
   }, [])
 
@@ -210,14 +157,6 @@ export function LanguageSwitcher() {
 
   return (
     <div className="relative flex items-center gap-1">
-      {/* Hidden Google Translate widget container */}
-      <div
-        ref={widgetDivRef}
-        id="google_translate_element"
-        className="pointer-events-none absolute h-0 w-0 overflow-hidden opacity-0"
-        aria-hidden="true"
-      />
-
       {/* EN pill -- UK flag, the conventional flag used for the English
           option on Malta-facing sites (gov.mt and equivalents use the same
           EN=UK / MT=Malta pairing since "English flag" isn't a distinct
