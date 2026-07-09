@@ -4,6 +4,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { Logo } from '@/components/brand/Logo'
 
 interface UserInfo {
   id: string | number
@@ -118,14 +119,13 @@ export default function ConsoleShell({ children }: { children: React.ReactNode }
         ].join(' ')}
         style={{ boxSizing: 'border-box' }}
       >
-        {/* Logo area */}
+        {/* Logo area -- Malta Food Agency brand mark (inverted variant,
+            matching the public site's header/footer usage on the same
+            bg-lunar-green background), not a text-abbreviation placeholder. */}
         <div className="flex h-16 items-center gap-3 border-b border-white/10 px-5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-matte-gold text-sm font-black text-lunar-green">
-            MF
-          </div>
+          <Logo variant="inverted" size="sm" className="!p-0 h-9 w-auto" />
           <div>
-            <div className="text-sm font-bold text-soft-beige">MFA Operator</div>
-            <div className="text-[10px] text-soft-beige/60">Console</div>
+            <div className="text-sm font-bold text-soft-beige">Operator Console</div>
           </div>
         </div>
 

@@ -45,10 +45,16 @@ export function SiteHeader() {
         </nav>
 
         <div className="flex items-center gap-2">
-          {/* EN | MT language switcher — functional per ADR-006 */}
-          <LanguageSwitcher />
+          {/* EN | MT language switcher — functional per ADR-006.
+              Hidden below md: on mobile it lives inside the MobileNav
+              drawer instead, so the header doesn't get crowded and the
+              switcher sits alongside the rest of the nav in the menu. */}
+          <div className="hidden md:block">
+            <LanguageSwitcher />
+          </div>
 
-          {/* Hamburger menu — mobile only, hidden at md and above */}
+          {/* Hamburger menu — mobile only, hidden at md and above.
+              Renders its own LanguageSwitcher inside the drawer. */}
           <MobileNav />
         </div>
       </div>

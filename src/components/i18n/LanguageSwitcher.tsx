@@ -206,7 +206,7 @@ export function LanguageSwitcher() {
   }, [])
 
   const pillBase =
-    "rounded-full px-3 py-1 text-xs font-semibold transition-colors focus:outline-2 focus:outline-offset-1 focus:outline-matte-gold"
+    "flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold transition-colors focus:outline-2 focus:outline-offset-1 focus:outline-matte-gold"
 
   return (
     <div className="relative flex items-center gap-1">
@@ -218,7 +218,10 @@ export function LanguageSwitcher() {
         aria-hidden="true"
       />
 
-      {/* EN pill */}
+      {/* EN pill -- UK flag, the conventional flag used for the English
+          option on Malta-facing sites (gov.mt and equivalents use the same
+          EN=UK / MT=Malta pairing since "English flag" isn't a distinct
+          national flag). */}
       <button
         type="button"
         onClick={() => handleSelect("en")}
@@ -229,10 +232,11 @@ export function LanguageSwitcher() {
             : "border border-soft-beige/30 text-soft-beige/70 hover:bg-terracotta hover:text-soft-beige"
         }`}
       >
+        <span aria-hidden="true" className="text-sm leading-none">🇬🇧</span>
         EN
       </button>
 
-      {/* MT pill */}
+      {/* MT pill -- Malta flag */}
       <button
         type="button"
         onClick={() => handleSelect("mt")}
@@ -243,6 +247,7 @@ export function LanguageSwitcher() {
             : "border border-soft-beige/30 text-soft-beige/70 hover:bg-terracotta hover:text-soft-beige"
         }`}
       >
+        <span aria-hidden="true" className="text-sm leading-none">🇲🇹</span>
         MT
       </button>
 

@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { useEffect, useRef, useState } from "react"
+import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher"
 
 /**
  * MobileNav — hamburger drawer for viewports < 960px.
@@ -13,8 +14,10 @@ import { useEffect, useRef, useState } from "react"
  *   Esc closes, and focus is moved into the drawer on open (lightweight
  *   focus management; full trap omitted per spec but keyboard-closable).
  * - Body scroll is locked while open.
- * - The language switcher lives separately in the header and remains
- *   visible at all breakpoints, so it is not duplicated here.
+ * - The language switcher is hidden in the header below the md breakpoint
+ *   and rendered inside this drawer instead (near the top, above the nav
+ *   links), so mobile users toggle language from the menu rather than a
+ *   crowded header bar.
  */
 
 const NAV_LINKS = [
@@ -118,6 +121,16 @@ export function MobileNav() {
             </svg>
           </button>
         </div>
+        {/* Language switcher -- moved here from the header on mobile
+            viewports (< md). Its own small section, flags + EN|MT pills,
+            sitting above the nav links inside the drawer. */}
+        <div className="flex items-center justify-between border-b border-soft-beige/20 px-4 py-3">
+          <span className="text-xs font-semibold uppercase tracking-wider text-soft-beige/60">
+            Language
+          </span>
+          <LanguageSwitcher />
+        </div>
+
         <nav className="flex flex-col gap-1 p-4">
           {NAV_LINKS.map((link) => (
             <Link
