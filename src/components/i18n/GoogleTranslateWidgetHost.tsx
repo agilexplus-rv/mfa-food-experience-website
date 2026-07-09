@@ -103,6 +103,33 @@ function loadWidget(widgetDiv: HTMLElement): Promise<void> {
   })
 }
 
+// Belt-and-suspenders fallback: GT's widget is documented to auto-apply
+// the translation itself as soon as it reads the `googtrans` cookie
+// during its own initialisation (see the module doc comment). In
+// practice this has proven unreliable to verify -- observed sessions
+// showed the widget constructing successfully but its internal
+// <select class="goog-te-combo"> never populating with real language
+// options, independent of the cookie's value or encoding. Rather than
+// trust the cookie mechanism alone, this function polls for the combo to
+// actually populate, then drives it directly by setting `.value` and
+// dispatching a `change` event -- the mechanism GT's own UI uses when a
+// user manually picks a language from the dropdown. This runs in
+// addition to (not instead of) the googtrans cookie, so if either
+// mechanism works, the translation applies.
+function driveComboWhenReady(targetLangCode: string, attempts = 0): void {
+  if (attempts > 40) return // ~20s budget (40 * 500ms), then give up quietly
+  const combo = document.querySelector<HTMLSelectElement>(".goog-te-combo")
+  if (combo && combo.options.length > 0) {
+    const hasTarget = Array.from(combo.options).some((o) => o.value === targetLangCode)
+    if (hasTarget) {
+      combo.value = targetLangCode
+      combo.dispatchEvent(new Event("change", { bubbles: true }))
+      return
+    }
+  }
+  setTimeout(() => driveComboWhenReady(targetLangCode, attempts + 1), 500)
+}
+
 export function GoogleTranslateWidgetHost() {
   const widgetDivRef = useRef<HTMLDivElement>(null)
 
@@ -111,7 +138,12 @@ export function GoogleTranslateWidgetHost() {
     const savedLang = getCookie(LANG_COOKIE) as Lang | null
     if (consented && savedLang === "mt" && widgetDivRef.current) {
       document.documentElement.lang = "mt"
-      void loadWidget(widgetDivRef.current)
+      void loadWidget(widgetDivRef.current).then(() => {
+        // Give the cookie-driven auto-apply a moment to take effect on its
+        // own first; only start the DOM-driven fallback after a short
+        // delay so we're not fighting GT's own initialisation mid-flight.
+        setTimeout(() => driveComboWhenReady("mt"), 800)
+      })
     }
   }, [])
 

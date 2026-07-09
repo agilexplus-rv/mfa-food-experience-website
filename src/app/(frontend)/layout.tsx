@@ -4,6 +4,7 @@ import { SiteHeader } from "@/components/layout/SiteHeader"
 import { SiteFooter } from "@/components/layout/SiteFooter"
 import { CookieBanner } from "@/components/compliance/CookieBanner"
 import { GoogleTranslateWidgetHost } from "@/components/i18n/GoogleTranslateWidgetHost"
+import { I18nDebugPanel } from "@/components/i18n/I18nDebugPanel"
 import "./globals.css"
 
 export const metadata: Metadata = {
@@ -36,6 +37,10 @@ export default function RootLayout({
         <main id="main-content" className="flex-1">{children}</main>
         <SiteFooter />
         <CookieBanner />
+        {/* Temporary, URL-gated diagnostic panel (?debug=i18n) -- see
+            I18nDebugPanel.tsx doc comment. Remove once the translation
+            issue reported 2026-07-09 is confirmed resolved. */}
+        <I18nDebugPanel />
       </body>
     </html>
   )
