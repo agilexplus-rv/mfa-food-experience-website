@@ -138,10 +138,21 @@ export function LanguageSwitcher() {
     window.location.reload()
   }, [])
 
+  // NOTE: deliberately does NOT early-return when target === lang. Lang
+  // state here is inferred purely from the `lang` cookie, which reflects
+  // what was *requested*, not whether the widget actually applied a
+  // translation -- a real prior bug (see setRawCookie above) meant the
+  // cookie could say "mt" while the page was still rendering English.
+  // With the old `if (target === lang) return` guard, a user stuck in
+  // that state had NO way to retry from the UI: clicking MT again was a
+  // silent no-op (no reload, no error, nothing changes -- exactly the
+  // symptom reported 2026-07-09). Always re-running activate() on every
+  // click guarantees the cookie gets rewritten and the page reloads even
+  // if state and reality have drifted apart; the cost is one extra reload
+  // in the rare case where the user clicks a pill that's already correctly
+  // active, which is a fully acceptable trade for self-healing behaviour.
   const handleSelect = useCallback(
     (target: Lang) => {
-      if (target === lang) return
-
       if (target === "en") {
         activate("en")
         return
@@ -154,7 +165,7 @@ export function LanguageSwitcher() {
 
       activate("mt")
     },
-    [lang, consentGiven, activate],
+    [consentGiven, activate],
   )
 
   const handleAccept = useCallback(() => {
