@@ -318,14 +318,8 @@ export default function DashboardPage() {
           )}
           {user?.role === 'admin' && (
             <>
-              <a href="/admin-tools/staff" className="rounded-lg border-2 border-border px-3 py-2 text-xs font-bold text-lunar-green hover:bg-surface transition-colors">
-                Staff
-              </a>
-              <a href="/admin-tools/coupons" className="rounded-lg border-2 border-border px-3 py-2 text-xs font-bold text-lunar-green hover:bg-surface transition-colors">
-                Coupons
-              </a>
-              <a href="/admin-tools/data-subject" className="rounded-lg border-2 border-border px-3 py-2 text-xs font-bold text-lunar-green hover:bg-surface transition-colors">
-                GDPR
+              <a href="/console" className="rounded-lg border-2 border-lunar-green px-3 py-2 text-xs font-bold text-lunar-green hover:bg-lunar-green hover:text-white transition-colors">
+                Console
               </a>
             </>
           )}
