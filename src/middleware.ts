@@ -27,7 +27,7 @@ const PUBLIC_PATHS = [
   '/storage',
 ]
 // Routes that door_staff must NOT access (admin-only)
-const ADMIN_ONLY_PREFIXES = ['/admin/collections/bookings']
+const ADMIN_ONLY_PREFIXES = ['/admin/collections/bookings', '/console']
 
 function isPublicPath(pathname: string): boolean {
   return PUBLIC_PATHS.some((p) => pathname.startsWith(p))
@@ -42,7 +42,8 @@ function isProtectedPath(pathname: string): boolean {
     pathname.startsWith('/admin') ||
     pathname.startsWith('/scan') ||
     pathname.startsWith('/dashboard') ||
-    pathname.startsWith('/admin-tools')
+    pathname.startsWith('/admin-tools') ||
+    pathname.startsWith('/console')
   )
 }
 
@@ -151,5 +152,5 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/admin/:path*', '/scan/:path*', '/dashboard/:path*', '/admin-tools/:path*'],
+  matcher: ['/admin/:path*', '/scan/:path*', '/dashboard/:path*', '/admin-tools/:path*', '/console/:path*'],
 }
