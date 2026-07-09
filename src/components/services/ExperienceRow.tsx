@@ -47,8 +47,8 @@ export function ExperienceRow({
             className="h-56 w-full object-cover md:h-full md:min-h-[280px]"
           />
         ) : (
-          <div className="flex h-56 w-full items-center justify-center bg-lunar-green/10 md:h-full md:min-h-[280px]">
-            <span className="text-sm font-semibold text-lunar-green/40">
+          <div className="flex h-56 w-full items-center justify-center bg-lunar-green px-6 text-center md:h-full md:min-h-[280px]">
+            <span className="text-sm font-semibold text-soft-beige">
               {name}
             </span>
           </div>
