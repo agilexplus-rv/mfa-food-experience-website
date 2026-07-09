@@ -17,6 +17,9 @@ export const STATUS_COLORS: Record<string, string> = {
   door_staff: 'bg-lunar-green/20 text-lunar-green',
   active: 'bg-lunar-green/20 text-lunar-green',
   deactivated: 'bg-terracotta/20 text-[#9C4E2F]',
+  exhausted: 'bg-terracotta/20 text-[#9C4E2F]',
+  disabled: 'bg-gray-200 text-gray-600',
+  expiring: 'bg-matte-gold/20 text-matte-gold',
 }
 
 interface BadgeProps {
