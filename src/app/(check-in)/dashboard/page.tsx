@@ -12,6 +12,7 @@ interface BookingRow {
   status: string
   totalAmount: number
   checkedInAt: string | null
+  checkInStaffName: string | null
   createdAt: string
 }
 
@@ -23,7 +24,17 @@ interface SearchResult {
 }
 
 interface UserInfo {
+  id: string | number
+  email: string
   role: string
+}
+
+interface CapacityInfo {
+  eventId: string | number
+  capacity: number
+  booked: number
+  remaining: number
+  checkedIn: number
 }
 
 const STATUS_OPTIONS = [
@@ -42,7 +53,7 @@ const STATUS_COLORS: Record<string, string> = {
 }
 
 function formatCurrency(cents: number): string {
-  return `\u20AC${cents.toFixed(2)}`
+  return `\u20AC${(cents / 100).toFixed(2)}`
 }
 
 function formatDate(iso: string | null): string {
@@ -77,6 +88,9 @@ export default function DashboardPage() {
 
   // Cancel state
   const [cancellingId, setCancellingId] = useState<string | number | null>(null)
+
+  // Capacity
+  const [liveCapacity, setLiveCapacity] = useState<CapacityInfo | null>(null)
 
   const fetchUser = useCallback(async () => {
     try {
@@ -138,6 +152,31 @@ export default function DashboardPage() {
     void fetchUser()
   }, [fetchUser])
 
+  // Live capacity poll
+  useEffect(() => {
+    let cancelled = false
+    async function load() {
+      try {
+        const res = await fetch('/api/staff/events')
+        if (!res.ok) return
+        const data = await res.json()
+        if (!cancelled && data.events?.length > 0) {
+          const firstEvent = data.events[0]
+          try {
+            const capRes = await fetch(`/api/staff/events?event=${firstEvent.id}`)
+            if (capRes.ok) {
+              const capData = await capRes.json()
+              if (!cancelled) setLiveCapacity(capData)
+            }
+          } catch { /* ignore */ }
+        }
+      } catch { /* ignore */ }
+    }
+    void load()
+    const interval = setInterval(() => { void load() }, 30_000)
+    return () => { cancelled = true; clearInterval(interval) }
+  }, [])
+
   const handleCancel = useCallback(async (id: string | number) => {
     setCancellingId(id)
     try {
@@ -150,7 +189,6 @@ export default function DashboardPage() {
         const data = await res.json().catch(() => null)
         throw new Error(data?.error || 'Cancel failed')
       }
-      // Refresh the results.
       void search()
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Cancel failed')
@@ -184,12 +222,20 @@ export default function DashboardPage() {
             )}
           </p>
         </div>
-        <a
-          href="/scan"
-          className="rounded-lg border-2 border-lunar-green px-4 py-2 text-sm font-bold text-lunar-green hover:bg-lunar-green hover:text-white transition-colors"
-        >
-          &larr; Scanner
-        </a>
+        <div className="flex items-center gap-3">
+          {/* Live capacity */}
+          {liveCapacity && (
+            <span className="text-sm font-semibold text-lunar-green">
+              {liveCapacity.checkedIn} / {liveCapacity.capacity} checked in
+            </span>
+          )}
+          <a
+            href="/scan"
+            className="rounded-lg border-2 border-lunar-green px-4 py-2 text-sm font-bold text-lunar-green hover:bg-lunar-green hover:text-white transition-colors"
+          >
+            &larr; Scanner
+          </a>
+        </div>
       </header>
 
       {/* Filters */}
@@ -268,8 +314,11 @@ export default function DashboardPage() {
                   <th className="px-4 py-3 font-semibold text-text-light">Attendee</th>
                   <th className="px-4 py-3 font-semibold text-text-light text-center">Persons</th>
                   <th className="px-4 py-3 font-semibold text-text-light">Status</th>
-                  <th className="px-4 py-3 font-semibold text-text-light text-right">Total</th>
+                  {user?.role === 'admin' && (
+                    <th className="px-4 py-3 font-semibold text-text-light text-right">Total</th>
+                  )}
                   <th className="px-4 py-3 font-semibold text-text-light">Checked In</th>
+                  <th className="px-4 py-3 font-semibold text-text-light">Checked In By</th>
                   {user?.role === 'admin' && (
                     <th className="px-4 py-3 font-semibold text-text-light text-center">Actions</th>
                   )}
@@ -302,11 +351,16 @@ export default function DashboardPage() {
                         {b.status.replace('_', ' ')}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-right font-semibold text-lunar-green">
-                      {formatCurrency(b.totalAmount)}
-                    </td>
+                    {user?.role === 'admin' && (
+                      <td className="px-4 py-3 text-right font-semibold text-lunar-green">
+                        {formatCurrency(b.totalAmount)}
+                      </td>
+                    )}
                     <td className="px-4 py-3 text-xs text-text-light">
                       {formatDateTime(b.checkedInAt)}
+                    </td>
+                    <td className="px-4 py-3 text-xs text-text-light">
+                      {b.checkInStaffName || '\u2014'}
                     </td>
                     {user?.role === 'admin' && (
                       <td className="px-4 py-3 text-center">
@@ -319,7 +373,7 @@ export default function DashboardPage() {
                             {cancellingId === b.id ? '...' : 'Cancel'}
                           </button>
                         ) : (
-                          <span className="text-xs text-text-light">\u2014</span>
+                          <span className="text-xs text-text-light">{'\u2014'}</span>
                         )}
                       </td>
                     )}

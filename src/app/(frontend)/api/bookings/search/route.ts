@@ -63,15 +63,20 @@ export async function GET(req: NextRequest) {
       page,
       limit,
       sort: '-createdAt',
-      depth: 1,
+      depth: 2, // need checkInStaff relationship populated
       overrideAccess: true,
     })
+    const isAdmin = currentUser.role === 'admin'
     const docs = result.docs.map((b) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const booking = b as any
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const event = booking.event as any
-      return {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const staff = booking.checkInStaff as any
+
+      // Door-staff: restricted view — no financial fields
+      const base = {
         id: booking.id,
         reference: booking.reference,
         eventTitle: event?.title || null,
@@ -79,10 +84,19 @@ export async function GET(req: NextRequest) {
         email: booking.email,
         persons: booking.persons,
         status: booking.status,
-        totalAmount: booking.totalAmount,
         checkedInAt: booking.checkedInAt || null,
         createdAt: booking.createdAt,
+        // Phase 6 scope 5: staff accountability column
+        checkInStaffName: staff?.email || null,
       }
+
+      if (isAdmin) {
+        return {
+          ...base,
+          totalAmount: booking.totalAmount,
+        }
+      }
+      return base
     })
     return NextResponse.json({
       docs,

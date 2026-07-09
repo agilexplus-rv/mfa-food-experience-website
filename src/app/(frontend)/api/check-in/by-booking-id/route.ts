@@ -3,10 +3,21 @@ import { getPayload } from 'payload'
 import type { Payload } from 'payload'
 import config from '@payload-config'
 
-import { hashQrToken } from '@/lib/qr/token'
 import { verifySession } from '@/lib/rbac/verify-session'
 import { createRateLimiter, getClientIp } from '@/lib/rate-limit'
 import { performCheckIn } from '@/lib/check-in/perform-check-in'
+
+/**
+ * POST /api/check-in/by-booking-id — manual-lookup check-in endpoint.
+ *
+ * Allows door staff to check in a booking by its database ID
+ * (e.g. from a name/reference search) instead of by QR token.
+ * Reuses the shared performCheckIn() logic — no duplication of
+ * the audit-log or booking-update logic.
+ *
+ * @compliance ADR-008 C6 (RBAC: admin + door_staff only),
+ *   C9 (rate-limited), C18 (session-only auth).
+ */
 
 let _payload: Payload | null = null
 async function payload(): Promise<Payload> {
@@ -14,25 +25,7 @@ async function payload(): Promise<Payload> {
   return _payload
 }
 
-/**
- * POST /api/check-in — QR scan check-in endpoint per ADR-003.
- *
- * @compliance ADR-003 verification section, ADR-008 C9 (rate-limited),
- *   C6 (RBAC: admin + door_staff only), C18 (session-only auth).
- */
-
-// --- In-memory rate limiter (sliding window, per ADR-008 C9, C11) ---
-// 60 s window, 30 req/min per key. Two-tier: first per-IP (guards against a
-// single source hammering the endpoint with unauthenticated requests), then
-// per-user (limits how many scans one logged-in staff member can submit).
 const rateLimiter = createRateLimiter({ windowMs: 60_000, max: 30 })
-
-async function getAuthUser(
-  req: NextRequest,
-  p: Payload,
-): Promise<{ id: string | number; email: string; role: string } | null> {
-  return verifySession(req, p)
-}
 
 export async function POST(req: NextRequest) {
   rateLimiter.maybeCleanup()
@@ -44,7 +37,7 @@ export async function POST(req: NextRequest) {
   }
 
   const p = await payload()
-  const currentUser = await getAuthUser(req, p)
+  const currentUser = await verifySession(req, p)
 
   if (!currentUser) {
     return NextResponse.json({ error: 'unauthenticated' }, { status: 401 })
@@ -66,42 +59,45 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'invalid_json' }, { status: 400 })
   }
 
-  const token =
-    typeof (body as Record<string, unknown>)?.token === 'string'
-      ? (body as { token: string }).token.trim()
-      : null
+  const bookingId =
+    typeof (body as Record<string, unknown>)?.bookingId === 'string'
+      ? (body as { bookingId: string }).bookingId
+      : typeof (body as Record<string, unknown>)?.bookingId === 'number'
+        ? String((body as { bookingId: number }).bookingId)
+        : null
 
-  if (!token) {
-    return NextResponse.json({ error: 'missing_token' }, { status: 400 })
+  if (!bookingId) {
+    return NextResponse.json({ error: 'missing_booking_id' }, { status: 400 })
   }
 
-  const tokenHash = hashQrToken(token)
-
-  const result = await p.find({
-    collection: 'bookings',
-    where: { qrTokenHash: { equals: tokenHash } },
-    limit: 1,
-    depth: 1,
-    overrideAccess: true,
-  })
-
-  if (result.totalDocs === 0) {
-    return NextResponse.json({ error: 'invalid_token' }, { status: 404 })
+  // Fetch the booking by ID
+  let booking
+  try {
+    booking = await p.findByID({
+      collection: 'bookings',
+      id: bookingId,
+      depth: 1,
+      overrideAccess: true,
+    })
+  } catch {
+    return NextResponse.json({ error: 'invalid_booking_id' }, { status: 404 })
   }
 
-  const booking = result.docs[0] as Parameters<typeof performCheckIn>[0]['booking']
+  if (!booking) {
+    return NextResponse.json({ error: 'invalid_booking_id' }, { status: 404 })
+  }
 
   try {
-    const checkInResult = await performCheckIn({
+    const result = await performCheckIn({
       payload: p,
-      booking,
+      booking: booking as Parameters<typeof performCheckIn>[0]['booking'],
       staffUser: currentUser,
     })
 
-    // Include staff name for accountability display (Phase 6 scope 5)
+    // Add staff name to response for accountability display
     return NextResponse.json(
       {
-        ...checkInResult,
+        ...result,
         checkInStaffName: currentUser.email,
       },
       { status: 200 },
