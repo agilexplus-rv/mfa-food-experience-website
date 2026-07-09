@@ -107,18 +107,18 @@ function deleteCookie(name: string): void {
 export function LanguageSwitcher() {
   const [lang, setLang] = useState<Lang>("en")
   const [showConsent, setShowConsent] = useState(false)
-  const [consentGiven, setConsentGiven] = useState(false)
 
-  // Restore language + consent on mount. Checks CookieBanner consent
-  // (localStorage mfa_cookie_consent) as primary, falls back to translate_consent
-  // cookie. The actual widget (if MT was previously active) is loaded by the
-  // singleton GoogleTranslateWidgetHost, not here — this only sets local
+  // Restore language on mount, from the `lang` cookie. Consent is
+  // deliberately NOT cached into state here (see the FOURTH root cause
+  // note on handleSelect below) -- it's always re-read live via
+  // hasConsent() at the moment a decision actually needs it, so it can
+  // never go stale relative to a same-tab CookieBanner accept. The actual
+  // widget (if MT was previously active) is loaded by the singleton
+  // GoogleTranslateWidgetHost, not here -- this only sets local
   // pill-highlight state to match.
   useEffect(() => {
-    const consented = hasConsent()
     const savedLang = getCookie(LANG_COOKIE) as Lang | null
-    setConsentGiven(consented)
-    if (consented && savedLang === "mt") {
+    if (hasConsent() && savedLang === "mt") {
       setLang("mt")
     }
   }, [])
@@ -151,6 +151,29 @@ export function LanguageSwitcher() {
   // if state and reality have drifted apart; the cost is one extra reload
   // in the rare case where the user clicks a pill that's already correctly
   // active, which is a fully acceptable trade for self-healing behaviour.
+  //
+  // FOURTH root cause (2026-07-09): `consentGiven` was only ever set once,
+  // in the mount-time useEffect above. If a user loads the page, accepts
+  // the CookieBanner ("Accept all" -> writes localStorage in the SAME
+  // render pass, does NOT remount this component), then clicks MT, this
+  // component's `consentGiven` state is still the STALE `false` it read
+  // on its own mount -- before the banner was accepted. So the consent
+  // dialog below re-prompts every time even though consent was already
+  // given moments earlier in the same page load, and the user never sees
+  // any error or feedback explaining why. (CookieBanner does export an
+  // `onConsentChange` pub/sub helper seemingly built for exactly this,
+  // but LanguageSwitcher never actually calls it -- and even if it did,
+  // the underlying `window.addEventListener("storage", ...)` mechanism it
+  // uses is a browser-spec dead end here: the native `storage` event only
+  // ever fires in OTHER tabs/windows, never in the same tab that called
+  // `localStorage.setItem()`. It cannot be made to work for same-tab
+  // consent sync no matter how it's wired.)
+  //
+  // Fix: re-read consent live, at click time, directly from localStorage/
+  // cookie via hasConsent(), instead of trusting a value captured once at
+  // mount. This is correct regardless of whether the CookieBanner was
+  // accepted before this component mounted, during the same page view
+  // after it mounted, or in a previous session.
   const handleSelect = useCallback(
     (target: Lang) => {
       if (target === "en") {
@@ -158,14 +181,14 @@ export function LanguageSwitcher() {
         return
       }
 
-      if (!consentGiven) {
-        setShowConsent(true)
+      if (hasConsent()) {
+        activate("mt")
         return
       }
 
-      activate("mt")
+      setShowConsent(true)
     },
-    [consentGiven, activate],
+    [activate],
   )
 
   const handleAccept = useCallback(() => {
