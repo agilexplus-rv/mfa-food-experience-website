@@ -24,10 +24,10 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Services', href: '/console/services', icon: 'SV' },
   { label: 'Content', href: '/console/content', icon: 'CN' },
   { label: 'Media', href: '/console/media', icon: 'MD' },
-  { label: 'Coupons', href: '/console/coupons', icon: 'CP', badge: 'Phase C' },
-  { label: 'Staff', href: '/console/staff', icon: 'ST', badge: 'Phase C' },
-  { label: 'Audit Log', href: '/console/audit-log', icon: 'AL', badge: 'Phase C' },
-  { label: 'Settings', href: '/console/settings', icon: 'SG', badge: 'Phase C' },
+  { label: 'Coupons', href: '/console/coupons', icon: 'CP' },
+  { label: 'Staff', href: '/console/staff', icon: 'ST' },
+  { label: 'Audit Log', href: '/console/audit-log', icon: 'AL' },
+  { label: 'Settings', href: '/console/settings', icon: 'SG' },
 ]
 
 export default function ConsoleShell({ children }: { children: React.ReactNode }) {

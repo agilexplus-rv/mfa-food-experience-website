@@ -42,12 +42,6 @@ function isProtectedPath(pathname: string): boolean {
     pathname.startsWith('/admin') ||
     pathname.startsWith('/scan') ||
     pathname.startsWith('/dashboard') ||
-    // NOTE: admin-tools/* still exists on disk as of this commit (Phase 7C's
-    // migration of Staff management + retirement of this directory is not
-    // yet complete) -- keep it protected until that cleanup actually lands,
-    // to avoid an auth-bypass window where the routes exist but are
-    // unguarded by middleware.
-    pathname.startsWith('/admin-tools') ||
     pathname.startsWith('/console')
   )
 }
@@ -157,5 +151,5 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/admin/:path*', '/scan/:path*', '/dashboard/:path*', '/admin-tools/:path*', '/console/:path*'],
+  matcher: ['/admin/:path*', '/scan/:path*', '/dashboard/:path*', '/console/:path*'],
 }
