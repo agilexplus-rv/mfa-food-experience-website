@@ -63,7 +63,7 @@ export async function ComingEvents() {
                   {formatPrice(event.pricePerPerson ?? 0)}
                   <span className="text-sm font-regular text-lunar-green/60"> / person</span>
                 </p>
-                <p className="mt-2 text-sm font-semibold text-lunar-green/80">
+                <p className="mt-2 text-center text-sm font-semibold text-lunar-green/80">
                   {fullyBooked ? (
                     <span className="text-terracotta">Fully booked</span>
                   ) : (

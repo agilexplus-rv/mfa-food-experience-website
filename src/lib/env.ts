@@ -31,3 +31,18 @@ export function serverUrl(): string {
 export function cronSecret(): string | undefined {
   return process.env.CRON_SECRET
 }
+
+/** Cloudflare Turnstile secret key for server-side verification. */
+export function turnstileSecretKey(): string | undefined {
+  return process.env.TURNSTILE_SECRET_KEY
+}
+
+/** Cloudflare Turnstile site key for the client-side widget. */
+export function turnstileSiteKey(): string | undefined {
+  return process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY
+}
+
+/** Whether Turnstile is fully configured (both keys present). */
+export function isTurnstileConfigured(): boolean {
+  return Boolean(process.env.TURNSTILE_SECRET_KEY && process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY)
+}

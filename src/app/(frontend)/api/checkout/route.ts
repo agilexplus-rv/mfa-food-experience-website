@@ -9,7 +9,7 @@ import { getSeatHold, releaseSeatHold } from '@/lib/bookings/seat-holds'
 import { generateBookingReference } from '@/lib/bookings/reference'
 import { validateCoupon } from '@/lib/coupons/validate'
 import { getStripe, StripeNotConfiguredError } from '@/lib/stripe/client'
-import { serverUrl, holdDurationMinutes, isStripeConfigured } from '@/lib/env'
+import { serverUrl, holdDurationMinutes, isStripeConfigured, turnstileSecretKey, isTurnstileConfigured } from '@/lib/env'
 import { createRateLimiter, getClientIp } from '@/lib/rate-limit'
 
 let _payload: Payload | null = null
@@ -27,17 +27,21 @@ async function payload(): Promise<Payload> {
  * 2. Optionally validates + prices a coupon (ADR-005 preview logic;
  *    the coupon is NOT consumed here -- consumption happens in the
  *    webhook, see src/lib/bookings/finalize.ts).
- * 3. If Stripe is not configured (STRIPE_SECRET_KEY unset), returns a
+ * 3. Verifies the Cloudflare Turnstile token (ADR-008 C16) if
+ *    configured. Degrades gracefully with a clear warning if keys
+ *    are unset — same pattern as Stripe graceful degradation.
+ * 4. If Stripe is not configured (STRIPE_SECRET_KEY unset), returns a
  *    clear 503 "payments not yet configured" response BEFORE creating
  *    the booking, so no orphaned pending row is left behind.
- * 4. Creates the booking with status: 'pending'.
- * 5. Creates a Stripe Checkout Session with client_reference_id =
+ * 5. Creates the booking with status: 'pending'.
+ * 6. Creates a Stripe Checkout Session with client_reference_id =
  *    booking.id and the metadata contract ADR-004 specifies, plus
  *    sessionId (used later by the webhook to locate + delete the
  *    correct seat_hold).
- * 6. Returns { url } for the frontend to redirect to.
+ * 7. Returns { url } for the frontend to redirect to.
  *
  * @compliance ADR-008 C11 (rate limiting on booking endpoint).
+ * @compliance ADR-008 C16 (bot mitigation via Cloudflare Turnstile).
  */
 
 // 60 s window, 10 req/min per IP. Each successful call creates a pending
@@ -46,6 +50,46 @@ async function payload(): Promise<Payload> {
 // on a transient Stripe error; 10/min comfortably covers that while
 // throttling scripted checkout spam.
 const rateLimiter = createRateLimiter({ windowMs: 60_000, max: 10 })
+
+/**
+ * Verify a Cloudflare Turnstile token server-side.
+ * Returns true if the token is valid; false otherwise.
+ *
+ * When Turnstile is not configured (secret key absent), the caller should
+ * skip this check entirely — see isTurnstileConfigured().
+ */
+async function verifyTurnstileToken(token: string): Promise<boolean> {
+  const secret = turnstileSecretKey()
+  if (!secret) {
+    console.warn('[checkout] Turnstile secret key is unset — skipping bot verification. Set TURNSTILE_SECRET_KEY to enable.')
+    return true // degrade gracefully
+  }
+
+  try {
+    const formData = new URLSearchParams()
+    formData.append('secret', secret)
+    formData.append('response', token)
+
+    const res = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+      method: 'POST',
+      body: formData,
+    })
+
+    if (!res.ok) {
+      console.warn('[checkout] Turnstile siteverify returned non-200:', res.status)
+      return false
+    }
+
+    const data = (await res.json()) as { success: boolean; 'error-codes'?: string[] }
+    if (!data.success) {
+      console.warn('[checkout] Turnstile verification failed:', data['error-codes'])
+    }
+    return data.success
+  } catch (err) {
+    console.error('[checkout] Turnstile siteverify network error:', err)
+    return false
+  }
+}
 
 export async function POST(req: NextRequest) {
   rateLimiter.maybeCleanup()
@@ -67,6 +111,25 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'invalid_input', details: parsed.error.flatten() }, { status: 400 })
   }
   const input = parsed.data
+
+  // --- Turnstile bot mitigation (ADR-008 C16) ---
+  // Graceful degradation: if keys are not configured, skip verification
+  // and log a clear warning (same pattern as Stripe graceful degradation).
+  if (isTurnstileConfigured()) {
+    if (!input.turnstileToken) {
+      return NextResponse.json({ error: 'bot_check_required' }, { status: 400 })
+    }
+    const verified = await verifyTurnstileToken(input.turnstileToken)
+    if (!verified) {
+      return NextResponse.json({ error: 'bot_check_failed' }, { status: 400 })
+    }
+  } else {
+    console.warn(
+      '[checkout] Turnstile is not configured (TURNSTILE_SECRET_KEY / NEXT_PUBLIC_TURNSTILE_SITE_KEY are unset). ' +
+        'Bot mitigation is DISABLED — register a free Cloudflare Turnstile site and set both env vars to enable it. ' +
+        'See .env.example for details.',
+    )
+  }
 
   const p = await payload()
 

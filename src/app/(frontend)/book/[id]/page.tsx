@@ -46,7 +46,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 function formatDay(dateIso: string): string {
-  const d = new Date(dateIso + 'T00:00:00')
+  // Payload stores dates as full ISO datetime strings (e.g. "2026-08-07T00:00:00.000Z"),
+  // even when pickerAppearance is 'dayOnly'. Slice to the date portion to avoid NaN.
+  const d = new Date(dateIso.slice(0, 10) + 'T00:00:00')
   if (Number.isNaN(d.getTime())) return dateIso
   return d.toLocaleDateString('en-MT', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
 }
