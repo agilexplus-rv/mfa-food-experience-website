@@ -81,6 +81,25 @@ function setCookie(name: string, value: string, days: number): void {
   document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/; SameSite=Lax; Secure`
 }
 
+// Google Translate's own widget script reads document.cookie looking for
+// the LITERAL string "googtrans=/en/mt" (unencoded slashes) to decide
+// which language pair to auto-apply on init. setCookie() above always
+// URL-encodes its value via encodeURIComponent, which turns "/en/mt" into
+// "%2Fen%2Fmt" -- a value Google's own cookie parser doesn't recognise,
+// so the widget silently never applies the translation even though the
+// cookie is set, the script loads, and TranslateElement constructs
+// successfully (confirmed empirically: goog-te-combo exists but never
+// gets populated with real language options). This was a pre-existing
+// bug (present before the singleton-host split), not something the
+// earlier fix introduced -- setCookie()'s blanket encoding is correct
+// for plain string values like `lang` and `translate_consent`, just not
+// for this one Google-specific cookie which needs its raw, unescaped
+// format preserved.
+function setRawCookie(name: string, value: string, days: number): void {
+  const expires = new Date(Date.now() + days * 864e5).toUTCString()
+  document.cookie = `${name}=${value}; expires=${expires}; path=/; SameSite=Lax; Secure`
+}
+
 function deleteCookie(name: string): void {
   document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; SameSite=Lax; Secure`
 }
@@ -107,7 +126,7 @@ export function LanguageSwitcher() {
   const activate = useCallback((target: Lang) => {
     setCookie(LANG_COOKIE, target, 365)
     if (target === "mt") {
-      setCookie(GOOGTRANS_COOKIE, "/en/mt", 365)
+      setRawCookie(GOOGTRANS_COOKIE, "/en/mt", 365)
     } else {
       deleteCookie(GOOGTRANS_COOKIE)
     }
