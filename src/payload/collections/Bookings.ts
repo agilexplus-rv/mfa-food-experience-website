@@ -169,6 +169,40 @@ export const Bookings: CollectionConfig = {
         description: 'Timestamp when PII fields were anonymised per data-retention policy (DPIA-6, DPIA-10). Null means not yet anonymised. The retention cron skips already-anonymised rows.',
       },
     },
+    {
+      name: 'stripeRefundId',
+      type: 'text',
+      admin: {
+        readOnly: true,
+        position: 'sidebar',
+        description: 'Stripe refund ID (re_xxx), set when a refund is issued for this booking via the cancel flow.',
+      },
+    },
+    {
+      name: 'refundStatus',
+      type: 'select',
+      options: [
+        { label: 'None', value: 'none' },
+        { label: 'Pending', value: 'pending' },
+        { label: 'Succeeded', value: 'succeeded' },
+        { label: 'Failed', value: 'failed' },
+      ],
+      defaultValue: 'none',
+      admin: {
+        readOnly: true,
+        position: 'sidebar',
+        description: 'Refund status for this booking. Tracks Stripe refund lifecycle.',
+      },
+    },
+    {
+      name: 'noShow',
+      type: 'checkbox',
+      defaultValue: false,
+      admin: {
+        position: 'sidebar',
+        description: 'Admin-only: mark booking as no-show if attendee did not check in after the event.',
+      },
+    },
   ],
   hooks: {
     beforeChange: [

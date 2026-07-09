@@ -48,7 +48,8 @@ function isProtectedPath(pathname: string): boolean {
   return (
     pathname.startsWith('/admin') ||
     pathname.startsWith('/scan') ||
-    pathname.startsWith('/dashboard')
+    pathname.startsWith('/dashboard') ||
+    pathname.startsWith('/admin-tools')
   )
 }
 
@@ -60,6 +61,7 @@ function isProtectedPath(pathname: string): boolean {
 function getPayloadFromToken(req: NextRequest): {
   role: string
   mfaEnabled?: boolean
+  active?: boolean
   id?: string
 } | null {
   const token = req.cookies.get('payload-token')?.value
@@ -71,6 +73,7 @@ function getPayloadFromToken(req: NextRequest): {
     return {
       role: payload.role || 'door_staff',
       mfaEnabled: payload.mfaEnabled === true,
+      active: payload.active,
       id: payload.id,
     }
   } catch {
@@ -128,6 +131,15 @@ export function middleware(req: NextRequest) {
     return NextResponse.redirect(loginUrl)
   }
 
+  // Deactivated users: block all protected paths
+  // Only enforce when the active field is explicitly false (undefined means
+  // token was issued before the field existed — let it through gracefully).
+  if (session.active === false) {
+    return new NextResponse('Account deactivated. Contact an administrator.', {
+      status: 403,
+    })
+  }
+
   // Door-staff blocked from admin-only paths
   if (session.role === 'door_staff' && isAdminOnlyPath(pathname)) {
     return new NextResponse('Forbidden: Admin access required for this page.', {
@@ -146,5 +158,5 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/admin/:path*', '/scan/:path*', '/dashboard/:path*'],
+  matcher: ['/admin/:path*', '/scan/:path*', '/dashboard/:path*', '/admin-tools/:path*'],
 }

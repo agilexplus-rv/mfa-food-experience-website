@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Parse request body
-  let body: { email?: string; confirm?: boolean }
+  let body: { email?: string; reference?: string; confirm?: boolean }
   try {
     body = await req.json()
   } catch {
@@ -60,22 +60,30 @@ export async function POST(req: NextRequest) {
   }
 
   const email = body.email?.trim().toLowerCase()
-  if (!email) {
-    return NextResponse.json({ error: 'email is required' }, { status: 400 })
+  const reference = body.reference?.trim()
+  if (!email && !reference) {
+    return NextResponse.json({ error: 'email or booking reference is required' }, { status: 400 })
   }
 
-  // Basic email format sanity check
-  if (!email.includes('@')) {
-    return NextResponse.json({ error: 'invalid email format' }, { status: 400 })
+  // Build where clause based on provided input
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const where: any = {}
+  if (email && reference) {
+    where.and = [{ email: { equals: email } }, { reference: { equals: reference } }]
+  } else if (email) {
+    if (!email.includes('@')) {
+      return NextResponse.json({ error: 'invalid email format' }, { status: 400 })
+    }
+    where.email = { equals: email }
+  } else if (reference) {
+    where.reference = { equals: reference }
   }
 
-  // Look up all bookings matching this email (not anonymised ones since
+  // Look up all bookings matching the criteria (not anonymised ones since
   // their email field is now the placeholder).
   const result = await p.find({
     collection: 'bookings',
-    where: {
-      email: { equals: email },
-    },
+    where,
     depth: 2,
     limit: 500,
     overrideAccess: true,

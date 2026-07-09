@@ -76,6 +76,16 @@ export const Users: CollectionConfig = {
           'TOTP secret (AES-256-GCM encrypted at rest). Set via MFA setup flow. Never exposed in JWT.',
       },
     },
+    {
+      name: 'active',
+      type: 'checkbox',
+      defaultValue: true,
+      saveToJWT: true,
+      admin: {
+        position: 'sidebar',
+        description: 'Deactivated users cannot log in. Use this instead of deleting accounts.',
+      },
+    },
   ],
   hooks: {
     beforeChange: [

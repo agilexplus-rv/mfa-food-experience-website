@@ -236,5 +236,26 @@ export async function finalizeBookingFromStripeSession(session: {
     })
   }
 
+  // 8. Low-capacity alert: notify admin when remaining seats <= 2 or fully booked
+  const adminAlertEmail = process.env.ADMIN_ALERT_EMAIL
+  if (adminAlertEmail) {
+    const afterAvailability = await getAvailability(eventId)
+    if (afterAvailability.remaining <= 2) {
+      const statusLabel = afterAvailability.remaining <= 0 ? 'FULLY BOOKED' : `${afterAvailability.remaining} seat(s) remaining`
+      try {
+        await p.sendEmail({
+          to: adminAlertEmail,
+          subject: `[MFA Alert] ${eventInfo?.title ?? 'Event'} — ${statusLabel}`,
+          html: `<p><strong>${eventInfo?.title ?? 'Event'}</strong> — ${statusLabel}</p>
+<p>Capacity: ${capacity} | Booked: ${afterAvailability.booked} | Holds: ${afterAvailability.holds}</p>
+<p>Booking reference: ${(booking as unknown as { reference: string }).reference}</p>
+<p>This is an automated alert from Malta Food Experience.</p>`,
+        })
+      } catch (emailErr) {
+        console.warn('[finalize/alert] Failed to send admin alert email:', emailErr)
+      }
+    }
+  }
+
   return { ok: true }
 }

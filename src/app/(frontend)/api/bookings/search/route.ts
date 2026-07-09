@@ -79,7 +79,9 @@ export async function GET(req: NextRequest) {
       const base = {
         id: booking.id,
         reference: booking.reference,
+        eventId: event?.id || booking.event || null,
         eventTitle: event?.title || null,
+        eventDate: event?.date || null,
         leadAttendeeName: booking.leadAttendeeName,
         email: booking.email,
         persons: booking.persons,
@@ -94,6 +96,8 @@ export async function GET(req: NextRequest) {
         return {
           ...base,
           totalAmount: booking.totalAmount,
+          noShow: booking.noShow ?? false,
+          refundStatus: booking.refundStatus ?? null,
         }
       }
       return base

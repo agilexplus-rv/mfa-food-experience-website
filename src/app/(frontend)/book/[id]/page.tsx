@@ -6,6 +6,7 @@ import config from '@payload-config'
 
 import { getAvailability } from '@/lib/availability'
 import { BookingForm } from '@/components/booking/BookingForm'
+import { WaitlistForm } from '@/components/waitlist/WaitlistForm'
 import { formatPrice } from '@/lib/availability-types'
 import { getCancellationPolicy } from '@/lib/policies/cancellation'
 
@@ -127,11 +128,14 @@ export default async function BookEventPage({ params }: PageProps) {
             </p>
           </div>
         ) : availability.status === 'fully_booked' ? (
-          <div className="mx-auto max-w-2xl rounded-xl border border-dashed border-border bg-surface/60 px-6 py-16 text-center">
-            <p className="text-lg font-semibold text-lunar-green">Fully booked</p>
-            <p className="mt-2 text-sm text-text-light">
-              All seats for this date have been reserved. Please check other upcoming dates.
-            </p>
+          <div className="space-y-6">
+            <div className="mx-auto max-w-2xl rounded-xl border border-dashed border-border bg-surface/60 px-6 py-16 text-center">
+              <p className="text-lg font-semibold text-lunar-green">Fully booked</p>
+              <p className="mt-2 text-sm text-text-light">
+                All seats for this date have been reserved. Please check other upcoming dates.
+              </p>
+            </div>
+            <WaitlistForm eventId={event.id} />
           </div>
         ) : (
           <BookingForm

@@ -18,6 +18,7 @@ import { Testimonials } from './src/payload/collections/Testimonials'
 import { NewsItems } from './src/payload/collections/NewsItems'
 import { Policies } from './src/payload/collections/Policies'
 import { AuditLog } from './src/payload/collections/AuditLog'
+import { Waitlist } from './src/payload/collections/Waitlist'
 import { CancellationPolicy } from './src/payload/globals/CancellationPolicy'
 
 const filename = fileURLToPath(import.meta.url)
@@ -85,6 +86,7 @@ export default buildConfig({
     NewsItems,
     Policies,
     AuditLog,
+    Waitlist,
   ],
   globals: [
     CancellationPolicy,

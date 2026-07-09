@@ -46,3 +46,8 @@ export function turnstileSiteKey(): string | undefined {
 export function isTurnstileConfigured(): boolean {
   return Boolean(process.env.TURNSTILE_SECRET_KEY && process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY)
 }
+
+/** Admin alert email for low-capacity notifications (Phase 6). */
+export function adminAlertEmail(): string | undefined {
+  return process.env.ADMIN_ALERT_EMAIL
+}
