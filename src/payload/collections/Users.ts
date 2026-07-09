@@ -52,6 +52,15 @@ export const Users: CollectionConfig = {
       ],
       defaultValue: 'door_staff',
       required: true,
+      // Required so middleware.ts can read the role directly off the
+      // payload-token JWT without a database hit (see getPayloadFromToken()).
+      // Without this, Payload never embeds `role` into the JWT, so every
+      // authenticated user -- including admins -- falls through to
+      // middleware's `payload.role || 'door_staff'` fallback and gets
+      // treated as door_staff, incorrectly blocked from /console and other
+      // admin-only paths. This was a real production bug (all admins locked
+      // out of /console) fixed 2026-07-09.
+      saveToJWT: true,
       admin: { position: 'sidebar' },
     },
     {
