@@ -9,6 +9,8 @@ import {
   removeQueuedScan,
   getQueueCount,
   bumpRetry,
+  purgeStaleEntries,
+  type PurgedScan,
 } from '@/lib/check-in/offline-queue'
 
 // No localStorage or sessionStorage anywhere in this page (ADR-008 C18).
@@ -96,6 +98,7 @@ export default function ScanPage() {
   const [queueLength, setQueueLength] = useState(0)
   const [syncing, setSyncing] = useState(false)
   const [syncProgress, setSyncProgress] = useState('')
+  const [purgedNotice, setPurgedNotice] = useState<PurgedScan[]>([])
 
   // Scope 2: Manual lookup
   const [lookupMode, setLookupMode] = useState<'token' | 'lookup'>('token')
@@ -195,6 +198,15 @@ export default function ScanPage() {
   const flushQueue = useCallback(async () => {
     setSyncing(true)
     try {
+      // Auto-purge before syncing: drop anything past MAX_SYNC_RETRIES or
+      // older than 24h so a long outage can't grow the queue unbounded.
+      // Purged entries are surfaced to staff (never silently dropped) so
+      // they know to check that attendee in manually instead.
+      const purged = await purgeStaleEntries(MAX_SYNC_RETRIES)
+      if (purged.length > 0) {
+        setPurgedNotice((prev) => [...prev, ...purged])
+      }
+
       const queued = await getQueuedScans()
       if (queued.length === 0) return
 
@@ -228,7 +240,9 @@ export default function ScanPage() {
           // Small delay so user can see progress
           await new Promise((r) => setTimeout(r, 800))
         } catch {
-          // Still offline or server error — bump retry, leave in queue
+          // Still offline or server error — bump retry, leave in queue.
+          // If this push crosses MAX_SYNC_RETRIES, the *next* flush's
+          // purgeStaleEntries call above will drop it and notify staff.
           await bumpRetry(item.id)
           // Don't clear progress, items stay queued
         }
@@ -654,6 +668,25 @@ export default function ScanPage() {
               </option>
             ))}
           </select>
+        </div>
+      )}
+
+      {/* Scope 1: Purged-scan notice — surfaced, never silent */}
+      {purgedNotice.length > 0 && (
+        <div className="mb-4 rounded-lg border-2 border-terracotta bg-terracotta/5 p-3 text-xs text-terracotta">
+          <p className="font-bold mb-1">
+            {purgedNotice.length} scan{purgedNotice.length !== 1 ? 's' : ''} could not be synced
+            {purgedNotice.length !== 1 ? ' and were' : ' and was'} removed from the queue
+            ({purgedNotice.filter((p) => p.reason === 'max_retries').length} after {MAX_SYNC_RETRIES}{' '}
+            failed attempts, {purgedNotice.filter((p) => p.reason === 'expired').length} expired after 24h).
+          </p>
+          <p className="mb-2">Please check these attendees in manually using the lookup tab.</p>
+          <button
+            onClick={() => setPurgedNotice([])}
+            className="rounded-md border border-terracotta px-3 py-1 font-semibold hover:bg-terracotta hover:text-white transition-colors"
+          >
+            Dismiss
+          </button>
         </div>
       )}
 

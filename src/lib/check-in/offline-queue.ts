@@ -98,8 +98,14 @@ export async function removeQueuedScan(id: string): Promise<void> {
   })
 }
 
-/** Increment retry count and update timestamp. */
-export async function bumpRetry(id: string): Promise<void> {
+/**
+ * Increment retry count (timestamp is NOT touched -- \`timestamp\` always
+ * reflects original queue time so age-based purge logic in
+ * \`purgeStaleEntries\` stays accurate regardless of retry count).
+ * Returns the updated entry so callers can act on the new retry count
+ * without a second round-trip to IndexedDB.
+ */
+export async function bumpRetry(id: string): Promise<QueuedScan | undefined> {
   const db = await openDB()
   const tx = db.transaction(STORE_NAME, 'readwrite')
   const store = tx.objectStore(STORE_NAME)
@@ -109,15 +115,61 @@ export async function bumpRetry(id: string): Promise<void> {
       const entry = getReq.result as QueuedScan | undefined
       if (entry) {
         entry.retries += 1
-        entry.timestamp = Date.now()
         store.put(entry)
       }
       db.close()
-      resolve()
+      resolve(entry)
     }
     getReq.onerror = () => {
       db.close()
       reject(getReq.error)
+    }
+  })
+}
+
+export interface PurgedScan extends QueuedScan {
+  reason: 'max_retries' | 'expired'
+}
+
+/**
+ * Auto-purge entries that have either exceeded maxRetries or exceeded
+ * maxAgeMs since they were first queued (whichever comes first). This is
+ * the safety net that stops the queue from growing unbounded during an
+ * extended outage -- entries that can't be synced within a reasonable
+ * window are dropped and surfaced to the caller (so the UI can tell staff
+ * "these N scans could not be synced, check the attendee in manually")
+ * rather than silently disappearing.
+ *
+ * Defaults: maxRetries=3 (matches MAX_SYNC_RETRIES in scan/page.tsx),
+ * maxAgeMs=24h (an event/shift is assumed over by then).
+ */
+export async function purgeStaleEntries(
+  maxRetries = 3,
+  maxAgeMs = 24 * 60 * 60 * 1000,
+): Promise<PurgedScan[]> {
+  const db = await openDB()
+  const tx = db.transaction(STORE_NAME, 'readwrite')
+  const store = tx.objectStore(STORE_NAME)
+  const now = Date.now()
+  return new Promise((resolve, reject) => {
+    const request = store.getAll()
+    request.onsuccess = () => {
+      const entries = (request.result || []) as QueuedScan[]
+      const purged: PurgedScan[] = []
+      for (const entry of entries) {
+        const expired = now - entry.timestamp > maxAgeMs
+        const exhausted = entry.retries >= maxRetries
+        if (expired || exhausted) {
+          store.delete(entry.id)
+          purged.push({ ...entry, reason: expired ? 'expired' : 'max_retries' })
+        }
+      }
+      db.close()
+      resolve(purged)
+    }
+    request.onerror = () => {
+      db.close()
+      reject(request.error)
     }
   })
 }
