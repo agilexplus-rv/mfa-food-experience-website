@@ -26,13 +26,6 @@ const PUBLIC_PATHS = [
   '/favicon.ico',
   '/storage',
 ]
-
-// Routes that are always allowed (MFA setup/verify pages are outside /admin)
-const ALWAYS_ALLOWED_PREFIXES = [
-  '/mfa-setup',
-  '/mfa-verify',
-]
-
 // Routes that door_staff must NOT access (admin-only)
 const ADMIN_ONLY_PREFIXES = ['/admin/collections/bookings']
 

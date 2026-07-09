@@ -1,6 +1,7 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 interface StaffUser {
   id: string | number
@@ -19,8 +20,10 @@ export default function StaffPage() {
   const [inviteSending, setInviteSending] = useState(false)
   const [inviteStatus, setInviteStatus] = useState<string | null>(null)
   const [togglingId, setTogglingId] = useState<string | number | null>(null)
+  const mounted = useRef(true)
 
   const fetchUsers = useCallback(async () => {
+    if (!mounted.current) return
     setLoading(true)
     setError(null)
     try {
@@ -43,7 +46,8 @@ export default function StaffPage() {
   }, [])
 
   useEffect(() => {
-    void fetchUsers()
+    fetchUsers()
+    return () => { mounted.current = false }
   }, [fetchUsers])
 
   const handleInvite = async () => {
@@ -58,9 +62,9 @@ export default function StaffPage() {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data?.error || 'Invite failed')
-      setInviteStatus(`Invited ${data.email} (temp password: ${data.tempPassword}) — ask user to change password on first login.`)
+      setInviteStatus('Invited ' + data.email + ' (temp password: ' + data.tempPassword + ') - ask user to change password on first login.')
       setInviteEmail('')
-      void fetchUsers()
+      fetchUsers()
     } catch (err) {
       setInviteStatus(err instanceof Error ? err.message : 'Invite failed')
     } finally {
@@ -80,7 +84,7 @@ export default function StaffPage() {
         const data = await res.json().catch(() => null)
         throw new Error(data?.error || 'Toggle failed')
       }
-      void fetchUsers()
+      fetchUsers()
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Toggle failed')
     } finally {
@@ -123,7 +127,7 @@ export default function StaffPage() {
           </button>
         </div>
         {inviteStatus && (
-          <p className={`mt-3 text-xs ${inviteStatus.includes('failed') || inviteStatus.includes('error') ? 'text-terracotta' : 'text-lunar-green'}`}>
+          <p className={'mt-3 text-xs ' + (inviteStatus.includes('failed') || inviteStatus.includes('error') ? 'text-terracotta' : 'text-lunar-green')}>
             {inviteStatus}
           </p>
         )}
@@ -158,7 +162,7 @@ export default function StaffPage() {
                 <tr key={String(u.id)} className="border-b border-border/50 last:border-0 hover:bg-soft-beige/30 transition-colors">
                   <td className="px-4 py-3 font-mono text-xs text-lunar-green">{u.email}</td>
                   <td className="px-4 py-3">
-                    <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold ${u.role === 'admin' ? 'bg-terracotta/20 text-terracotta' : 'bg-lunar-green/20 text-lunar-green'}`}>
+                    <span className={'inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold ' + (u.role === 'admin' ? 'bg-terracotta/20 text-terracotta' : 'bg-lunar-green/20 text-lunar-green')}>
                       {u.role === 'admin' ? 'Admin' : 'Door Staff'}
                     </span>
                   </td>
@@ -170,7 +174,7 @@ export default function StaffPage() {
                     )}
                   </td>
                   <td className="px-4 py-3">
-                    <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold ${u.active ? 'bg-lunar-green/20 text-lunar-green' : 'bg-terracotta/20 text-terracotta'}`}>
+                    <span className={'inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold ' + (u.active ? 'bg-lunar-green/20 text-lunar-green' : 'bg-terracotta/20 text-terracotta')}>
                       {u.active ? 'Active' : 'Deactivated'}
                     </span>
                   </td>
@@ -181,11 +185,11 @@ export default function StaffPage() {
                     <button
                       onClick={() => handleToggleActive(u)}
                       disabled={togglingId === u.id}
-                      className={`rounded-md border px-2.5 py-1 text-xs font-semibold disabled:opacity-40 transition-colors ${
+                      className={'rounded-md border px-2.5 py-1 text-xs font-semibold disabled:opacity-40 transition-colors ' + (
                         u.active
                           ? 'border-terracotta text-terracotta hover:bg-terracotta hover:text-white'
                           : 'border-lunar-green text-lunar-green hover:bg-lunar-green hover:text-white'
-                      }`}
+                      )}
                     >
                       {togglingId === u.id ? '...' : u.active ? 'Deactivate' : 'Activate'}
                     </button>

@@ -49,7 +49,7 @@ export function WaitlistForm({ eventId }: WaitlistFormProps) {
   if (result?.ok) {
     return (
       <div className="mx-auto max-w-2xl rounded-xl border border-lunar-green bg-lunar-green/5 p-8 text-center">
-        <p className="text-lg font-semibold text-lunar-green">You're on the waitlist</p>
+        <p className="text-lg font-semibold text-lunar-green">You&apos;re on the waitlist</p>
         <p className="mt-2 text-sm text-text-light">{result.message}</p>
       </div>
     )
@@ -59,7 +59,7 @@ export function WaitlistForm({ eventId }: WaitlistFormProps) {
     <div className="mx-auto max-w-2xl rounded-xl border border-border bg-surface p-6">
       <h3 className="text-lg font-bold text-lunar-green mb-1">Join waitlist</h3>
       <p className="text-sm text-text-light mb-4">
-        We'll email you if a seat becomes available.
+        We&apos;ll email you if a seat becomes available..
       </p>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
