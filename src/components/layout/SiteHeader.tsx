@@ -1,6 +1,7 @@
 import { Logo } from "@/components/brand/Logo"
 import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher"
 import { MobileNav } from "@/components/layout/MobileNav"
+import { SiteSearch } from "@/components/search/SiteSearch"
 import Link from "next/link"
 
 const NAV_LINKS = [
@@ -42,7 +43,13 @@ export function SiteHeader() {
           ))}
         </nav>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
+          {/* Site search — desktop only, hidden below md.
+              On mobile it lives inside the MobileNav drawer. */}
+          <div className="hidden md:block">
+            <SiteSearch />
+          </div>
+
           {/* EN | MT language switcher — functional per ADR-006.
               Hidden below md: on mobile it lives inside the MobileNav
               drawer instead, so the header doesn't get crowded and the
