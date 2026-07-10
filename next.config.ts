@@ -78,13 +78,33 @@ const nextConfig: NextConfig = {
             //     silently breaks the widget (goog-te-combo stays empty, no
             //     JS errors, cookies/lang-attr all correct — a CSP-blocked CSS
             //     subresource is the root cause, found 2026-07-10).
+            //   * SEVENTH root cause (2026-07-10): data: URI sandbox iframe blocked
+            //     by frame-src. The Google Translate widget creates a data: URI iframe
+            //     (<iframe src="data:text/html;base64,...">) as a sandboxed execution
+            //     context where its internal init, supportedLanguages fetch, and combo
+            //     population all run. frame-src listed explicit https:// domains but
+            //     omitted data:, so the widget's sandbox iframe was silently blocked by
+            //     CSP (confirmed via securitypolicyviolation event: violatedDirective
+            //     frame-src, blockedURI empty = data: URI). The empty iframe meant the
+            //     widget's internal init never executed at all — NOT that any specific
+            //     API call failed, but that the entire inner lifecycle was prevented
+            //     from starting. This is invisible from the parent frame: CSP violations
+            //     in null-origin iframes don't bubble, and the violated-directive event
+            //     fires on the iframe element with no sourceFile/lineNumber. Adding
+            //     data: to frame-src is the MINIMAL fix. Verified: on a no-CSP page
+            //     the widget works perfectly (combo populates with "Maltais" option,
+            //     TranslateElement constructs, translation applies). On the production
+            //     page WITH CSP but WITHOUT frame-src data:, the data: iframe exists
+            //     in the DOM but is empty/cross-origin-blocked and the combo stays at
+            //     options.length === 0 forever. With data: added to frame-src, the
+            //     widget's inner init can execute normally.
             //   * object-src 'none', base-uri 'self', frame-ancestors 'none' harden
             //     against plugin/embedding/clickjacking vectors the app does not use.
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
               "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://translate.google.com https://translate.googleapis.com https://js.stripe.com https://checkout.stripe.com",
-              "frame-src 'self' https://translate.google.com https://translate-pa.googleapis.com https://www.openstreetmap.org https://checkout.stripe.com",
+              "frame-src 'self' data: https://translate.google.com https://translate-pa.googleapis.com https://www.openstreetmap.org https://checkout.stripe.com",
               "connect-src 'self' https://api.stripe.com https://translate.googleapis.com https://translate-pa.googleapis.com",
               "style-src 'self' 'unsafe-inline' https://www.gstatic.com",
               "img-src 'self' data: https:",
