@@ -2,6 +2,7 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Button from '@/components/console/Button'
 import Badge from '@/components/console/Badge'
 import Card from '@/components/console/Card'
@@ -247,6 +248,12 @@ export default function ConsoleEventsPage() {
                       <div className="flex items-center justify-center gap-1">
                         <button onClick={() => openEdit(ev)} className="rounded-md border border-lunar-green px-2 py-0.5 text-[10px] font-semibold text-lunar-green hover:bg-lunar-green hover:text-white transition-colors">
                           Edit
+                        </button>
+                        <button
+                          onClick={() => window.location.href = '/console/events/' + ev.id + '/attendees'}
+                          className="rounded-md border border-matte-gold px-2 py-0.5 text-[10px] font-semibold text-matte-gold hover:bg-matte-gold hover:text-white transition-colors"
+                        >
+                          Attendees
                         </button>
                         <button onClick={() => setDeleteTarget(ev)} className="rounded-md border border-terracotta px-2 py-0.5 text-[10px] font-semibold text-[#9C4E2F] hover:bg-terracotta hover:text-white transition-colors">
                           Delete
