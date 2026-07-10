@@ -20,6 +20,12 @@ export const STATUS_COLORS: Record<string, string> = {
   exhausted: 'bg-terracotta/20 text-[#9C4E2F]',
   disabled: 'bg-gray-200 text-gray-600',
   expiring: 'bg-matte-gold/20 text-matte-gold',
+  // Payment methods
+  stripe: 'bg-lunar-green/20 text-lunar-green',
+  cash: 'bg-lunar-green/20 text-lunar-green',
+  bank_transfer: 'bg-matte-gold/20 text-matte-gold',
+  comped: 'bg-soft-beige text-text-light',
+  pending_payment: 'bg-terracotta/20 text-[#9C4E2F]',
 }
 
 interface BadgeProps {

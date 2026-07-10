@@ -128,6 +128,7 @@ export async function GET(req: NextRequest) {
         refundId: b.stripeRefundId || null,
         dietaryNotes: b.dietaryNotes || null,
         dietaryConsent: b.dietaryConsent ?? false,
+        paymentMethod: b.paymentMethod || 'stripe',
         couponCode: coupon?.code || null,
         createdAt: b.createdAt,
         updatedAt: b.updatedAt,
@@ -192,6 +193,7 @@ export async function GET(req: NextRequest) {
         checkInStaffName: staff?.email || null,
         noShow: booking.noShow ?? false,
         refundStatus: booking.refundStatus ?? null,
+        paymentMethod: booking.paymentMethod || 'stripe',
         createdAt: booking.createdAt,
       }
     })
@@ -223,6 +225,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'eventId, leadAttendeeName, email, persons are required' }, { status: 400 })
   }
 
+  const paymentMethod = body.paymentMethod || 'cash'
+  if (!['stripe', 'cash', 'bank_transfer', 'comped', 'pending_payment'].includes(paymentMethod)) {
+    return NextResponse.json({ error: 'invalid paymentMethod' }, { status: 400 })
+  }
+
   try {
     // Verify event exists
     const event = await p.findByID({
@@ -235,7 +242,14 @@ export async function POST(req: NextRequest) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const ev = event as any
     const pricePerPerson = ev.pricePerPerson || 0
-    const totalAmount = pricePerPerson * (body.persons || 1)
+    let totalAmount: number
+    if (body.totalAmount != null && typeof body.totalAmount === 'number') {
+      totalAmount = body.totalAmount
+    } else if (paymentMethod === 'comped') {
+      totalAmount = 0
+    } else {
+      totalAmount = pricePerPerson * (body.persons || 1)
+    }
 
     // Generate a reference
     const ts = Date.now().toString(36).toUpperCase()
@@ -254,6 +268,7 @@ export async function POST(req: NextRequest) {
         status: 'confirmed',
         language: body.language || 'en',
         totalAmount,
+        paymentMethod,
         dietaryNotes: body.dietaryNotes || undefined,
       },
       overrideAccess: true,

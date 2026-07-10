@@ -27,6 +27,7 @@ interface BookingDetail {
   refundId: string | null
   dietaryNotes: string | null
   dietaryConsent: boolean
+  paymentMethod: string | null
   couponCode: string | null
   createdAt: string
   updatedAt: string
@@ -180,6 +181,14 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
             <div className="flex justify-between">
               <dt className="text-text-light">Checked In By</dt>
               <dd className="text-right text-lunar-green">{booking.checkInStaffName || '\u2014'}</dd>
+            </div>
+            <div className="flex justify-between">
+              <dt className="text-text-light">Payment Method</dt>
+              <dd className="text-right">
+                {booking.paymentMethod ? (
+                  <Badge variant={booking.paymentMethod}>{booking.paymentMethod.replace('_', ' ')}</Badge>
+                ) : '—'}
+              </dd>
             </div>
             <div className="flex justify-between">
               <dt className="text-text-light">Refund Status</dt>
