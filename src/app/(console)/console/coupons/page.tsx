@@ -248,7 +248,7 @@ export default function CouponsPage() {
             />
           </div>
 
-          <div className="flex gap-3">
+          <div className="flex flex-col sm:flex-row gap-3">
             <div className="flex-1">
               <label className="block text-xs font-semibold text-text-light mb-1">Type</label>
               <select
@@ -277,7 +277,7 @@ export default function CouponsPage() {
             </div>
           </div>
 
-          <div className="flex gap-3">
+          <div className="flex flex-col sm:flex-row gap-3">
             <div className="flex-1">
               <label className="block text-xs font-semibold text-text-light mb-1">Valid From *</label>
               <input
@@ -300,7 +300,7 @@ export default function CouponsPage() {
             </div>
           </div>
 
-          <div className="flex gap-3">
+          <div className="flex flex-col sm:flex-row gap-3">
             <div className="flex-1">
               <label className="block text-xs font-semibold text-text-light mb-1">Max Total Uses (optional)</label>
               <input
