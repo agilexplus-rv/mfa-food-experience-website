@@ -2,6 +2,7 @@ import Link from 'next/link'
 
 import type { EventAvailability } from '@/lib/availability-types'
 import { formatPrice } from '@/lib/availability-types'
+import { formatDay, formatTimeRange } from '@/lib/format-date'
 
 /**
  * EventCard — single upcoming event in a service grid.
@@ -37,29 +38,6 @@ export interface EventCardProps {
   shortDescription?: string
   /** Optional href for the card/CTA link. Defaults to the event booking route. */
   href?: string
-}
-
-function formatDay(dateIso: string): string {
-  const d = new Date(dateIso.slice(0, 10) + 'T00:00:00')
-  if (Number.isNaN(d.getTime())) return dateIso
-  return d.toLocaleDateString('en-MT', {
-    weekday: 'short',
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  })
-}
-
-function formatTimeRange(startIso: string, endIso: string): string {
-  const s = new Date(startIso)
-  const e = new Date(endIso)
-  if (Number.isNaN(s.getTime()) || Number.isNaN(e.getTime())) return ''
-  const fmt = new Intl.DateTimeFormat('en-MT', {
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: false,
-  })
-  return `${fmt.format(s)} – ${fmt.format(e)}`
 }
 
 function AvailabilityBadge({ availability }: { availability: EventAvailability }) {

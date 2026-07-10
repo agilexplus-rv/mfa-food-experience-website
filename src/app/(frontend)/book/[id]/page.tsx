@@ -9,6 +9,7 @@ import { BookingForm } from '@/components/booking/BookingForm'
 import { WaitlistForm } from '@/components/waitlist/WaitlistForm'
 import { formatPrice } from '@/lib/availability-types'
 import { getCancellationPolicy } from '@/lib/policies/cancellation'
+import { formatDay, formatTimeRange } from '@/lib/format-date'
 
 export const dynamic = 'force-dynamic'
 
@@ -44,22 +45,6 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     title: `Book: ${event.title} — Malta Food Experience`,
     description: `Reserve your seat for ${event.title}.`,
   }
-}
-
-function formatDay(dateIso: string): string {
-  // Payload stores dates as full ISO datetime strings (e.g. "2026-08-07T00:00:00.000Z"),
-  // even when pickerAppearance is 'dayOnly'. Slice to the date portion to avoid NaN.
-  const d = new Date(dateIso.slice(0, 10) + 'T00:00:00')
-  if (Number.isNaN(d.getTime())) return dateIso
-  return d.toLocaleDateString('en-MT', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
-}
-
-function formatTimeRange(startIso: string, endIso: string): string {
-  const s = new Date(startIso)
-  const e = new Date(endIso)
-  if (Number.isNaN(s.getTime()) || Number.isNaN(e.getTime())) return ''
-  const fmt = new Intl.DateTimeFormat('en-MT', { hour: 'numeric', minute: '2-digit', hour12: false })
-  return `${fmt.format(s)} – ${fmt.format(e)}`
 }
 
 /**
@@ -100,7 +85,7 @@ export default async function BookEventPage({ params }: PageProps) {
         <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm sm:grid-cols-3">
           <div>
             <dt className="text-xs font-semibold uppercase tracking-wide text-lunar-green/50">Date</dt>
-            <dd className="font-semibold text-lunar-green">{formatDay(event.date)}</dd>
+            <dd className="font-semibold text-lunar-green">{formatDay(event.date, 'long')}</dd>
           </div>
           <div>
             <dt className="text-xs font-semibold uppercase tracking-wide text-lunar-green/50">Time</dt>
