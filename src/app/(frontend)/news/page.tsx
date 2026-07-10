@@ -1,7 +1,7 @@
 import { getPayload } from "payload"
 import config from "@payload-config"
 import type { Metadata } from "next"
-import { NewsCard } from "@/components/news/NewsCard"
+import { NewsList } from "@/components/news/NewsList"
 
 export const metadata: Metadata = {
   title: "News — Malta Food Experience",
@@ -52,8 +52,9 @@ function collectText(node: unknown): string {
 
 /**
  * News listing page (FR-7.2).
- * Shows published news items, newest first, up to 10.
- * Cards link to /news/[slug] (detail page deferred — URD open question 6).
+ * Shows published news items, newest first. Fetches up to 30 items
+ * server-side and paginates client-side with a "Show more" button
+ * (6 items per page) to avoid a hard cutoff at 10 with no way to see more.
  */
 export default async function NewsPage() {
   const payload = await getPayload({ config })
@@ -62,10 +63,17 @@ export default async function NewsPage() {
     collection: "news_items",
     where: { published: { equals: true } },
     sort: "-date",
-    limit: 10,
+    limit: 30,
   })
 
-  const items = docs as unknown as NewsItemDoc[]
+  const items = (docs as unknown as NewsItemDoc[]).map((item) => ({
+    id: item.id,
+    title: item.title,
+    date: item.date,
+    slug: item.slug,
+    image: item.image,
+    excerpt: excerptFromLexical(item.body),
+  }))
 
   if (items.length === 0) {
     return (
@@ -95,18 +103,8 @@ export default async function NewsPage() {
           </p>
         </header>
 
-        <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {items.map((item) => (
-            <NewsCard
-              key={String(item.id)}
-              id={item.id}
-              title={item.title}
-              date={item.date}
-              slug={item.slug}
-              image={item.image}
-              excerpt={excerptFromLexical(item.body)}
-            />
-          ))}
+        <div className="mt-10">
+          <NewsList items={items} initialPageSize={6} pageSize={6} />
         </div>
       </div>
     </section>
