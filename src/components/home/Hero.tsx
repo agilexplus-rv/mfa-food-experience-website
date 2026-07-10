@@ -1,5 +1,6 @@
 import { getPayload } from 'payload'
 import config from '@payload-config'
+import Link from "next/link"
 import { Logo } from "@/components/brand/Logo"
 
 /**
@@ -58,13 +59,13 @@ export async function Hero() {
             tastings, and cultural experiences hosted by the Malta Food Agency.
           </p>
 
-          <a
+          <Link
             href="/services"
             className="mt-10 inline-flex items-center gap-2 rounded-lg bg-terracotta px-8 py-4 text-base font-bold text-soft-beige transition-colors hover:bg-terracotta/85 focus:outline-2 focus:outline-offset-2 focus:outline-terracotta"
           >
             Book an Event
             <span aria-hidden="true">&rarr;</span>
-          </a>
+          </Link>
 
           <div className="mt-20 h-px w-32 bg-matte-gold/60" />
         </div>
@@ -87,13 +88,13 @@ export async function Hero() {
         tastings, and cultural experiences hosted by the Malta Food Agency.
       </p>
 
-      <a
+      <Link
         href="/services"
         className="mt-10 inline-flex items-center gap-2 rounded-lg bg-terracotta px-8 py-4 text-base font-bold text-soft-beige transition-colors hover:bg-terracotta/85 focus:outline-2 focus:outline-offset-2 focus:outline-terracotta"
       >
         Book an Event
         <span aria-hidden="true">&rarr;</span>
-      </a>
+      </Link>
 
       {/* Subtle decorative divider */}
       <div className="mt-20 h-px w-32 bg-matte-gold/40" />
