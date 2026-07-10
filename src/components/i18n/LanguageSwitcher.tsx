@@ -152,7 +152,17 @@ export function LanguageSwitcher() {
   // in the rare case where the user clicks a pill that's already correctly
   // active, which is a fully acceptable trade for self-healing behaviour.
   //
-  // FOURTH root cause (2026-07-09): `consentGiven` was only ever set once,
+  // FIFTH root cause (2026-07-10): CSP style-src blocked www.gstatic.com,
+// preventing the Google Translate widget's own stylesheet from loading. The
+// widget constructs TranslateElement successfully (no JS errors), creates the
+// goog-te-combo <select>, but never populates it with language options because
+// its internal init depends on the blocked CSS. Result: goog-te-combo.options.
+// length === 0 permanently, so both the cookie-driven and DOM-driven activation
+// paths dead-end. The securitypolicyviolation event fires but wasn't being
+// listened for. Fix: add https://www.gstatic.com to style-src in next.config.ts.
+// See GoogleTranslateWidgetHost.tsx for the full diagnosis.
+//
+// FOURTH root cause (2026-07-09): `consentGiven` was only ever set once,
   // in the mount-time useEffect above. If a user loads the page, accepts
   // the CookieBanner ("Accept all" -> writes localStorage in the SAME
   // render pass, does NOT remount this component), then clicks MT, this

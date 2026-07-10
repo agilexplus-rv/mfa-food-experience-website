@@ -103,6 +103,25 @@ function loadWidget(widgetDiv: HTMLElement): Promise<void> {
   })
 }
 
+// FIFTH root cause (2026-07-10): CSP style-src blocked the widget's CSS at
+// www.gstatic.com. The element.js script calls _loadCss() which creates a
+// <link rel=stylesheet> to gstatic.com — and the CSP header had style-src:
+// 'self' 'unsafe-inline' with NO gstatic.com allowance. The browser silently
+// blocked this cross-origin stylesheet; without it, TranslateElement
+// constructed successfully but its internal init never populated
+// goog-te-combo with language options (empty <select>). The widget hides its
+// gadget div with display:none and the entire cookie-driven AND DOM-driven
+// activation path dead-ends on the empty combo. The securitypolicyviolation
+// event fires but wasn't being listened for (now recommended to always
+// listen during debugging). The fix is a one-line CSP change in
+// next.config.ts: add https://www.gstatic.com to style-src. This is the
+// MINIMAL fix — the widget has always loaded this CSS; it was only noticed
+// as broken after Phase 4.4 added a strict CSP that finally blocked it.
+// Symptom: goog-te-combo exists but options.length === 0, zero JS errors,
+// zero console warnings, cookies + lang attr all correct. The gstatic.com
+// CSS request shows duration:0 transferSize:0 in Performance API — a
+// hallmark of a CSP-blocked subresource.
+//
 // Belt-and-suspenders fallback: GT's widget is documented to auto-apply
 // the translation itself as soon as it reads the `googtrans` cookie
 // during its own initialisation (see the module doc comment). In
