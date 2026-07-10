@@ -7,6 +7,26 @@ export const Users: CollectionConfig = {
     maxLoginAttempts: 5,
     lockTime: 15 * 60 * 1000, // 15-minute lockout per ADR-008 C5
     useAPIKey: true,
+    forgotPassword: {
+      generateEmailSubject: () =>
+        'Malta Food Experience — Reset your password',
+      generateEmailHTML: (args) => {
+        const token = args?.token ?? ''
+        const user = args?.user as { email?: string } | undefined
+        const baseUrl = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000'
+        return (
+          '<div style="font-family:Montserrat,sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#F9F4EF;border-radius:12px">' +
+          '<h1 style="color:#33483D;font-size:1.25rem;margin:0 0 8px">Password Reset</h1>' +
+          '<p style="color:#33483D;line-height:1.6">Hello ' + (user?.email || '') + ',</p>' +
+          '<p style="color:#33483D;line-height:1.6">A password reset was requested for your Malta Food Experience account. Click the button below to set a new password. This link expires in 1 hour.</p>' +
+          '<a href="' + baseUrl + '/admin/reset-password?token=' + token + '" style="display:inline-block;padding:14px 32px;background:#33483D;color:#F9F4EF;font-weight:700;border-radius:8px;text-decoration:none;margin:16px 0">Reset Password</a>' +
+          '<p style="color:#6B7F74;font-size:0.875rem;line-height:1.5">If you did not request this, you can safely ignore this email.</p>' +
+          '<hr style="border:none;border-top:1px solid #D4C8B8;margin:24px 0">' +
+          '<p style="color:#6B7F74;font-size:0.75rem">Malta Food Experience</p>' +
+          '</div>'
+        )
+      },
+    },
   },
   admin: {
     useAsTitle: 'email',
