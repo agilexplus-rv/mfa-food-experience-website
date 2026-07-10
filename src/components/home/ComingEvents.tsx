@@ -2,6 +2,7 @@ import { getPayload } from 'payload'
 import config from '@payload-config'
 import Link from 'next/link'
 import { formatPrice, getAvailabilityForEvents } from '@/lib/availability'
+import { formatDay, formatTimeRange } from '@/lib/format-date'
 import type { EventDoc } from '@/lib/availability-types'
 
 /**
@@ -57,7 +58,7 @@ export async function ComingEvents() {
               >
                 <h3 className="font-bold text-xl text-lunar-green">{event.title}</h3>
                 <p className="mt-1 text-sm text-lunar-green/60">
-                  {event.date} · {event.startTime}
+                  {formatDay(event.date)} · {formatTimeRange(event.startTime, event.endTime)}
                 </p>
                 <p className="mt-2 font-semibold text-terracotta text-lg">
                   {formatPrice(event.pricePerPerson ?? 0)}

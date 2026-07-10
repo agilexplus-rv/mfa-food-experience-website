@@ -2,6 +2,8 @@ import { getPayload } from 'payload'
 import config from '@payload-config'
 import Link from 'next/link'
 
+import { formatDay } from '@/lib/format-date'
+
 interface NewsItemDoc {
   id: string | number
   title: string
@@ -49,7 +51,12 @@ export async function LatestNews() {
                   <img src={imageUrl} alt={item.title} className="h-48 w-full object-cover" />
                 ) : null}
                 <div className="p-6">
-                  <p className="text-sm font-semibold text-matte-gold">{item.date}</p>
+                  <time
+                    dateTime={item.date.slice(0, 10)}
+                    className="text-sm font-semibold text-matte-gold"
+                  >
+                    {formatDay(item.date)}
+                  </time>
                   <h3 className="mt-1 font-bold text-xl text-lunar-green">{item.title}</h3>
                 </div>
               </article>

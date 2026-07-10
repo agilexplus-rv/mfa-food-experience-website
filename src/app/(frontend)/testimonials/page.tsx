@@ -4,8 +4,8 @@ import config from '@payload-config'
 import { getPayload } from 'payload'
 
 import { Logo } from '@/components/brand/Logo'
-import { TestimonialCard } from '@/components/testimonials/TestimonialCard'
 import { TestimonialForm } from '@/components/testimonials/TestimonialForm'
+import { TestimonialList } from '@/components/testimonials/TestimonialList'
 
 export const metadata: Metadata = {
   title: 'Testimonials — Malta Food Experience',
@@ -28,7 +28,8 @@ interface TestimonialDoc {
  *
  * Server component: fetches approved testimonials via the Payload Local API,
  * renders them in a responsive grid alongside a public submission form and the
- * Omnibus verification statement.
+ * Omnibus verification statement. The grid uses client-side "Show more"
+ * pagination (9 items per page) to avoid dumping 50 cards at once.
  */
 export default async function TestimonialsPage() {
   let testimonials: TestimonialDoc[] = []
@@ -58,6 +59,16 @@ export default async function TestimonialsPage() {
     // Degrade gracefully: empty lists render the form still functional
   }
 
+  const listItems = testimonials.map((t) => ({
+    id: t.id,
+    name: t.name,
+    text: t.text,
+    eventName:
+      typeof t.event === 'object' && t.event !== null
+        ? t.event.title
+        : undefined,
+  }))
+
   return (
     <section className="mx-auto max-w-7xl px-6 py-16">
       <header className="mx-auto max-w-2xl text-center">
@@ -78,20 +89,9 @@ export default async function TestimonialsPage() {
       </p>
 
       {/* Approved testimonials grid */}
-      {testimonials.length > 0 ? (
-        <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {testimonials.map((t) => (
-            <TestimonialCard
-              key={t.id}
-              name={t.name}
-              text={t.text}
-              eventName={
-                typeof t.event === 'object' && t.event !== null
-                  ? t.event.title
-                  : undefined
-              }
-            />
-          ))}
+      {listItems.length > 0 ? (
+        <div className="mt-12">
+          <TestimonialList items={listItems} initialPageSize={9} pageSize={9} />
         </div>
       ) : (
         <div className="mt-12 rounded-xl border border-dashed border-border bg-surface p-10 text-center">

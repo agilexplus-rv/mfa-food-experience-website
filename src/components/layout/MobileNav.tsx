@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { useEffect, useRef, useState } from "react"
 import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher"
+import { SiteSearch } from "@/components/search/SiteSearch"
 
 /**
  * MobileNav — hamburger drawer for viewports < 960px.
@@ -24,7 +25,6 @@ const NAV_LINKS = [
   { label: "Home", href: "/" },
   { label: "About", href: "/about" },
   { label: "Experiences", href: "/services" },
-  { label: "Classes", href: "/services/classes" },
   { label: "Book Now", href: "/services" },
 ]
 
@@ -121,6 +121,15 @@ export function MobileNav() {
             </svg>
           </button>
         </div>
+
+        {/* Site search — mobile lives here in the drawer. */}
+        <div className="border-b border-soft-beige/20 px-4 py-3">
+          <span className="mb-2 block text-xs font-semibold uppercase tracking-wider text-soft-beige/60">
+            Search
+          </span>
+          <SiteSearch />
+        </div>
+
         {/* Language switcher -- moved here from the header on mobile
             viewports (< md). Its own small section, flags + EN|MT pills,
             sitting above the nav links inside the drawer. */}

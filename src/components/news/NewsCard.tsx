@@ -1,5 +1,7 @@
 import Link from "next/link"
 
+import { formatDay } from "@/lib/format-date"
+
 export interface NewsCardProps {
   id: string | number
   title: string
@@ -25,10 +27,10 @@ export function NewsCard({ title, date, slug, image, excerpt }: NewsCardProps) {
       ) : null}
       <div className="flex flex-1 flex-col p-6">
         <time
-          dateTime={date}
+          dateTime={date.slice(0, 10)}
           className="text-sm font-semibold text-matte-gold"
         >
-          {date}
+          {formatDay(date)}
         </time>
         <h2 className="mt-1 font-bold text-xl text-lunar-green">
           <Link href={`/news/${slug}`} className="hover:text-terracotta focus:outline-2 focus:outline-offset-2 focus:outline-terracotta">
