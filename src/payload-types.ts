@@ -27,3 +27,8 @@ export interface NewsItem {
   published?: boolean
   slug: string
 }
+
+/** Site-wide settings (Payload Global: site-settings). */
+export interface SiteSettings {
+  heroBackgroundImage?: MediaRelation
+}

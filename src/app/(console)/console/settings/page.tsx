@@ -11,6 +11,12 @@ interface SettingsSection {
 
 const SECTIONS: SettingsSection[] = [
   {
+    title: 'Site Settings',
+    description: 'Homepage hero background image and other site-wide presentation options',
+    href: '/console/settings/site-settings',
+    icon: 'SS',
+  },
+  {
     title: 'Cancellation Policy',
     description: 'Edit refund tiers, organiser-cancellation text, and the withdrawal-right disclosure',
     href: '/console/settings/cancellation-policy',
