@@ -127,6 +127,22 @@ export const Bookings: CollectionConfig = {
       },
     },
     {
+      name: 'paymentMethod',
+      type: 'select',
+      options: [
+        { label: 'Stripe', value: 'stripe' },
+        { label: 'Cash', value: 'cash' },
+        { label: 'Bank Transfer', value: 'bank_transfer' },
+        { label: 'Comped', value: 'comped' },
+        { label: 'Pending Payment', value: 'pending_payment' },
+      ],
+      defaultValue: 'stripe',
+      admin: {
+        description:
+          'How this booking was paid. stripe = automated Stripe Checkout (set automatically by webhook); cash/bank_transfer/pending_payment = manual staff-created bookings; comped = free/no charge (e.g. staff/VIP).',
+      },
+    },
+    {
       name: 'dietaryNotes',
       type: 'textarea',
       admin: {

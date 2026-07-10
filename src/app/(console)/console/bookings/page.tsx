@@ -24,6 +24,7 @@ interface BookingRow {
   checkInStaffName: string | null
   noShow: boolean
   refundStatus: string | null
+  paymentMethod: string | null
   createdAt: string
 }
 
@@ -98,6 +99,8 @@ export default function ConsoleBookingsPage() {
     phone: '',
     persons: '1',
     dietaryNotes: '',
+    paymentMethod: 'cash' as string,
+    totalAmount: '' as string,
   })
   const [createError, setCreateError] = useState<string | null>(null)
 
@@ -175,12 +178,14 @@ export default function ConsoleBookingsPage() {
           phone: createForm.phone.trim() || undefined,
           persons: parseInt(createForm.persons, 10) || 1,
           dietaryNotes: createForm.dietaryNotes.trim() || undefined,
+          paymentMethod: createForm.paymentMethod,
+          totalAmount: createForm.totalAmount ? parseFloat(createForm.totalAmount) : undefined,
         }),
       })
       const data = await res.json().catch(() => null)
       if (!res.ok) throw new Error(data?.error || 'Create failed')
       setCreateOpen(false)
-      setCreateForm({ eventId: '', leadAttendeeName: '', email: '', phone: '', persons: '1', dietaryNotes: '' })
+      setCreateForm({ eventId: '', leadAttendeeName: '', email: '', phone: '', persons: '1', dietaryNotes: '', paymentMethod: 'cash', totalAmount: '' })
       void search()
     } catch (err) {
       setCreateError(err instanceof Error ? err.message : 'Create failed')
@@ -276,6 +281,7 @@ export default function ConsoleBookingsPage() {
                   <th className="px-4 py-3 font-semibold text-text-light text-center">Persons</th>
                   <th className="px-4 py-3 font-semibold text-text-light">Status</th>
                   <th className="px-4 py-3 font-semibold text-text-light text-right">Total</th>
+                  <th className="px-4 py-3 font-semibold text-text-light">Payment</th>
                   <th className="px-4 py-3 font-semibold text-text-light">Checked In</th>
                   <th className="px-4 py-3 font-semibold text-text-light">By</th>
                   <th className="px-4 py-3 font-semibold text-text-light text-center">Actions</th>
@@ -311,6 +317,13 @@ export default function ConsoleBookingsPage() {
                       </td>
                       <td className="px-4 py-3 text-right font-semibold text-lunar-green">
                         {formatCurrency(b.totalAmount)}
+                      </td>
+                      <td className="px-4 py-3">
+                        {b.paymentMethod ? (
+                          <Badge variant={b.paymentMethod}>{b.paymentMethod.replace('_', ' ')}</Badge>
+                        ) : (
+                          <span className="text-xs text-text-light">—</span>
+                        )}
                       </td>
                       <td className="px-4 py-3 text-xs text-text-light">{formatDateTime(b.checkedInAt)}</td>
                       <td className="px-4 py-3 text-xs text-text-light">{b.checkInStaffName || '\u2014'}</td>
@@ -427,6 +440,62 @@ export default function ConsoleBookingsPage() {
               value={createForm.dietaryNotes}
               onChange={(e) => setCreateForm(prev => ({ ...prev, dietaryNotes: e.target.value }))}
               rows={2}
+              className="w-full rounded-lg border border-border px-4 py-2.5 text-sm text-lunar-green focus:outline-none focus:ring-2 focus:ring-lunar-green/30"
+              style={{ boxSizing: 'border-box' }}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-lunar-green mb-1">Payment Method</label>
+            <select
+              value={createForm.paymentMethod}
+              onChange={(e) => setCreateForm(prev => ({ ...prev, paymentMethod: e.target.value }))}
+              className="w-full rounded-lg border border-border px-4 py-2.5 text-sm text-lunar-green bg-surface focus:outline-none focus:ring-2 focus:ring-lunar-green/30"
+              style={{ boxSizing: 'border-box' }}
+            >
+              <option value="cash">Cash</option>
+              <option value="bank_transfer">Bank Transfer</option>
+              <option value="comped">Comped</option>
+              <option value="pending_payment">Pending Payment</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-lunar-green mb-1">
+              Total Amount (cents) — leave empty to auto-calculate
+            </label>
+            <input
+              type="number"
+              min="0"
+              value={createForm.totalAmount}
+              onChange={(e) => setCreateForm(prev => ({ ...prev, totalAmount: e.target.value }))}
+              placeholder={createForm.paymentMethod === 'comped' ? '0' : 'Auto from event price'}
+              className="w-full rounded-lg border border-border px-4 py-2.5 text-sm text-lunar-green focus:outline-none focus:ring-2 focus:ring-lunar-green/30"
+              style={{ boxSizing: 'border-box' }}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-lunar-green mb-1">Payment Method</label>
+            <select
+              value={createForm.paymentMethod}
+              onChange={(e) => setCreateForm(prev => ({ ...prev, paymentMethod: e.target.value }))}
+              className="w-full rounded-lg border border-border px-4 py-2.5 text-sm text-lunar-green bg-surface focus:outline-none focus:ring-2 focus:ring-lunar-green/30"
+              style={{ boxSizing: 'border-box' }}
+            >
+              <option value="cash">Cash</option>
+              <option value="bank_transfer">Bank Transfer</option>
+              <option value="comped">Comped</option>
+              <option value="pending_payment">Pending Payment</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-lunar-green mb-1">
+              Total Amount (cents) — leave empty to auto-calculate
+            </label>
+            <input
+              type="number"
+              min="0"
+              value={createForm.totalAmount}
+              onChange={(e) => setCreateForm(prev => ({ ...prev, totalAmount: e.target.value }))}
+              placeholder={createForm.paymentMethod === 'comped' ? '0' : 'Auto from event price'}
               className="w-full rounded-lg border border-border px-4 py-2.5 text-sm text-lunar-green focus:outline-none focus:ring-2 focus:ring-lunar-green/30"
               style={{ boxSizing: 'border-box' }}
             />

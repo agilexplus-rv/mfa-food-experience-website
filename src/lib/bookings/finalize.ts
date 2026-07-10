@@ -183,6 +183,7 @@ export async function finalizeBookingFromStripeSession(session: {
       qrTokenHash,
       stripeCheckoutSessionId: session.id,
       stripePaymentIntentId: paymentIntentId ?? undefined,
+      paymentMethod: 'stripe',
     },
     overrideAccess: true,
   })
