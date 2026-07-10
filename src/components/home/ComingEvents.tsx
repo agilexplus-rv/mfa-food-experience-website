@@ -54,7 +54,7 @@ export async function ComingEvents() {
             return (
               <article
                 key={String(event.id)}
-                className="flex flex-col rounded-lg border border-matte-gold/20 bg-white p-6 shadow-sm"
+                className="flex h-full flex-col rounded-lg border border-matte-gold/20 bg-white p-6 shadow-sm"
               >
                 <h3 className="font-bold text-xl text-lunar-green">{event.title}</h3>
                 <p className="mt-1 text-sm text-lunar-green/60">
@@ -64,19 +64,37 @@ export async function ComingEvents() {
                   {formatPrice(event.pricePerPerson ?? 0)}
                   <span className="text-sm font-regular text-lunar-green/60"> / person</span>
                 </p>
-                <p className="mt-2 text-center text-sm font-semibold text-lunar-green/80">
+
+                {/* Spacer pushes the action row to the bottom for equal-height alignment */}
+                <div className="flex-1" />
+
+                {/* Compact action row: seats pill + smaller Book button */}
+                <div className="mt-4 flex items-center justify-between gap-3 border-t border-matte-gold/20 pt-4">
                   {fullyBooked ? (
-                    <span className="text-terracotta">Fully booked</span>
+                    <span className="inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-full bg-terracotta/15 px-3 py-1 text-xs font-semibold text-terracotta">
+                      Fully booked
+                    </span>
                   ) : (
-                    <span>{remaining} seats left</span>
+                    <span className="inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-full bg-matte-gold/20 px-3 py-1 text-xs font-semibold text-matte-gold">
+                      {remaining} {remaining === 1 ? 'seat' : 'seats'} left
+                    </span>
                   )}
-                </p>
-                <Link
-                  href="/services"
-                  className="mt-4 inline-flex items-center justify-center rounded-lg bg-terracotta px-4 py-2 text-sm font-bold text-soft-beige transition-colors hover:bg-terracotta/85"
-                >
-                  Book
-                </Link>
+                  <Link
+                    href="/services"
+                    aria-label={fullyBooked ? `${event.title} — fully booked` : `Book ${event.title}`}
+                    aria-disabled={fullyBooked}
+                    tabIndex={fullyBooked ? -1 : 0}
+                    className={[
+                      'inline-flex shrink-0 items-center justify-center rounded-lg px-4 py-1.5 text-sm font-bold transition-colors',
+                      'focus:outline-2 focus:outline-offset-2 focus:outline-terracotta',
+                      fullyBooked
+                        ? 'cursor-not-allowed bg-lunar-green/10 text-lunar-green/50'
+                        : 'bg-terracotta text-soft-beige hover:bg-terracotta/85',
+                    ].join(' ')}
+                  >
+                    {fullyBooked ? 'Full' : 'Book'}
+                  </Link>
+                </div>
               </article>
             )
           })}
