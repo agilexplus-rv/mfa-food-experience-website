@@ -7,8 +7,6 @@ const NAV_LINKS = [
   { label: "Home", href: "/" },
   { label: "About", href: "/about" },
   { label: "Experiences", href: "/services" },
-  { label: "Classes", href: "/services/classes" },
-  { label: "Testimonials", href: "/testimonials" },
   // "Tastings" intentionally omitted from nav — Tastings.visible=false
   // per FR-1.2; its route returns the "not available" state (FR-1.3).
   { label: "Book Now", href: "/services" },
