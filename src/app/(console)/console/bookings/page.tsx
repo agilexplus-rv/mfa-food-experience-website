@@ -472,34 +472,6 @@ export default function ConsoleBookingsPage() {
               style={{ boxSizing: 'border-box' }}
             />
           </div>
-          <div>
-            <label className="block text-sm font-semibold text-lunar-green mb-1">Payment Method</label>
-            <select
-              value={createForm.paymentMethod}
-              onChange={(e) => setCreateForm(prev => ({ ...prev, paymentMethod: e.target.value }))}
-              className="w-full rounded-lg border border-border px-4 py-2.5 text-sm text-lunar-green bg-surface focus:outline-none focus:ring-2 focus:ring-lunar-green/30"
-              style={{ boxSizing: 'border-box' }}
-            >
-              <option value="cash">Cash</option>
-              <option value="bank_transfer">Bank Transfer</option>
-              <option value="comped">Comped</option>
-              <option value="pending_payment">Pending Payment</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-semibold text-lunar-green mb-1">
-              Total Amount (cents) — leave empty to auto-calculate
-            </label>
-            <input
-              type="number"
-              min="0"
-              value={createForm.totalAmount}
-              onChange={(e) => setCreateForm(prev => ({ ...prev, totalAmount: e.target.value }))}
-              placeholder={createForm.paymentMethod === 'comped' ? '0' : 'Auto from event price'}
-              className="w-full rounded-lg border border-border px-4 py-2.5 text-sm text-lunar-green focus:outline-none focus:ring-2 focus:ring-lunar-green/30"
-              style={{ boxSizing: 'border-box' }}
-            />
-          </div>
           {createError && (
             <div className="rounded-lg border border-terracotta bg-terracotta/5 p-3 text-sm text-[#9C4E2F]">{createError}</div>
           )}
