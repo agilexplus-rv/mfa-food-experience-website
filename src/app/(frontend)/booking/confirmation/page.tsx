@@ -19,12 +19,15 @@ interface PageProps {
  * then polled via /api/bookings/[id]/status every 2s until the webhook
  * has flipped it to 'confirmed' (webhook delivery is asynchronous and
  * may arrive after the redirect).
+ *
+ * This page displays PII (attendee name, email, booking reference) and
+ * is excluded from Google Translate per ADR-006 Sec 4 (C17 / DPIA P5).
  */
 export default async function BookingConfirmationPage({ searchParams }: PageProps) {
   const { session_id: sessionId } = await searchParams
 
   return (
-    <section className="mx-auto max-w-2xl px-6 py-20 text-center">
+    <section className="notranslate mx-auto max-w-2xl px-6 py-20 text-center">
       {sessionId ? (
         <ConfirmationStatus sessionId={sessionId} />
       ) : (
