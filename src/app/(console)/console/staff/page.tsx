@@ -22,6 +22,9 @@ export default function StaffPage() {
   const [inviteSending, setInviteSending] = useState(false)
   const [inviteStatus, setInviteStatus] = useState<string | null>(null)
   const [togglingId, setTogglingId] = useState<string | number | null>(null)
+  const [resettingPwId, setResettingPwId] = useState<string | number | null>(null)
+  const [resettingMfaId, setResettingMfaId] = useState<string | number | null>(null)
+  const [mfaConfirmIds, setMfaConfirmIds] = useState<Set<string | number>>(new Set())
   const mounted = useRef(true)
 
   const fetchUsers = useCallback(async () => {
@@ -91,6 +94,40 @@ export default function StaffPage() {
       alert(err instanceof Error ? err.message : 'Toggle failed')
     } finally {
       setTogglingId(null)
+    }
+  }
+
+  const handleResetPassword = async (u: StaffUser) => {
+    setResettingPwId(u.id)
+    try {
+      const res = await fetch('/console/api/users?action=reset-password&userId=' + encodeURIComponent(String(u.id)), {
+        method: 'DELETE',
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data?.error || 'Password reset failed')
+      alert(data.detail || 'Password reset email sent')
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Password reset failed')
+    } finally {
+      setResettingPwId(null)
+    }
+  }
+
+  const handleResetMfa = async (u: StaffUser) => {
+    setResettingMfaId(u.id)
+    try {
+      const res = await fetch('/console/api/users?action=reset-mfa&userId=' + encodeURIComponent(String(u.id)), {
+        method: 'DELETE',
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data?.error || 'MFA reset failed')
+      setMfaConfirmIds(prev => { const next = new Set(prev); next.delete(u.id); return next })
+      alert(data.detail || 'MFA reset complete')
+      fetchUsers()
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'MFA reset failed')
+    } finally {
+      setResettingMfaId(null)
     }
   }
 
@@ -178,17 +215,52 @@ export default function StaffPage() {
                     {new Date(u.createdAt).toLocaleDateString('en-MT')}
                   </td>
                   <td className="px-4 py-3 text-center">
-                    <button
-                      onClick={() => handleToggleActive(u)}
-                      disabled={togglingId === u.id}
-                      className={'rounded-md border px-2.5 py-1 text-xs font-semibold disabled:opacity-40 transition-colors ' + (
-                        u.active
-                          ? 'border-terracotta text-[#9C4E2F] hover:bg-terracotta hover:text-white'
-                          : 'border-lunar-green text-lunar-green hover:bg-lunar-green hover:text-white'
+                    <div className="flex items-center justify-center gap-1.5 flex-wrap">
+                      <button
+                        onClick={() => handleToggleActive(u)}
+                        disabled={togglingId === u.id}
+                        className={'rounded-md border px-2.5 py-1 text-xs font-semibold disabled:opacity-40 transition-colors ' + (
+                          u.active
+                            ? 'border-terracotta text-[#9C4E2F] hover:bg-terracotta hover:text-white'
+                            : 'border-lunar-green text-lunar-green hover:bg-lunar-green hover:text-white'
+                        )}
+                      >
+                        {togglingId === u.id ? '...' : u.active ? 'Deactivate' : 'Activate'}
+                      </button>
+                      <button
+                        onClick={() => handleResetPassword(u)}
+                        disabled={resettingPwId === u.id}
+                        className="rounded-md border border-matte-gold text-matte-gold px-2.5 py-1 text-xs font-semibold hover:bg-matte-gold hover:text-white disabled:opacity-40 transition-colors"
+                      >
+                        {resettingPwId === u.id ? '...' : 'Reset PW'}
+                      </button>
+                      {u.mfaEnabled && (
+                        mfaConfirmIds.has(u.id) ? (
+                          <span className="inline-flex items-center gap-1">
+                            <button
+                              onClick={() => handleResetMfa(u)}
+                              disabled={resettingMfaId === u.id}
+                              className="rounded-md border border-terracotta bg-terracotta text-white px-2.5 py-1 text-xs font-semibold hover:opacity-85 disabled:opacity-40 transition-colors"
+                            >
+                              {resettingMfaId === u.id ? '...' : 'Confirm'}
+                            </button>
+                            <button
+                              onClick={() => setMfaConfirmIds(prev => { const next = new Set(prev); next.delete(u.id); return next })}
+                              className="rounded-md border border-border text-text-light px-2 py-1 text-xs font-semibold hover:bg-surface transition-colors"
+                            >
+                              Cancel
+                            </button>
+                          </span>
+                        ) : (
+                          <button
+                            onClick={() => setMfaConfirmIds(prev => new Set(prev).add(u.id))}
+                            className="rounded-md border border-terracotta text-[#9C4E2F] px-2.5 py-1 text-xs font-semibold hover:bg-terracotta hover:text-white transition-colors"
+                          >
+                            Reset MFA
+                          </button>
+                        )
                       )}
-                    >
-                      {togglingId === u.id ? '...' : u.active ? 'Deactivate' : 'Activate'}
-                    </button>
+                    </div>
                   </td>
                 </tr>
               ))}

@@ -149,3 +149,92 @@ export async function PATCH(req: NextRequest) {
 
   return NextResponse.json({ ok: true })
 }
+
+export async function DELETE(req: NextRequest) {
+  const currentUser = await auth(req)
+  if (!currentUser) {
+    const p = await payload()
+    const user = await verifySession(req, p)
+    if (!user) return NextResponse.json({ error: 'unauthenticated' }, { status: 401 })
+    return NextResponse.json({ error: 'forbidden' }, { status: 403 })
+  }
+
+  const p = await payload()
+  const url = new URL(req.url)
+  const action = url.searchParams.get('action')
+  const userId = url.searchParams.get('userId')
+
+  if (!userId || !action) {
+    return NextResponse.json({ error: 'userId and action query params required' }, { status: 400 })
+  }
+
+  if (action === 'reset-password') {
+    const userRecord = await p.findByID({
+      collection: 'users',
+      id: userId,
+      overrideAccess: true,
+    })
+    const record = userRecord as Record<string, unknown>
+    const email = record.email as string | undefined
+    if (!email) {
+      return NextResponse.json({ error: 'user_not_found' }, { status: 404 })
+    }
+    try {
+      await p.forgotPassword({
+        collection: 'users',
+        data: { email },
+        disableEmail: false,
+      })
+      await p.create({
+        collection: 'audit_logs',
+        data: {
+          action: 'update',
+          actor: currentUser.id,
+          collection: 'users',
+          documentId: String(userId),
+          detail: `Admin-triggered password reset for user ${email}`,
+        },
+        overrideAccess: true,
+      })
+      return NextResponse.json({ ok: true, detail: `Password reset email sent to ${email}` })
+    } catch (err) {
+      return NextResponse.json(
+        { error: 'Failed to send password reset email', detail: String(err) },
+        { status: 500 },
+      )
+    }
+  }
+
+  if (action === 'reset-mfa') {
+    const userRecord = await p.findByID({
+      collection: 'users',
+      id: userId,
+      overrideAccess: true,
+    })
+    const record = userRecord as Record<string, unknown>
+    const email = record.email as string | undefined
+    if (!email) {
+      return NextResponse.json({ error: 'user_not_found' }, { status: 404 })
+    }
+    await p.update({
+      collection: 'users',
+      id: userId,
+      data: { mfaEnabled: false, totpSecret: null },
+      overrideAccess: true,
+    })
+    await p.create({
+      collection: 'audit_logs',
+      data: {
+        action: 'mfa_reset',
+        actor: currentUser.id,
+        collection: 'users',
+        documentId: String(userId),
+        detail: `Admin-triggered MFA reset for user ${email} — MFA enrollment cleared, user must re-enroll at /mfa-setup`,
+      },
+      overrideAccess: true,
+    })
+    return NextResponse.json({ ok: true, detail: `MFA reset for ${email}. User must re-enroll on next login.` })
+  }
+
+  return NextResponse.json({ error: 'unknown action. Use action=reset-password or action=reset-mfa' }, { status: 400 })
+}
