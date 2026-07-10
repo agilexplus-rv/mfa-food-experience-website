@@ -86,7 +86,7 @@ function MfaVerifyForm() {
   }
 
   return (
-    <div className="mfa-container">
+    <div className="notranslate mfa-container">
       <div className="mfa-card">
         <div className="mfa-icon-wrap">
           <svg
@@ -147,7 +147,7 @@ function MfaVerifyForm() {
 export default function MfaVerifyPage() {
   return (
     <Suspense fallback={
-      <div className="mfa-container">
+      <div className="notranslate mfa-container">
         <div className="mfa-card">
           <div className="mfa-icon-wrap">
             <svg

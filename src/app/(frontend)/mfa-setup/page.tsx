@@ -122,7 +122,7 @@ export default function MfaSetupPage() {
 
   if (step === 'loading') {
     return (
-      <div className="mfa-container">
+      <div className="notranslate mfa-container">
         <div className="mfa-card">
           <h1 className="mfa-title">Set Up Two-Factor Authentication</h1>
           <p className="mfa-subtitle">Generating your secure key…</p>
@@ -133,7 +133,7 @@ export default function MfaSetupPage() {
 
   if (step === 'error') {
     return (
-      <div className="mfa-container">
+      <div className="notranslate mfa-container">
         <div className="mfa-card">
           <h1 className="mfa-title">Setup Error</h1>
           <p style={{ color: '#C9643D', marginBottom: 16 }}>{error}</p>
@@ -147,7 +147,7 @@ export default function MfaSetupPage() {
 
   if (step === 'done') {
     return (
-      <div className="mfa-container">
+      <div className="notranslate mfa-container">
         <div className="mfa-card">
           <div
             className="mfa-success-icon"
@@ -177,7 +177,7 @@ export default function MfaSetupPage() {
   }
 
   return (
-    <div className="mfa-container">
+    <div className="notranslate mfa-container">
       <div className="mfa-card">
         <h1 className="mfa-title">Set Up Two-Factor Authentication</h1>
         <p className="mfa-subtitle">
