@@ -66,7 +66,7 @@ function AvailabilityBadge({ availability }: { availability: EventAvailability }
   const { status, remaining } = availability
   let label = `${remaining} seat${remaining === 1 ? '' : 's'} left`
   let className =
-    'inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold'
+    'inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-full px-3 py-1 text-center text-xs font-semibold'
 
   if (status === 'fully_booked') {
     label = 'Fully booked'
@@ -99,7 +99,7 @@ export function EventCard({
   const fullyBooked = availability.status === 'fully_booked'
 
   return (
-    <article className="group relative flex flex-col rounded-xl border border-border bg-surface p-6 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md focus-within:shadow-md">
+    <article className="group relative flex h-full flex-col rounded-xl border border-border bg-surface p-6 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md focus-within:shadow-md">
       <div className="flex items-start justify-between gap-3">
         <h3 className="text-lg font-bold tracking-tight text-lunar-green">
           {title}
@@ -128,10 +128,7 @@ export function EventCard({
         </div>
       </dl>
 
-      <div className="mt-6 flex items-center justify-between gap-3 pt-4 border-t border-border">
-        <span className="text-xs text-text-light" aria-hidden="true">
-          {timeRange}
-        </span>
+      <div className="mt-6 flex items-center justify-end gap-3 pt-4 border-t border-border">
         <Link
           href={linkHref}
           aria-label={fullyBooked ? `${title} — fully booked` : `Book ${title}`}
