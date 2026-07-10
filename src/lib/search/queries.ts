@@ -5,22 +5,29 @@ import { getExcerpt } from '@/lib/payload'
 /**
  * Site-wide search queries.
  *
- * Fetches Services, News, and Testimonials via the Payload Local API and
- * performs free-text matching against their human-readable fields. The
- * datasets are small (services <20, news capped, testimonials capped at
- * 50) so we fetch in bulk and match client-of-server side rather than
- * building a dedicated search API/index.
+ * Fetches Services, Events, News, and Testimonials via the Payload Local
+ * API and performs free-text matching against their human-readable fields.
+ * The datasets are small (services <20, events in the low hundreds, news
+ * capped, testimonials capped at 50) so we fetch in bulk and match
+ * server-side rather than building a dedicated search API/index.
+ *
+ * The architecture is fully type-agnostic: it queries the generic
+ * `services` and `events` collections with no hardcoded service names or
+ * slugs. Any new Service (or its Events) added in Payload is automatically
+ * searchable the moment it becomes visible/scheduled — zero code changes
+ * required.
  */
 
 export interface SearchResultItem {
   title: string
   description?: string
   href: string
-  type: 'service' | 'news' | 'testimonial'
+  type: 'service' | 'event' | 'news' | 'testimonial'
 }
 
 export interface SearchResults {
   services: SearchResultItem[]
+  events: SearchResultItem[]
   news: SearchResultItem[]
   testimonials: SearchResultItem[]
   query: string
@@ -46,6 +53,21 @@ export async function siteSearch(query: string): Promise<SearchResults> {
     where: { visible: { equals: true } },
     sort: 'order',
     limit: 100,
+    depth: 1,
+  })
+
+  // Fetch scheduled events.
+  // depth: 1 populates the `service` relationship so we can read the
+  // parent Service's name without a second query per event.
+  // Public read access already filters to status: 'scheduled' for
+  // unauthenticated requests (see Events.ts access.read), but we add
+  // the explicit filter so the query is self-documenting and also works
+  // correctly if the local API call ever runs with overrideAccess.
+  const eventsRes = await payload.find({
+    collection: 'events',
+    where: { status: { equals: 'scheduled' } },
+    sort: 'date',
+    limit: 200,
     depth: 1,
   })
 
@@ -80,6 +102,33 @@ export async function siteSearch(query: string): Promise<SearchResults> {
       type: 'service' as const,
     }))
 
+  const events: SearchResultItem[] = (eventsRes.docs as unknown as {
+    id: string | number
+    title: string
+    locationRef: string
+    date: string
+    service?: { name?: string } | string | number | null
+  }[])
+    .filter((e) => {
+      // Match against the event's own title, its location, and the parent
+      // Service's name (e.g. searching "Classes" surfaces individual class
+      // events too, not just the Classes service page itself).
+      const serviceName =
+        e.service && typeof e.service === 'object' ? e.service.name : undefined
+      return matches(q, e.title, e.locationRef, serviceName)
+    })
+    .map((e) => {
+      const serviceName =
+        e.service && typeof e.service === 'object' ? e.service.name : undefined
+      const descParts = [serviceName, e.locationRef].filter(Boolean)
+      return {
+        title: e.title,
+        description: descParts.length > 0 ? descParts.join(' · ') : undefined,
+        href: `/book/${e.id}`,
+        type: 'event' as const,
+      }
+    })
+
   const news: SearchResultItem[] = (newsRes.docs as unknown as {
     title: string
     slug: string
@@ -106,5 +155,5 @@ export async function siteSearch(query: string): Promise<SearchResults> {
       type: 'testimonial' as const,
     }))
 
-  return { services, news, testimonials, query }
+  return { services, events, news, testimonials, query }
 }

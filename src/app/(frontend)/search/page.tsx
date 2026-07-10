@@ -5,7 +5,7 @@ import { siteSearch, type SearchResultItem } from '@/lib/search/queries'
 
 export const metadata: Metadata = {
   title: 'Search — Malta Food Experience',
-  description: 'Search across experiences, news, and testimonials on the Malta Food Experience site.',
+  description: 'Search across experiences, upcoming sessions, news, and testimonials on the Malta Food Experience site.',
 }
 
 export const dynamic = 'force-dynamic'
@@ -23,9 +23,11 @@ function ResultCard({ item }: { item: SearchResultItem }) {
       <span className="text-xs font-semibold uppercase tracking-wide text-matte-gold">
         {item.type === 'service'
           ? 'Experience'
-          : item.type === 'news'
-            ? 'News'
-            : 'Testimonial'}
+          : item.type === 'event'
+            ? 'Upcoming Session'
+            : item.type === 'news'
+              ? 'News'
+              : 'Testimonial'}
       </span>
       <h3 className="mt-1 text-lg font-bold text-lunar-green">
         {item.title}
@@ -75,8 +77,8 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
           Search
         </h1>
         <p className="mt-4 text-lg text-text-light">
-          Use the search box in the header to find experiences, news, and
-          testimonials across the site.
+          Use the search box in the header to find experiences, upcoming
+          sessions, news, and testimonials across the site.
         </p>
       </section>
     )
@@ -85,6 +87,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   const results = await siteSearch(query)
   const total =
     results.services.length +
+    results.events.length +
     results.news.length +
     results.testimonials.length
 
@@ -131,6 +134,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 
       <div className="mt-10 flex flex-col gap-10">
         <ResultSection label="Experiences" items={results.services} />
+        <ResultSection label="Upcoming Sessions" items={results.events} />
         <ResultSection label="News" items={results.news} />
         <ResultSection label="Testimonials" items={results.testimonials} />
       </div>
