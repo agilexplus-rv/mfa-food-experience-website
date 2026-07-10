@@ -147,6 +147,20 @@ export function middleware(req: NextRequest) {
     return NextResponse.redirect(verifyUrl)
   }
 
+  // MFA setup discoverability (Item 1): admin users who haven't enabled MFA
+  // are redirected to /mfa-setup immediately. The only admin paths exempt
+  // from this gate are /admin/login and /admin/logout (so they can get a
+  // fresh JWT after enrolling).
+  if (
+    session.role === 'admin' &&
+    !session.mfaEnabled &&
+    pathname !== '/admin/login' &&
+    !pathname.startsWith('/admin/logout')
+  ) {
+    const setupUrl = new URL('/mfa-setup', req.url)
+    return NextResponse.redirect(setupUrl)
+  }
+
   return NextResponse.next()
 }
 
