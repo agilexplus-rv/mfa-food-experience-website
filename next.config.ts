@@ -63,6 +63,18 @@ const nextConfig: NextConfig = {
             //   * The Google Translate widget loads its stylesheet from
             //     www.gstatic.com via _loadCss (creating a <link rel=stylesheet>).
             //     gstatic.com is in style-src for this reason — removing it
+            //   * SIXTH root cause (2026-07-10): translate-pa.googleapis.com — the
+            //   *     widget's internal XHR fetches its supported-language list from
+            //   *     https://translate-pa.googleapis.com/v1/supportedLanguages. This
+            //   *     domain was only in frame-src (for iframes the widget creates)
+            //   *     but was MISSING from connect-src, so the XHR was silently
+            //   *     blocked by CSP. Without this, TranslateElement constructs
+            //   *     successfully (no JS errors) but goog-te-combo.options.length
+            //   *     stays 0 forever — exact same symptom constellation as the
+            //   *     gstatic.com style-src block, but a different mechanism and a
+            //   *     different blocked domain. The domain is now in BOTH frame-src
+            //   *     (for iframes) AND connect-src (for the supported-languages
+            //   *     XHR). Adding it to connect-src is the MINIMAL fix.
             //     silently breaks the widget (goog-te-combo stays empty, no
             //     JS errors, cookies/lang-attr all correct — a CSP-blocked CSS
             //     subresource is the root cause, found 2026-07-10).
@@ -73,7 +85,7 @@ const nextConfig: NextConfig = {
               "default-src 'self'",
               "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://translate.google.com https://translate.googleapis.com https://js.stripe.com https://checkout.stripe.com",
               "frame-src 'self' https://translate.google.com https://translate-pa.googleapis.com https://www.openstreetmap.org https://checkout.stripe.com",
-              "connect-src 'self' https://api.stripe.com https://translate.googleapis.com",
+              "connect-src 'self' https://api.stripe.com https://translate.googleapis.com https://translate-pa.googleapis.com",
               "style-src 'self' 'unsafe-inline' https://www.gstatic.com",
               "img-src 'self' data: https:",
               "font-src 'self' data:",
