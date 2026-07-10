@@ -135,11 +135,12 @@ export const Users: CollectionConfig = {
     ],
     afterLogin: [
       async ({ user }) => {
-        const u = user as { role?: string; mfaEnabled?: boolean }
+        const u = user as { role?: string; mfaEnabled?: boolean; id?: string | number }
         if (u.role === 'admin' && !u.mfaEnabled) {
           console.info(
-            '[MFA] Admin logged in without MFA enabled. Middleware will not block; frontend banner prompts setup.',
+            `[MFA] Admin user ${u.id} logged in without MFA. Redirecting to /mfa-setup for enrollment.`,
           )
+          return { redirectTo: '/mfa-setup' }
         }
       },
     ],
