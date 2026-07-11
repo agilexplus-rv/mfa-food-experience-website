@@ -54,6 +54,21 @@ export default buildConfig({
     meta: {
       titleSuffix: '- Malta Food Experience',
     },
+    // Snag #6 (2026-07-12): all admin errors/notifications (including
+    // login and forgot-password failures) should surface as a
+    // floating banner from the TOP of the screen, stay visible for
+    // 30s, and be dismissible via a built-in close button. Payload's
+    // toast system (Sonner under the hood) already renders a close
+    // button by default (see @payloadcms/ui's ToastContainer) -- the
+    // only two things needed are position and duration, both
+    // first-class documented config options (no CSS hacking needed
+    // for placement/timing; see AdminThemeStyles.tsx for the
+    // banner-style visual polish layered on top of Sonner's own
+    // markup/close-button).
+    toast: {
+      position: 'top-center',
+      duration: 30000,
+    },
     components: {
       // Brand theming (ADR-008 NFR-1: brand palette + Montserrat) --
       // applied via admin.components.providers, which wraps EVERY
