@@ -33,6 +33,11 @@ export function SiteSearch() {
       <label htmlFor="site-search-input" className="sr-only">
         Search the site
       </label>
+      {/* Navbar control consistency (Rudie 2026-07-12): every header
+          control -- this input, its button, and the language dropdown
+          trigger -- shares one exact height (h-9), border treatment
+          (soft-beige/30, full-round), and text size, so the toolbar
+          reads as one clean row instead of three mismatched controls. */}
       <input
         id="site-search-input"
         type="search"
@@ -40,12 +45,12 @@ export function SiteSearch() {
         onChange={(e) => setQuery(e.target.value)}
         placeholder="Search…"
         aria-label="Search the site"
-        className="w-32 rounded-md border border-soft-beige/30 bg-lunar-green/80 px-3 py-1.5 text-sm text-soft-beige placeholder:text-soft-beige/50 focus:border-matte-gold focus:outline-2 focus:outline-offset-1 focus:outline-matte-gold sm:w-40"
+        className="h-9 w-32 rounded-full border border-soft-beige/30 bg-lunar-green/80 px-4 text-sm text-soft-beige placeholder:text-soft-beige/50 focus:border-matte-gold focus:outline-2 focus:outline-offset-1 focus:outline-matte-gold sm:w-40 box-border"
       />
       <button
         type="submit"
         aria-label="Search"
-        className="flex items-center justify-center rounded-md bg-terracotta px-2.5 py-1.5 text-soft-beige transition-colors hover:bg-terracotta/85 focus:outline-2 focus:outline-offset-1 focus:outline-matte-gold"
+        className="flex h-9 w-9 items-center justify-center rounded-full bg-terracotta text-soft-beige transition-colors hover:bg-terracotta/85 focus:outline-2 focus:outline-offset-1 focus:outline-matte-gold"
       >
         <svg
           width="16"

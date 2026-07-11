@@ -265,7 +265,7 @@ export function LanguageSwitcher() {
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-label={`Language: ${current.label}. Change language`}
-        className="flex items-center gap-1.5 rounded-full border border-soft-beige/30 px-3 py-1 text-xs font-semibold text-soft-beige transition-colors hover:border-soft-beige/60 focus:outline-2 focus:outline-offset-1 focus:outline-matte-gold"
+        className="flex h-9 items-center gap-1.5 rounded-full border border-soft-beige/30 px-4 text-sm font-semibold text-soft-beige transition-colors hover:border-soft-beige/60 focus:outline-2 focus:outline-offset-1 focus:outline-matte-gold box-border"
       >
         <span aria-hidden="true" className="text-sm leading-none">{current.flag}</span>
         {current.value.toUpperCase()}
