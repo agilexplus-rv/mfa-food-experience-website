@@ -3,6 +3,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import Card from '@/components/console/Card'
+import { FilterBar, FilterSelect, FilterDate } from '@/components/console/FilterBar'
 import { Pagination } from '@/components/console/DataTable'
 
 interface AuditLogEntry {
@@ -77,48 +78,36 @@ export default function AuditLogPage() {
         <p className="mt-1 text-sm text-text-light">Track all administrative actions across the platform</p>
       </header>
 
-      {/* Filters */}
+      {/* Filters -- shared FilterBar primitives: uniform 40px control
+          height, captions above fields, brand select chevron. */}
       <Card className="mb-6" padding>
-        <div className="flex flex-wrap gap-3 items-end">
-          <select
+        <FilterBar>
+          <FilterSelect
+            label="Action"
             value={actionFilter}
-            onChange={(e) => { setActionFilter(e.target.value); setPage(1) }}
-            className="rounded-lg border border-border px-4 py-2.5 text-sm text-lunar-green bg-surface focus:outline-none focus:ring-2 focus:ring-lunar-green/30"
-            style={{ boxSizing: 'border-box' }}
-          >
-            {ACTION_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>{o.label}</option>
-            ))}
-          </select>
-          <div className="flex items-center gap-1.5">
-            <label className="text-xs font-semibold text-text-light">From</label>
-            <input
-              type="date"
-              value={dateFrom}
-              onChange={(e) => { setDateFrom(e.target.value); setPage(1) }}
-              className="rounded-lg border border-border px-3 py-2 text-sm text-lunar-green focus:outline-none focus:ring-2 focus:ring-lunar-green/30"
-              style={{ boxSizing: 'border-box' }}
-            />
-          </div>
-          <div className="flex items-center gap-1.5">
-            <label className="text-xs font-semibold text-text-light">To</label>
-            <input
-              type="date"
-              value={dateTo}
-              onChange={(e) => { setDateTo(e.target.value); setPage(1) }}
-              className="rounded-lg border border-border px-3 py-2 text-sm text-lunar-green focus:outline-none focus:ring-2 focus:ring-lunar-green/30"
-              style={{ boxSizing: 'border-box' }}
-            />
-          </div>
+            onChange={(v) => { setActionFilter(v); setPage(1) }}
+            options={ACTION_OPTIONS}
+            className="w-44"
+          />
+          <FilterDate
+            label="From"
+            value={dateFrom}
+            onChange={(v) => { setDateFrom(v); setPage(1) }}
+          />
+          <FilterDate
+            label="To"
+            value={dateTo}
+            onChange={(v) => { setDateTo(v); setPage(1) }}
+          />
           {(actionFilter || dateFrom || dateTo) && (
             <button
               onClick={() => { setActionFilter(''); setDateFrom(''); setDateTo(''); setPage(1) }}
-              className="rounded-lg border border-border px-3 py-2 text-xs font-semibold text-text-light hover:text-lunar-green transition-colors"
+              className="h-10 rounded-lg border border-border px-3.5 text-xs font-semibold text-text-light transition-colors hover:border-lunar-green/40 hover:text-lunar-green"
             >
               Clear Filters
             </button>
           )}
-        </div>
+        </FilterBar>
       </Card>
 
       {error && (

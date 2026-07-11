@@ -4,6 +4,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import Badge from '@/components/console/Badge'
 import Card from '@/components/console/Card'
+import { FilterBar, FilterSelect } from '@/components/console/FilterBar'
 import { Pagination } from '@/components/console/DataTable'
 
 interface WaitlistEntry {
@@ -88,31 +89,28 @@ export default function WaitlistPage() {
         <p className="mt-1 text-sm text-text-light">Manage waitlist entries across all events</p>
       </header>
 
-      {/* Filters */}
+      {/* Filters -- shared FilterBar primitives: uniform 40px control
+          height, one border/focus treatment, brand select chevron. */}
       <Card className="mb-6" padding>
-        <div className="flex flex-wrap gap-3 items-end">
-          <select
+        <FilterBar>
+          <FilterSelect
+            label="Event"
             value={eventFilter}
-            onChange={(e) => { setEventFilter(e.target.value); setPage(1) }}
-            className="rounded-lg border border-border px-4 py-2.5 text-sm text-lunar-green bg-surface focus:outline-none focus:ring-2 focus:ring-lunar-green/30"
-            style={{ boxSizing: 'border-box' }}
-          >
-            <option value="">All Events</option>
-            {events.map((ev) => (
-              <option key={String(ev.id)} value={String(ev.id)}>{ev.title}</option>
-            ))}
-          </select>
-          <select
+            onChange={(v) => { setEventFilter(v); setPage(1) }}
+            options={[
+              { value: '', label: 'All Events' },
+              ...events.map((ev) => ({ value: String(ev.id), label: ev.title })),
+            ]}
+            className="w-64"
+          />
+          <FilterSelect
+            label="Status"
             value={statusFilter}
-            onChange={(e) => { setStatusFilter(e.target.value); setPage(1) }}
-            className="rounded-lg border border-border px-4 py-2.5 text-sm text-lunar-green bg-surface focus:outline-none focus:ring-2 focus:ring-lunar-green/30"
-            style={{ boxSizing: 'border-box' }}
-          >
-            {STATUS_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>{o.label}</option>
-            ))}
-          </select>
-        </div>
+            onChange={(v) => { setStatusFilter(v); setPage(1) }}
+            options={STATUS_OPTIONS}
+            className="w-44"
+          />
+        </FilterBar>
       </Card>
 
       {error && (

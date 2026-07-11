@@ -12,9 +12,13 @@ const variantClasses = {
 } as const
 
 const sizeClasses = {
-  sm: 'px-3 py-1.5 text-xs',
-  md: 'px-4 py-2.5 text-sm',
-  lg: 'px-6 py-3 text-base',
+  // Fixed heights (not padding-derived) so buttons align exactly with
+  // the h-10 FilterBar controls on toolbar rows (Rudie 2026-07-12:
+  // "consistency in height, clean designs"). md = h-10 matches
+  // FilterInput/FilterSelect/FilterDate; sm/lg scale proportionally.
+  sm: 'h-8 px-3 text-xs',
+  md: 'h-10 px-4 text-sm',
+  lg: 'h-12 px-6 text-base',
 } as const
 
 interface ButtonProps {

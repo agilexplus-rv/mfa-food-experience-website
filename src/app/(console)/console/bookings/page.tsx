@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import Button from '@/components/console/Button'
 import Badge from '@/components/console/Badge'
 import Card from '@/components/console/Card'
+import { FilterBar, FilterSelect, FilterInput } from '@/components/console/FilterBar'
 import Modal from '@/components/console/Modal'
 import { Pagination } from '@/components/console/DataTable'
 
@@ -202,54 +203,55 @@ export default function ConsoleBookingsPage() {
         <Button onClick={() => setCreateOpen(true)}>+ New Booking</Button>
       </header>
 
-      {/* Filters */}
+      {/* Filters -- shared FilterBar primitives: uniform 40px control
+          height, one border/focus treatment, brand select chevron. The
+          CSV-export pair is separated from the search group by a
+          divider + right-alignment so the toolbar reads as two clear
+          zones (find bookings | export data) instead of five unrelated
+          controls in a row. */}
       <Card className="mb-6" padding>
-        <div className="flex flex-wrap gap-3 items-end">
-          <div className="flex-1 min-w-[200px]">
-            <input
-              type="text"
-              value={q}
-              onChange={(e) => { setQ(e.target.value); setPage(1) }}
-              placeholder="Search by reference, name, or email..."
-              className="w-full rounded-lg border border-border px-4 py-2.5 text-sm text-lunar-green placeholder:text-text-light/50 focus:outline-none focus:ring-2 focus:ring-lunar-green/30"
-              style={{ boxSizing: 'border-box' }}
-              onKeyDown={(e) => { if (e.key === 'Enter') { setPage(1); void search() } }}
-            />
-          </div>
-          <select
+        <FilterBar>
+          <FilterInput
+            value={q}
+            onChange={(v) => { setQ(v); setPage(1) }}
+            placeholder="Search by reference, name, or email..."
+            ariaLabel="Search bookings"
+            onEnter={() => { setPage(1); void search() }}
+            className="flex-1 min-w-[200px]"
+          />
+          <FilterSelect
             value={statusFilter}
-            onChange={(e) => { setStatusFilter(e.target.value); setPage(1) }}
-            className="rounded-lg border border-border px-4 py-2.5 text-sm text-lunar-green bg-surface focus:outline-none focus:ring-2 focus:ring-lunar-green/30"
-            style={{ boxSizing: 'border-box' }}
-          >
-            {STATUS_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>{o.label}</option>
-            ))}
-          </select>
+            onChange={(v) => { setStatusFilter(v); setPage(1) }}
+            options={STATUS_OPTIONS}
+            ariaLabel="Filter by status"
+            className="w-40"
+          />
           <Button onClick={() => { setPage(1); void search() }} loading={loading}>
             Search
           </Button>
 
-          {/* CSV Export */}
+          {/* CSV Export -- right-aligned zone */}
           {events.length > 0 && (
-            <div className="flex items-center gap-2">
-              <select
+            <div className="ml-auto flex items-end gap-2 border-l border-border pl-3">
+              <FilterSelect
                 value={exportEventId}
-                onChange={(e) => setExportEventId(e.target.value)}
-                className="rounded-lg border border-border px-3 py-2.5 text-xs text-lunar-green bg-surface focus:outline-none focus:ring-2 focus:ring-lunar-green/30"
-                style={{ boxSizing: 'border-box' }}
-              >
-                <option value="">Export CSV...</option>
-                {events.map((ev) => (
-                  <option key={String(ev.id)} value={String(ev.id)}>{ev.title} ({formatDate(ev.date)})</option>
-                ))}
-              </select>
-              <Button variant="secondary" size="sm" onClick={handleExportCSV} disabled={!exportEventId}>
+                onChange={setExportEventId}
+                options={[
+                  { value: '', label: 'Export CSV...' },
+                  ...events.map((ev) => ({
+                    value: String(ev.id),
+                    label: `${ev.title} (${formatDate(ev.date)})`,
+                  })),
+                ]}
+                ariaLabel="Select event to export"
+                className="w-56"
+              />
+              <Button variant="secondary" onClick={handleExportCSV} disabled={!exportEventId}>
                 Export
               </Button>
             </div>
           )}
-        </div>
+        </FilterBar>
       </Card>
 
       {error && (

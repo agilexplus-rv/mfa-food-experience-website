@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Button from '@/components/console/Button'
 import Card from '@/components/console/Card'
+import { FilterBar, FilterInput } from '@/components/console/FilterBar'
 
 interface Match {
   reference: string
@@ -83,28 +84,26 @@ export default function DataSubjectPage() {
       <p className="mt-[-1.5rem] mb-6 text-sm text-text-light">GDPR Art. 15 (access) and Art. 17 (erasure) requests</p>
 
       <Card className="mb-6" padding>
-        <div className="flex flex-wrap gap-3">
-          <input
-            type="email"
+        <FilterBar>
+          <FilterInput
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={setEmail}
             placeholder="Search by email address..."
-            className="flex-1 min-w-[200px] rounded-lg border border-border px-4 py-2.5 text-sm text-lunar-green placeholder:text-text-light/50 focus:outline-none focus:ring-2 focus:ring-lunar-green/30"
-            style={{ boxSizing: 'border-box' }}
-            onKeyDown={(e) => { if (e.key === 'Enter') handleSearch() }}
+            ariaLabel="Search by email address"
+            onEnter={handleSearch}
+            className="flex-1 min-w-[200px]"
           />
-          <input
-            type="text"
+          <FilterInput
             value={reference}
-            onChange={(e) => setReference(e.target.value)}
+            onChange={setReference}
             placeholder="Or booking reference..."
-            className="w-[220px] rounded-lg border border-border px-4 py-2.5 text-sm text-lunar-green placeholder:text-text-light/50 focus:outline-none focus:ring-2 focus:ring-lunar-green/30"
-            style={{ boxSizing: 'border-box' }}
+            ariaLabel="Search by booking reference"
+            className="w-[220px]"
           />
           <Button onClick={handleSearch} loading={loading} disabled={!email.trim() && !reference.trim()}>
             Search
           </Button>
-        </div>
+        </FilterBar>
       </Card>
 
       {error && (
