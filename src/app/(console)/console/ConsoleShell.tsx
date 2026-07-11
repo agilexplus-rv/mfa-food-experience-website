@@ -73,6 +73,13 @@ export default function ConsoleShell({ children }: { children: React.ReactNode }
   }, [pathname])
 
   const handleLogout = async () => {
+    // Write a 'logout' audit-log entry BEFORE the actual logout call,
+    // while the session cookie is still valid (the audit-log endpoint
+    // needs the cookie to resolve the actor user for the relationship).
+    // Best-effort: if this fails, proceed with logout anyway.
+    try {
+      await fetch('/console/api/audit-log/logout', { method: 'POST' })
+    } catch { /* best-effort: don't block logout */ }
     try {
       await fetch('/api/users/logout', { method: 'POST' })
     } catch { /* best-effort */ }

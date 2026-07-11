@@ -19,6 +19,7 @@ export const AuditLog: CollectionConfig = {
         { label: 'Delete', value: 'delete' },
         { label: 'Export', value: 'export' },
         { label: 'Login', value: 'login' },
+        { label: 'Logout', value: 'logout' },
         { label: 'Check-in', value: 'check_in' },
         { label: 'MFA Reset', value: 'mfa_reset' },
       ],
