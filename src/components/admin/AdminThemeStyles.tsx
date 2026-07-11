@@ -130,6 +130,27 @@ export default function AdminThemeStyles() {
           }
         }
 
+        /* Rudie 2026-07-11: on real mobile viewports the white card
+           chrome (background, border-radius, drop-shadow, fixed
+           max-width) around the email/password/Login/Forgot-password
+           group looks like an odd floating box rather than a page --
+           there's no surrounding content for a "card" to visually
+           separate from. Below 640px, strip the card treatment
+           entirely so the form sits directly on the page background,
+           full-width within its padding, exactly like a native mobile
+           form. Desktop/tablet keep the card (it correctly separates
+           the login form from the page below ~640px viewports where
+           there IS other page chrome around it). */
+        @media (max-width: 640px) {
+          .template-minimal__wrap {
+            max-width: 100%;
+            background: none;
+            box-shadow: none;
+            border-radius: 0;
+            padding: 32px 20px;
+          }
+        }
+
         /* P2 fix: Payload's default large-button sizing (420px) doesn't
            true up to the login card's actual input width (452px at the
            card's own padding), leaving a ~32px trailing-edge gap on an
