@@ -80,7 +80,7 @@ export async function ComingEvents() {
                     </span>
                   )}
                   <Link
-                    href="/services"
+                    href={fullyBooked ? '/services' : `/book/${event.id}`}
                     aria-label={fullyBooked ? `${event.title} — fully booked` : `Book ${event.title}`}
                     aria-disabled={fullyBooked}
                     tabIndex={fullyBooked ? -1 : 0}
