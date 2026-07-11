@@ -130,24 +130,33 @@ export default function AdminThemeStyles() {
           }
         }
 
-        /* Rudie 2026-07-11: on real mobile viewports the white card
-           chrome (background, border-radius, drop-shadow, fixed
-           max-width) around the email/password/Login/Forgot-password
-           group looks like an odd floating box rather than a page --
-           there's no surrounding content for a "card" to visually
-           separate from. Below 640px, strip the card treatment
-           entirely so the form sits directly on the page background,
-           full-width within its padding, exactly like a native mobile
-           form. Desktop/tablet keep the card (it correctly separates
-           the login form from the page below ~640px viewports where
-           there IS other page chrome around it). */
+        /* Rudie 2026-07-11 + 2026-07-12: on real mobile viewports the
+           white card chrome (background, border-radius, drop-shadow,
+           fixed max-width) around the email/password/Login/
+           Forgot-password group looks like an odd floating box rather
+           than a page -- there's no surrounding content for a "card"
+           to visually separate from. Below 640px, strip the card
+           treatment entirely so the form sits directly on the page
+           background, full-width within its padding, like a native
+           mobile form -- and pull the whole block to the TOP of the
+           viewport (not vertically centred, which on a short mobile
+           screen with the keyboard later opening pushes content
+           around awkwardly) with breathing room above the logo
+           instead. ONLY applies inside this @media block -- desktop/
+           tablet above 640px are completely untouched and keep the
+           centred card exactly as before. */
         @media (max-width: 640px) {
+          .template-minimal {
+            align-items: flex-start;
+            min-height: auto;
+          }
           .template-minimal__wrap {
             max-width: 100%;
             background: none;
             box-shadow: none;
             border-radius: 0;
-            padding: 32px 20px;
+            padding: 0 20px 32px;
+            padding-top: max(32px, env(safe-area-inset-top));
           }
         }
 
@@ -170,6 +179,79 @@ export default function AdminThemeStyles() {
         .login__brand img {
           width: 180px !important;
           height: auto !important;
+        }
+
+        /* Rudie 2026-07-12: /admin/forgot and /admin/reset render via
+           Payload's ForgotPasswordView/ResetPasswordView, which --
+           unlike LoginView -- never include a Logo component at all
+           (confirmed via node_modules/@payloadcms/next/dist/views/
+           ForgotPassword/index.js + ResetPassword/index.js: no Logo
+           import, no dollar-baseClass-brand wrapper). AdminGlobalStyles
+           injects the same AdminLogo unconditionally as a sibling
+           before the page section, then this rule hides it everywhere
+           EXCEPT when a later sibling section carries .forgot-password
+           or .reset-password -- i.e. exactly the two views that are
+           otherwise missing a logo. The login page keeps its own
+           built-in .login__brand block untouched; this injected copy
+           stays hidden there so there's no duplicate. */
+        .admin-brand-inject {
+          display: none;
+        }
+        .admin-brand-inject:has(~ .forgot-password),
+        .admin-brand-inject:has(~ .reset-password) {
+          display: flex;
+          justify-content: center;
+          padding: 48px 40px 0;
+        }
+        @media (max-width: 640px) {
+          .admin-brand-inject:has(~ .forgot-password),
+          .admin-brand-inject:has(~ .reset-password) {
+            padding: max(32px, env(safe-area-inset-top)) 20px 0;
+          }
+        }
+        .admin-brand-inject img {
+          width: 180px !important;
+          height: auto !important;
+        }
+
+        /* Match the login page's own heading/description styling
+           (2026-07-07 impeccable critique) on the forgot-password and
+           reset-password FormHeader block (node_modules/@payloadcms/
+           next/dist/elements/FormHeader/index.js renders a bare
+           a plain form-header div containing h1 + p, with no brand styling applied by
+           Payload's defaults -- this is the actual "CSS not exactly
+           like the login page" gap: the login view has no equivalent
+           heading at all, so there was nothing to match against
+           before beyond generic Payload defaults, but the brand
+           typography/colour/spacing rhythm established for the rest
+           of the login card should extend here too). */
+        .form-header h1 {
+          color: #33483D;
+          font-family: var(--font-sans, 'Montserrat', ui-sans-serif, system-ui, sans-serif);
+          font-weight: 700;
+          font-size: 1.25rem;
+          margin: 0 0 8px;
+          text-align: center;
+        }
+        .form-header p {
+          color: #6B7F74;
+          font-size: 0.875rem;
+          line-height: 1.5;
+          margin: 0 0 24px;
+          text-align: center;
+        }
+        .forgot-password .btn--style-primary,
+        .reset-password .btn--style-primary {
+          width: 100%;
+        }
+        .forgot-password .field-type,
+        .reset-password .field-type {
+          margin-bottom: 16px;
+        }
+        .forgot-password input,
+        .reset-password input {
+          box-sizing: border-box !important;
+          max-width: 100%;
         }
 
         .login__form .field-type {
