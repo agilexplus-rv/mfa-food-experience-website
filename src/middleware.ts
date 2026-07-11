@@ -19,8 +19,18 @@ import type { NextRequest } from 'next/server'
 const PUBLIC_PATHS = [
   '/admin/login',
   '/admin/create-first-user',
-  '/admin/forgot-password',
-  '/admin/reset-password',
+  // Payload's actual default admin routes are /admin/forgot and
+  // /admin/reset (see node_modules/payload/dist/config/defaults.js
+  // routes.forgot / routes.reset) -- NOT /admin/forgot-password /
+  // /admin/reset-password. The wrong paths here meant middleware
+  // treated the real forgot-password page as a PROTECTED route: an
+  // unauthenticated visitor hit /admin/forgot, had no session, and
+  // was redirected straight back to /admin/login?redirect=%2Fadmin%2Fforgot
+  // -- an infinite bounce with the forgot-password page never
+  // rendering. Confirmed 2026-07-11 (Rudie: "nothing happens" at
+  // /admin/login?redirect=%2Fadmin%2Fforgot).
+  '/admin/forgot',
+  '/admin/reset',
   '/api',
   '/_next',
   '/favicon.ico',
