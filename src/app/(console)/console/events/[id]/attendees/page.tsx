@@ -197,7 +197,7 @@ export default function EventAttendeesPage({ params }: { params: Promise<{ id: s
                         Yes
                       </span>
                     ) : (
-                      <span className="text-xs text-text-light">\u2014</span>
+                      <span className="text-xs text-text-light">&mdash;</span>
                     )}
                   </td>
                 </tr>

@@ -148,6 +148,16 @@ export default function ConsoleEventsPage() {
     setModalOpen(true)
   }
 
+  // Repeat-mode helpers: when a recurrence is selected in CREATE mode,
+  // Start/End render as plain time inputs. timePart extracts HH:MM from
+  // either a datetime-local value or an already-bare HH:MM value.
+  const isRepeating = !editingId && repeatFreq !== 'none'
+  const timePart = (v: string): string => {
+    if (!v) return ''
+    if (v.includes('T')) return v.slice(v.indexOf('T') + 1, v.indexOf('T') + 6)
+    return v.slice(0, 5)
+  }
+
   const handleSave = async () => {
     if (!form.title.trim() || !form.serviceId || !form.date) {
       setFormError('Title, service, and date are required.')
@@ -162,8 +172,15 @@ export default function ConsoleEventsPage() {
         // POST expects serviceId; PATCH allowlists 'service'. Send both.
         serviceId: form.serviceId,
         date: form.date,
-        startTime: form.startTime || form.date,
-        endTime: form.endTime || form.date,
+        // When repeating, the pickers give bare HH:MM -- compose them
+        // onto the first-occurrence date; the POST handler then shifts
+        // the time-of-day onto every generated occurrence.
+        startTime: form.startTime
+          ? (form.startTime.includes('T') ? form.startTime : `${form.date}T${form.startTime}`)
+          : form.date,
+        endTime: form.endTime
+          ? (form.endTime.includes('T') ? form.endTime : `${form.date}T${form.endTime}`)
+          : form.date,
         capacity: parseInt(form.capacity, 10) || 1,
         pricePerPerson: parseFloat(form.pricePerPerson) || 0,
         locationRef: form.locationRef,
@@ -359,8 +376,8 @@ export default function ConsoleEventsPage() {
               {repeatFreq !== 'none' && (
                 <p className="mt-2 text-xs text-text-light">
                   Creates one independent event per occurrence (max 52). Each can be
-                  edited or cancelled individually afterwards. Only the <strong>time of
-                  day</strong> from Start/End Time is applied to each occurrence &mdash;
+                  edited or cancelled individually afterwards. Only the <strong>time of day</strong>{' '}
+                  from Start/End Time is applied to each occurrence &mdash;
                   every event in the series runs at the same time on its own date.
                 </p>
               )}
@@ -396,22 +413,35 @@ export default function ConsoleEventsPage() {
             </div>
           )}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {/* For recurring series only the TIME portion propagates:
+                each generated occurrence gets its own date from the
+                repeat rule + this time-of-day (see the POST handler's
+                shiftToDate). When Repeat is on, show plain TIME pickers
+                (no misleading date part -- Rudie 2026-07-12); the form
+                value is composed back to <date>T<time> on save. */}
             <div>
               <label className="block text-sm font-semibold text-lunar-green mb-1">Start Time</label>
-              {/* For recurring series only the TIME portion propagates:
-                  each generated occurrence gets its own date from the
-                  repeat rule + this time-of-day (see the POST handler's
-                  shiftToDate). The date part of this picker applies to
-                  the first occurrence only. */}
-              <input type="datetime-local" value={form.startTime} onChange={(e) => setForm(p => ({ ...p, startTime: e.target.value }))}
-                className="w-full rounded-lg border border-border px-4 py-2.5 text-sm text-lunar-green focus:outline-none focus:ring-2 focus:ring-lunar-green/30"
-                style={{ boxSizing: 'border-box' }} />
+              {isRepeating ? (
+                <input type="time" value={timePart(form.startTime)} onChange={(e) => setForm(p => ({ ...p, startTime: e.target.value }))}
+                  className="w-full rounded-lg border border-border px-4 py-2.5 text-sm text-lunar-green focus:outline-none focus:ring-2 focus:ring-lunar-green/30"
+                  style={{ boxSizing: 'border-box' }} />
+              ) : (
+                <input type="datetime-local" value={form.startTime} onChange={(e) => setForm(p => ({ ...p, startTime: e.target.value }))}
+                  className="w-full rounded-lg border border-border px-4 py-2.5 text-sm text-lunar-green focus:outline-none focus:ring-2 focus:ring-lunar-green/30"
+                  style={{ boxSizing: 'border-box' }} />
+              )}
             </div>
             <div>
               <label className="block text-sm font-semibold text-lunar-green mb-1">End Time</label>
-              <input type="datetime-local" value={form.endTime} onChange={(e) => setForm(p => ({ ...p, endTime: e.target.value }))}
-                className="w-full rounded-lg border border-border px-4 py-2.5 text-sm text-lunar-green focus:outline-none focus:ring-2 focus:ring-lunar-green/30"
-                style={{ boxSizing: 'border-box' }} />
+              {isRepeating ? (
+                <input type="time" value={timePart(form.endTime)} onChange={(e) => setForm(p => ({ ...p, endTime: e.target.value }))}
+                  className="w-full rounded-lg border border-border px-4 py-2.5 text-sm text-lunar-green focus:outline-none focus:ring-2 focus:ring-lunar-green/30"
+                  style={{ boxSizing: 'border-box' }} />
+              ) : (
+                <input type="datetime-local" value={form.endTime} onChange={(e) => setForm(p => ({ ...p, endTime: e.target.value }))}
+                  className="w-full rounded-lg border border-border px-4 py-2.5 text-sm text-lunar-green focus:outline-none focus:ring-2 focus:ring-lunar-green/30"
+                  style={{ boxSizing: 'border-box' }} />
+              )}
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
