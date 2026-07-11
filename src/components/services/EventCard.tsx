@@ -106,14 +106,14 @@ export function EventCard({
         </div>
       </dl>
 
-      <div className="mt-6 flex items-center justify-end gap-3 pt-4 border-t border-border">
+      <div className="mt-6 pt-4 border-t border-border">
         <Link
           href={linkHref}
           aria-label={fullyBooked ? `${title} — fully booked` : `Book ${title}`}
           aria-disabled={fullyBooked}
           tabIndex={fullyBooked ? -1 : 0}
           className={[
-            'inline-flex items-center gap-1.5 rounded-lg px-5 py-2.5 text-sm font-bold transition-colors',
+            'flex w-full items-center justify-center gap-1.5 rounded-lg px-5 py-2.5 text-sm font-bold transition-colors',
             'focus:outline-2 focus:outline-offset-2 focus:outline-terracotta',
             fullyBooked
               ? 'cursor-not-allowed bg-lunar-green/10 text-lunar-green/50'
