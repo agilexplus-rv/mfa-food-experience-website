@@ -95,7 +95,7 @@ export async function POST(req: NextRequest) {
   }
 
   const verifiedToken = await createMfaVerifiedToken(userId)
-  const response = NextResponse.json({ success: true, redirect: '/admin' })
+  const response = NextResponse.json({ success: true, redirect: '/console' })
   response.cookies.set(MFA_VERIFIED_COOKIE, verifiedToken, MFA_COOKIE_OPTIONS)
   return response
 }

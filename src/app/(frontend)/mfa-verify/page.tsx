@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 function MfaVerifyForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const redirectTo = searchParams.get('redirect') || '/admin'
+  const redirectTo = searchParams.get('redirect') || '/console'
   const [digits, setDigits] = useState<string[]>(['', '', '', '', '', ''])
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)

@@ -125,7 +125,7 @@ export default function MfaSetupPage() {
         // user retries; do not block the redirect attempt on this.
       }
       setTimeout(() => {
-        window.location.href = '/admin'
+        window.location.href = '/console'
       }, 1500)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Verification failed')
@@ -186,7 +186,7 @@ export default function MfaSetupPage() {
           </div>
           <h1 className="mfa-title">MFA Enabled</h1>
           <p className="mfa-subtitle">
-            Two-factor authentication is now active. Redirecting to admin…
+            Two-factor authentication is now active. Redirecting to the console…
           </p>
         </div>
         <style>{mfaStyles}</style>
