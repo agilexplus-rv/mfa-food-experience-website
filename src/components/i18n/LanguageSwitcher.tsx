@@ -1,9 +1,16 @@
 "use client"
 
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 
 /**
- * LanguageSwitcher — EN | MT pill toggle.
+ * LanguageSwitcher — EN | MT dropdown.
+ *
+ * 2026-07-12 (Rudie): converted from a two-pill button toggle to a
+ * dropdown. All selection/consent/cookie logic is UNCHANGED -- only the
+ * presentation layer moved from two always-visible buttons to a single
+ * trigger button + options menu. The extensive root-cause notes below
+ * (stale consent, googtrans cookie encoding, CSP, self-healing
+ * re-activation) all still apply verbatim.
  *
  * Safe to render multiple times simultaneously (e.g. once in SiteHeader
  * for desktop, once inside MobileNav's drawer for mobile — both are
@@ -104,9 +111,40 @@ function deleteCookie(name: string): void {
   document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; SameSite=Lax; Secure`
 }
 
+const LANG_OPTIONS: { value: Lang; label: string; flag: string }[] = [
+  // UK flag is the conventional flag for the English option on
+  // Malta-facing sites (gov.mt and equivalents use the same EN=UK /
+  // MT=Malta pairing since "English flag" isn't a distinct national flag).
+  { value: "en", label: "English", flag: "🇬🇧" },
+  { value: "mt", label: "Malti", flag: "🇲🇹" },
+]
+
 export function LanguageSwitcher() {
   const [lang, setLang] = useState<Lang>("en")
   const [showConsent, setShowConsent] = useState(false)
+  const [open, setOpen] = useState(false)
+  const rootRef = useRef<HTMLDivElement>(null)
+
+  // Close the dropdown on any outside click/tap or Escape. Safe with two
+  // simultaneously-mounted instances (desktop header + mobile drawer):
+  // each instance only closes ITSELF, keyed off its own rootRef.
+  useEffect(() => {
+    if (!open) return
+    const onPointerDown = (e: PointerEvent) => {
+      if (rootRef.current && !rootRef.current.contains(e.target as Node)) {
+        setOpen(false)
+      }
+    }
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false)
+    }
+    document.addEventListener("pointerdown", onPointerDown)
+    document.addEventListener("keydown", onKeyDown)
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown)
+      document.removeEventListener("keydown", onKeyDown)
+    }
+  }, [open])
 
   // Restore language on mount, from the `lang` cookie. Consent is
   // deliberately NOT cached into state here (see the FOURTH root cause
@@ -186,6 +224,7 @@ export function LanguageSwitcher() {
   // after it mounted, or in a previous session.
   const handleSelect = useCallback(
     (target: Lang) => {
+      setOpen(false)
       if (target === "en") {
         activate("en")
         return
@@ -215,43 +254,73 @@ export function LanguageSwitcher() {
     setCookie(LANG_COOKIE, "en", 1)
   }, [])
 
-  const pillBase =
-    "flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold transition-colors focus:outline-2 focus:outline-offset-1 focus:outline-matte-gold"
+  const current = LANG_OPTIONS.find((o) => o.value === lang) ?? LANG_OPTIONS[0]
 
   return (
-    <div className="relative flex items-center gap-1">
-      {/* EN pill -- UK flag, the conventional flag used for the English
-          option on Malta-facing sites (gov.mt and equivalents use the same
-          EN=UK / MT=Malta pairing since "English flag" isn't a distinct
-          national flag). */}
+    <div ref={rootRef} className="relative flex items-center">
+      {/* Dropdown trigger -- shows the currently active language */}
       <button
         type="button"
-        onClick={() => handleSelect("en")}
-        aria-pressed={lang === "en"}
-        className={`${pillBase} ${
-          lang === "en"
-            ? "bg-soft-beige text-lunar-green"
-            : "border border-soft-beige/30 text-soft-beige/70 hover:bg-terracotta hover:text-soft-beige"
-        }`}
+        onClick={() => setOpen((v) => !v)}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-label={`Language: ${current.label}. Change language`}
+        className="flex items-center gap-1.5 rounded-full border border-soft-beige/30 px-3 py-1 text-xs font-semibold text-soft-beige transition-colors hover:border-soft-beige/60 focus:outline-2 focus:outline-offset-1 focus:outline-matte-gold"
       >
-        <span aria-hidden="true" className="text-sm leading-none">🇬🇧</span>
-        EN
+        <span aria-hidden="true" className="text-sm leading-none">{current.flag}</span>
+        {current.value.toUpperCase()}
+        {/* Chevron -- rotates when open */}
+        <svg
+          aria-hidden="true"
+          viewBox="0 0 12 12"
+          className={`h-3 w-3 transition-transform ${open ? "rotate-180" : ""}`}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.75"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M2.5 4.5 6 8l3.5-3.5" />
+        </svg>
       </button>
 
-      {/* MT pill -- Malta flag */}
-      <button
-        type="button"
-        onClick={() => handleSelect("mt")}
-        aria-pressed={lang === "mt"}
-        className={`${pillBase} ${
-          lang === "mt"
-            ? "bg-soft-beige text-lunar-green"
-            : "border border-soft-beige/30 text-soft-beige/70 hover:bg-terracotta hover:text-soft-beige"
-        }`}
-      >
-        <span aria-hidden="true" className="text-sm leading-none">🇲🇹</span>
-        MT
-      </button>
+      {/* Options menu */}
+      {open && (
+        <ul
+          role="listbox"
+          aria-label="Select language"
+          className="absolute right-0 top-full z-50 mt-2 w-40 overflow-hidden rounded-lg border border-matte-gold/40 bg-soft-beige py-1 text-lunar-green shadow-lg"
+        >
+          {LANG_OPTIONS.map((opt) => (
+            <li key={opt.value} role="option" aria-selected={lang === opt.value}>
+              <button
+                type="button"
+                onClick={() => handleSelect(opt.value)}
+                className={`flex w-full items-center gap-2.5 px-4 py-2 text-left text-sm transition-colors hover:bg-lunar-green/10 focus:outline-2 focus:-outline-offset-2 focus:outline-matte-gold ${
+                  lang === opt.value ? "font-bold" : "font-medium"
+                }`}
+              >
+                <span aria-hidden="true" className="text-base leading-none">{opt.flag}</span>
+                {opt.label}
+                {lang === opt.value && (
+                  <svg
+                    aria-hidden="true"
+                    viewBox="0 0 12 12"
+                    className="ml-auto h-3.5 w-3.5 text-lunar-green"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.75"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M2 6.5 4.5 9 10 3.5" />
+                  </svg>
+                )}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
 
       {/* Cookie-consent gate */}
       {showConsent && (
