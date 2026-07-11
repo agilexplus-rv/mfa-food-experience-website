@@ -6,7 +6,7 @@ export const Users: CollectionConfig = {
   auth: {
     maxLoginAttempts: 5,
     lockTime: 15 * 60 * 1000, // 15-minute lockout per ADR-008 C5
-    useAPIKey: true,
+    useAPIKey: false,
     forgotPassword: {
       generateEmailSubject: () =>
         'Malta Food Experience — Reset your password',
@@ -154,8 +154,36 @@ export const Users: CollectionConfig = {
       },
     ],
     afterLogin: [
-      async ({ user }) => {
-        const u = user as { role?: string; mfaEnabled?: boolean; id?: string | number }
+      async ({ user, req }) => {
+        const u = user as { role?: string; mfaEnabled?: boolean; id?: string | number; email?: string }
+
+        // Write a 'login' entry to the audit log. This runs server-side
+        // in Payload's afterLogin hook, so we have the full req.payload
+        // Local API available. Uses overrideAccess: true because the
+        // audit_logs collection's create access is () => true anyway,
+        // but we want to ensure the write succeeds even if access
+        // rules change later.
+        //
+        // ROOT CAUSE of "missing login/logout in audit log": this hook
+        // previously ONLY did a console.info for MFA warnings and never
+        // wrote an audit_logs entry. Login events were never persisted.
+        try {
+          await req.payload.create({
+            collection: 'audit_logs',
+            overrideAccess: true,
+            data: {
+              action: 'login',
+              actor: u.id,
+              collection: 'users',
+              documentId: String(u.id ?? ''),
+              detail: `User ${u.email || '(unknown)'} logged in (role: ${u.role || 'unknown'})`,
+            },
+          })
+        } catch (err) {
+          // Best-effort: do not block login if audit-log write fails.
+          console.error('[AuditLog] Failed to write login entry:', err)
+        }
+
         if (u.role === 'admin' && !u.mfaEnabled) {
           console.info(
             `[MFA] Admin user ${u.id} logged in without MFA. Redirecting to /mfa-setup for enrollment.`,
