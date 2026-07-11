@@ -28,6 +28,7 @@ const NAV_LINKS = [
   { label: "Experiences", href: "/services" },
   { label: "Classes", href: "/services/classes" },
   { label: "Testimonials", href: "/testimonials" },
+  { label: "Contact Us", href: "/contact" },
   { label: "Book Now", href: "/services" },
 ]
 
