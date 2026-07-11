@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react'
 import AdminThemeStyles from './AdminThemeStyles'
 import AdminLogo from './AdminLogo'
+import AdminBrandReparent from './AdminBrandReparent'
+import AdminSubmitOverlay from './AdminSubmitOverlay'
 
 /**
  * Wraps EVERY admin route (login, forgot-password, reset-password,
@@ -41,6 +43,8 @@ export default function AdminGlobalStyles({ children }: { children?: ReactNode }
       <div className="admin-brand-inject">
         <AdminLogo />
       </div>
+      <AdminBrandReparent />
+      <AdminSubmitOverlay />
       {children}
     </>
   )

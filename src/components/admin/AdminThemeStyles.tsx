@@ -53,6 +53,35 @@ export default function AdminThemeStyles() {
           font-family: var(--font-sans, 'Montserrat', ui-sans-serif, system-ui, sans-serif);
         }
 
+        /* Snags #2 + #4 (2026-07-12): on mobile, the login/forgot/
+           reset pages set .template-minimal to min-height: auto (see
+           the max-width:640px block below) so the page can be as
+           short as its content rather than always filling the full
+           viewport height. If the form content is shorter than the
+           viewport, the leftover space below it would otherwise show
+           the browser's default body background (white) instead of
+           matching the card/page colour -- Payload's own stylesheet
+           never sets an explicit background-color on html/body (only
+           on specific components), so this was previously relying
+           entirely on .template-minimal's own background, which only
+           covers its own box, not the full page below a short-content
+           mobile view. Setting it explicitly here on html/body
+           guarantees the ENTIRE viewport (not just the template's own
+           box) always matches --theme-bg, which is the same colour
+           .template-minimal__wrap uses for its card background on
+           desktop and the same colour the page falls back to on
+           mobile once the card chrome is stripped -- i.e. body,
+           .template-minimal, and .template-minimal__wrap are now
+           guaranteed to share one identical colour end-to-end. */
+        html,
+        body {
+          background-color: #F9F4EF;
+        }
+        html[data-theme='dark'],
+        html[data-theme='dark'] body {
+          background-color: #1E2A24;
+        }
+
         /* Primary buttons (Login, Save, etc.) match the public site's
            primary CTA pattern exactly (see e.g. src/components/home/
            Hero.tsx's "Book an Event" button: rounded-lg, bold, soft-beige
@@ -181,33 +210,46 @@ export default function AdminThemeStyles() {
           height: auto !important;
         }
 
-        /* Rudie 2026-07-12: /admin/forgot and /admin/reset render via
-           Payload's ForgotPasswordView/ResetPasswordView, which --
-           unlike LoginView -- never include a Logo component at all
-           (confirmed via node_modules/@payloadcms/next/dist/views/
-           ForgotPassword/index.js + ResetPassword/index.js: no Logo
-           import, no dollar-baseClass-brand wrapper). AdminGlobalStyles
-           injects the same AdminLogo unconditionally as a sibling
-           before the page section, then this rule hides it everywhere
-           EXCEPT when a later sibling section carries .forgot-password
-           or .reset-password -- i.e. exactly the two views that are
-           otherwise missing a logo. The login page keeps its own
-           built-in .login__brand block untouched; this injected copy
-           stays hidden there so there's no duplicate. */
+        /* Rudie 2026-07-12 (snags #3 + #4): /admin/forgot and
+           /admin/reset render via Payload's ForgotPasswordView/
+           ResetPasswordView, which -- unlike LoginView -- never
+           include a Logo component at all (confirmed via
+           node_modules/@payloadcms/next/dist/views/ForgotPassword/
+           index.js + ResetPassword/index.js: no Logo import, no
+           brand wrapper). AdminGlobalStyles renders the same
+           AdminLogo, and AdminBrandReparent.tsx (a small client-side
+           effect, since no config-level override slot exists for
+           these two views) physically moves it to be the FIRST CHILD
+           of .template-minimal__wrap on those two pages specifically
+           -- i.e. literally the same div that contains the email
+           field and submit button, matching the exact request rather
+           than an adjacent box that only looked similar. This class
+           now styles the logo AS a normal child of that wrap (no
+           longer floating outside it via :has() sibling-targeting),
+           and .template-minimal__wrap's own background/padding rules
+           above already make its background match the surrounding
+           page (#FFFFFF card on desktop, transparent/page-colour on
+           mobile per the max-width:640px rules) -- so satisfying
+           "logo in the same div" also directly satisfies "forgot-
+           password mobile background matches the div enclosing
+           email/password/button", since they're now the same element
+           by construction, not just colour-matched independently. */
         .admin-brand-inject {
           display: none;
         }
-        .admin-brand-inject:has(~ .forgot-password),
-        .admin-brand-inject:has(~ .reset-password) {
+        /* Once AdminBrandReparent.tsx has moved it inside
+           .template-minimal__wrap on the forgot/reset pages, it
+           becomes a DESCENDANT of section.forgot-password /
+           .reset-password -- this is what actually reveals it.
+           On the login page it is never moved (stays an un-relocated
+           sibling before section.login), so it stays display:none
+           there and the login page's own native .login__brand block
+           remains the only visible logo -- no duplicate. */
+        .forgot-password .admin-brand-inject,
+        .reset-password .admin-brand-inject {
           display: flex;
           justify-content: center;
-          padding: 48px 40px 0;
-        }
-        @media (max-width: 640px) {
-          .admin-brand-inject:has(~ .forgot-password),
-          .admin-brand-inject:has(~ .reset-password) {
-            padding: max(32px, env(safe-area-inset-top)) 20px 0;
-          }
+          margin-bottom: 32px;
         }
         .admin-brand-inject img {
           width: 180px !important;
@@ -243,6 +285,23 @@ export default function AdminThemeStyles() {
         .forgot-password .btn--style-primary,
         .reset-password .btn--style-primary {
           width: 100%;
+        }
+
+        /* Snag #1 (2026-07-12): style the "Back to login" link
+           (ForgotPasswordView / ResetPassword render it as a bare <a>
+           sibling after the form -- see node_modules/@payloadcms/next/
+           dist/views/ForgotPassword/index.js + ResetPassword/index.js)
+           to EXACTLY match the "Forgot password?" link's typography on
+           the login page (small, same font-size/margin-top -- see the
+           .login__form > a rule further down), except centred instead
+           of right-aligned, since there's no button for it to visually
+           pair with here the way "Forgot password?" pairs with Login. */
+        .forgot-password .template-minimal__wrap > a,
+        .reset-password .template-minimal__wrap > a {
+          display: block;
+          text-align: center;
+          font-size: 0.75rem;
+          margin-top: 12px;
         }
         .forgot-password .field-type,
         .reset-password .field-type {
@@ -318,14 +377,61 @@ export default function AdminThemeStyles() {
            centering above. Without this, a toast (e.g. "incorrect email
            or password") can render far down an artificially-tall page
            and be invisible without scrolling -- a real, confirmed P0
-           bug found during design review (2026-07-07 critique). */
+           bug found during design review (2026-07-07 critique).
+           2026-07-12: position is now top-center + 30s duration via
+           payload.config.ts's admin.toast (a first-class documented
+           option -- position/timing no longer need a CSS override),
+           but this fixed/pinned rule stays as the same safety net,
+           now anchored top instead of bottom, and widened into a
+           full-viewport-width floating BANNER look per explicit
+           design direction, rather than a small corner toast. */
         section[aria-label="Notifications alt+T"] {
           position: fixed !important;
-          bottom: 24px !important;
-          right: 24px !important;
-          left: auto !important;
-          top: auto !important;
+          top: 0 !important;
+          left: 0 !important;
+          right: 0 !important;
+          bottom: auto !important;
+          width: 100% !important;
+          display: flex;
+          justify-content: center;
           z-index: 9999 !important;
+          padding-top: env(safe-area-inset-top, 0px);
+        }
+        section[aria-label="Notifications alt+T"] [data-sonner-toaster] {
+          width: min(560px, calc(100vw - 32px)) !important;
+        }
+        /* Banner styling: brand-coloured left border keyed to toast
+           type (error/success/warning/info), full readable width,
+           generous padding, and a properly sized/clickable close (X)
+           button -- Payload's Sonner wrapper already renders a close
+           button by default (closeButton: true in ToastContainer),
+           this just makes it visually match the banner treatment
+           instead of the tiny default corner-toast affordance. */
+        [data-sonner-toaster] [data-sonner-toast] {
+          border-radius: 10px;
+          border-width: 1px;
+          border-left-width: 4px;
+          padding: 16px 44px 16px 20px;
+          font-size: 0.9375rem;
+          box-shadow: 0 8px 24px rgba(51, 72, 61, 0.16);
+        }
+        [data-sonner-toaster] [data-sonner-toast][data-type="error"] {
+          border-left-color: #C9643D;
+        }
+        [data-sonner-toaster] [data-sonner-toast][data-type="success"] {
+          border-left-color: #33483D;
+        }
+        [data-sonner-toaster] [data-sonner-toast][data-type="warning"],
+        [data-sonner-toaster] [data-sonner-toast][data-type="loading"] {
+          border-left-color: #B8974D;
+        }
+        [data-sonner-toaster] [data-close-button] {
+          width: 24px !important;
+          height: 24px !important;
+          opacity: 0.7;
+        }
+        [data-sonner-toaster] [data-close-button]:hover {
+          opacity: 1;
         }
       }
     `}</style>
