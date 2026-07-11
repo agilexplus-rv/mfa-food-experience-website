@@ -20,7 +20,8 @@ import { useEffect, useState } from 'react'
  * `"data-form-ready": !processing && isMounted && !initializing`).
  * This component watches that attribute via MutationObserver (cheap,
  * no polling) and toggles a full-viewport overlay that:
- *   - shows a centred circular spinner + "Submitting..." label,
+ *   - shows a centred circular spinner + a page-appropriate label
+ *     (see below -- 2026-07-12),
  *   - sets `pointer-events: none` + a transparent full-screen catcher
  *     so the user physically cannot interact with anything underneath
  *     (form fields, browser back-navigation link clicks inside the
@@ -31,9 +32,20 @@ import { useEffect, useState } from 'react'
  *     prevent -- only in-page interaction is blocked, matching what
  *     "does not let the user close before submission" can mean at the
  *     DOM level).
+ *
+ * Rudie 2026-07-12: label text must match the actual action --
+ * "Logging in…" on /admin/login, "Submitting…" on /admin/forgot and
+ * /admin/reset (the only other pages this overlay currently covers).
+ * Detected via the page's own root section class -- login/forgot-
+ * password/reset-password are Payload's own stable base classNames
+ * for these views (see loginBaseClass/forgotPasswordBaseClass/
+ * resetPasswordBaseClass in their respective view source files),
+ * present on <section> since the very first paint, so this is a
+ * reliable signal rather than guessing from form field names.
  */
 export default function AdminSubmitOverlay() {
   const [visible, setVisible] = useState(false)
+  const [label, setLabel] = useState('Submitting…')
 
   useEffect(() => {
     const forms = () => Array.from(document.querySelectorAll<HTMLFormElement>('form.form'))
@@ -41,6 +53,10 @@ export default function AdminSubmitOverlay() {
     const check = () => {
       const anyProcessing = forms().some((f) => f.getAttribute('data-form-ready') === 'false')
       setVisible(anyProcessing)
+      if (anyProcessing) {
+        const isLogin = !!document.querySelector('section.login')
+        setLabel(isLogin ? 'Logging in…' : 'Submitting…')
+      }
     }
 
     check()
@@ -64,7 +80,7 @@ export default function AdminSubmitOverlay() {
     <div
       role="status"
       aria-live="polite"
-      aria-label="Submitting, please wait"
+      aria-label={`${label} please wait`}
       style={{
         position: 'fixed',
         inset: 0,
@@ -98,7 +114,7 @@ export default function AdminSubmitOverlay() {
           letterSpacing: '0.01em',
         }}
       >
-        Submitting…
+        {label}
       </span>
       <style>{`
         @keyframes admin-submit-spin {
