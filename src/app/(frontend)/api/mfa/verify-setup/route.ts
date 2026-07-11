@@ -5,6 +5,11 @@ import config from '@payload-config'
 import { verifySession } from '@/lib/rbac/verify-session'
 import { decryptTotpSecret } from '@/lib/mfa/encryption'
 import { verifyTotpCode } from '@/lib/mfa/totp'
+import {
+  createMfaVerifiedToken,
+  MFA_VERIFIED_COOKIE,
+  MFA_COOKIE_OPTIONS,
+} from '@/lib/mfa/session'
 
 let _payload: Payload | null = null
 async function payload(): Promise<Payload> {
@@ -85,9 +90,25 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  return NextResponse.json({
+  // Rudie 2026-07-12 ("Redirecting to admin... never redirects"):
+  // set the mfa-verified cookie here too, exactly like verify-login
+  // does. The user has JUST proven TOTP possession by entering a
+  // valid code -- bouncing them to /mfa-verify to re-enter another
+  // code seconds later (which is what middleware's
+  // `mfaEnabled && !hasMfaVerifiedCookie` rule would otherwise do
+  // once the JWT is refreshed) is pointless friction. The client
+  // additionally refreshes the Payload JWT before navigating (see
+  // mfa-setup/page.tsx) because mfaEnabled is baked into the JWT at
+  // login time (saveToJWT: true) and middleware reads the STALE
+  // claim: without a refresh, `role=admin && !mfaEnabled` keeps
+  // redirecting /admin straight back to /mfa-setup forever -- the
+  // actual root cause of the stuck "Redirecting to admin..." screen.
+  const verifiedToken = await createMfaVerifiedToken(String(currentUser.id))
+  const response = NextResponse.json({
     success: true,
     message:
       'MFA setup complete. You will need a verification code on next login.',
   })
+  response.cookies.set(MFA_VERIFIED_COOKIE, verifiedToken, MFA_COOKIE_OPTIONS)
+  return response
 }

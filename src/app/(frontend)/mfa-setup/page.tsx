@@ -1,11 +1,9 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
 import QRCode from 'qrcode'
 
 export default function MfaSetupPage() {
-  const router = useRouter()
   const [step, setStep] = useState<'loading' | 'scan' | 'verifying' | 'done' | 'error'>('loading')
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null)
   const [manualKey, setManualKey] = useState<string | null>(null)
@@ -108,7 +106,27 @@ export default function MfaSetupPage() {
         throw new Error(data.error || 'Verification failed')
       }
       setStep('done')
-      setTimeout(() => router.push('/admin'), 2000)
+      // Refresh the Payload JWT BEFORE navigating: mfaEnabled is baked
+      // into the JWT at login time (saveToJWT: true on the field), so
+      // the cookie issued at login still says mfaEnabled=false even
+      // though the DB now says true. Middleware reads the stale JWT
+      // claim and its admin-without-MFA rule would redirect /admin
+      // straight back to /mfa-setup forever -- the root cause of the
+      // stuck "Redirecting to admin..." screen (Rudie, 2026-07-12).
+      // /api/users/refresh-token is Payload's built-in auth endpoint;
+      // it re-signs the JWT from CURRENT user state and Set-Cookies it.
+      // Then use a hard navigation (not router.push) so the request
+      // carries the fresh cookie through middleware with no client-
+      // side router cache involved.
+      try {
+        await fetch('/api/users/refresh-token', { method: 'POST' })
+      } catch {
+        // Non-fatal: worst case middleware bounces back here and the
+        // user retries; do not block the redirect attempt on this.
+      }
+      setTimeout(() => {
+        window.location.href = '/admin'
+      }, 1500)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Verification failed')
       setStep('scan')
