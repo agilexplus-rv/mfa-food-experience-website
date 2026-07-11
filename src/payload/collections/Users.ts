@@ -135,9 +135,36 @@ export const Users: CollectionConfig = {
             }
           }
         }
-        // Prevent non-admin users from changing their own role
+        // Prevent non-admin users from changing their own role.
+        //
+        // ROOT CAUSE of the 2026-07-12 "Failed to store TOTP secret"
+        // bug: Payload's beforeChange hook receives the FULL MERGED
+        // document for update operations -- data.role is the user's
+        // EXISTING role on every single update, whether or not role
+        // was part of the fields actually being changed. The previous
+        // `data?.role !== undefined` check therefore fired on every
+        // update to any user record (any update always has a role
+        // present in the merged data), not just genuine role-change
+        // attempts. This tripped /api/mfa/enroll's payload.update()
+        // call (which only sends { totpSecret }, never role) because
+        // that Local API call also has no req.user (it uses
+        // overrideAccess: true rather than an authenticated request
+        // context), so `user?.role !== 'admin'` was also always true
+        // -- confirmed via a temporary diagnostic route reproducing
+        // the exact call and surfacing the underlying error message
+        // ("Only admins can change user roles.") instead of the
+        // generic 500 the enroll route's catch-all wraps it in.
+        //
+        // Fix: compare against originalDoc.role to detect an ACTUAL
+        // change, not mere presence -- this is what should have been
+        // checked from the start.
         const roleChange = data?.role as string | undefined
-        if (operation === 'update' && roleChange !== undefined) {
+        if (
+          operation === 'update' &&
+          roleChange !== undefined &&
+          originalDoc &&
+          roleChange !== originalDoc.role
+        ) {
           const user = req.user as { role?: string } | null
           if (user?.role !== 'admin') {
             throw new Error('Only admins can change user roles.')
