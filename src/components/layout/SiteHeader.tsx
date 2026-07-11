@@ -15,14 +15,23 @@ const NAV_LINKS = [
 export function SiteHeader() {
   return (
     <header className="sticky top-0 z-50 bg-lunar-green text-soft-beige">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-3">
+      {/* True-centre layout (Rudie 2026-07-12): previously a
+          justify-between flex row, which centres the nav between two
+          UNEQUAL neighbours (210px logo vs the wider search+language
+          group), so the nav sat visibly off the real screen centre.
+          On md+ this is now a 3-column grid with equal flexible outer
+          columns (1fr auto 1fr): the middle column is mathematically
+          centred in the container no matter how wide either side is.
+          Below md it stays a flex row (logo left, hamburger right --
+          nothing to centre). */}
+      <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-3 md:grid md:grid-cols-[1fr_auto_1fr]">
         {/* Logo sizing (Rudie 2026-07-12): "a bit smaller, but not so
             small" -- stepped down ~15-20% from the previous
             140/180/260px to 120/150/210px. Still prominent on desktop
             per the original NFR-1 larger-logo requirement, still
             responsive-capped on mobile so it doesn't crowd the
             hamburger/language-switcher group on narrow viewports. */}
-        <Link href="/" className="min-w-0 flex-shrink">
+        <Link href="/" className="min-w-0 flex-shrink md:justify-self-start">
           <Logo
             variant="inverted"
             size="lg"
@@ -31,7 +40,7 @@ export function SiteHeader() {
         </Link>
 
         {/* Navigation — desktop only, hidden below md (<960px) */}
-        <nav className="hidden items-center gap-1 md:flex">
+        <nav className="hidden items-center gap-1 md:flex md:justify-self-center">
           {NAV_LINKS.map((link) => (
             <Link
               key={link.label}
@@ -43,7 +52,7 @@ export function SiteHeader() {
           ))}
         </nav>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 md:justify-self-end">
           {/* Site search — desktop only, hidden below md.
               On mobile it lives inside the MobileNav drawer. */}
           <div className="hidden md:block">
