@@ -1,5 +1,4 @@
 import { getPayload } from 'payload'
-import { MtText } from "@/components/i18n/MtText"
 import config from '@payload-config'
 import { Logo } from "@/components/brand/Logo"
 import type { ReactElement } from "react"
@@ -30,7 +29,6 @@ const NAV_LINKS = [
   { label: "Classes", href: "/services/classes" },
   { label: "Testimonials", href: "/testimonials" },
   { label: "Contact Us", href: "/contact" },
-  { label: "Book Now", mt: "Ibbukkja Issa", href: "/services" },
 ]
 
 const LEGAL_LINKS = [
@@ -176,7 +174,7 @@ export async function SiteFooter() {
                 href={link.href}
                 className="text-sm font-semibold text-soft-beige transition-colors hover:text-matte-gold focus:outline-2 focus:outline-offset-1 focus:outline-matte-gold"
               >
-                {('mt' in link && link.mt) ? <MtText en={link.label} mt={link.mt} /> : link.label}
+                {link.label}
               </Link>
             ))}
           </nav>
