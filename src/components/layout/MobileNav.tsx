@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import { MtText } from "@/components/i18n/MtText"
 import { useEffect, useRef, useState } from "react"
 import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher"
 import { SiteSearch } from "@/components/search/SiteSearch"
@@ -25,7 +26,7 @@ const NAV_LINKS = [
   { label: "Home", href: "/" },
   { label: "About", href: "/about" },
   { label: "Experiences", href: "/services" },
-  { label: "Book Now", href: "/services" },
+  { label: "Book Now", mt: "Ibbukkja Issa", href: "/services" },
 ]
 
 export function MobileNav() {
@@ -148,7 +149,7 @@ export function MobileNav() {
               onClick={() => setOpen(false)}
               className="rounded-md px-3 py-3 text-base font-semibold text-soft-beige transition-colors hover:bg-soft-beige/10 hover:text-matte-gold focus:outline-2 focus:outline-offset-1 focus:outline-matte-gold"
             >
-              {link.label}
+              {('mt' in link && link.mt) ? <MtText en={link.label} mt={link.mt} /> : link.label}
             </Link>
           ))}
         </nav>

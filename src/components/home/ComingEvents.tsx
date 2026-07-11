@@ -1,6 +1,7 @@
 import { getPayload } from 'payload'
 import config from '@payload-config'
 import Link from 'next/link'
+import { MtText } from '@/components/i18n/MtText'
 import { formatPrice, getAvailabilityForEvents } from '@/lib/availability'
 import { formatDay, formatTimeRange } from '@/lib/format-date'
 import type { EventDoc } from '@/lib/availability-types'
@@ -92,7 +93,7 @@ export async function ComingEvents() {
                         : 'bg-terracotta text-soft-beige hover:bg-terracotta/85',
                     ].join(' ')}
                   >
-                    {fullyBooked ? 'Full' : 'Book'}
+                    {fullyBooked ? <MtText en="Full" mt="Mimli" /> : <MtText en="Book" mt="Ibbukkja" />}
                   </Link>
                 </div>
               </article>

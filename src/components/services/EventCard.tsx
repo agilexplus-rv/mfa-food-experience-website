@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { MtText } from '@/components/i18n/MtText'
 
 import type { EventAvailability } from '@/lib/availability-types'
 import { formatPrice } from '@/lib/availability-types'
@@ -120,7 +121,7 @@ export function EventCard({
               : 'bg-terracotta text-soft-beige hover:bg-terracotta/85',
           ].join(' ')}
         >
-          {fullyBooked ? 'Fully booked' : 'Book'}
+          {fullyBooked ? <MtText en="Fully booked" mt="Kollox mibbukkjat" /> : <MtText en="Book" mt="Ibbukkja" />}
           {!fullyBooked && <span aria-hidden="true">&rarr;</span>}
         </Link>
       </div>

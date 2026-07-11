@@ -1,4 +1,5 @@
 import { Logo } from "@/components/brand/Logo"
+import { MtText } from "@/components/i18n/MtText"
 import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher"
 import { MobileNav } from "@/components/layout/MobileNav"
 import { SiteSearch } from "@/components/search/SiteSearch"
@@ -10,7 +11,7 @@ const NAV_LINKS = [
   { label: "Experiences", href: "/services" },
   // "Tastings" intentionally omitted from nav — Tastings.visible=false
   // per FR-1.2; its route returns the "not available" state (FR-1.3).
-  { label: "Book Now", href: "/services" },
+  { label: "Book Now", mt: "Ibbukkja Issa", href: "/services" },
 ]
 
 export function SiteHeader() {
@@ -39,7 +40,7 @@ export function SiteHeader() {
               href={link.href}
               className="rounded px-4 py-2 text-sm font-semibold text-soft-beige transition-colors hover:text-matte-gold focus:outline-2 focus:outline-offset-1 focus:outline-matte-gold"
             >
-              {link.label}
+              {('mt' in link && link.mt) ? <MtText en={link.label} mt={link.mt} /> : link.label}
             </Link>
           ))}
         </nav>

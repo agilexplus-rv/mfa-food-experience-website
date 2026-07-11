@@ -1,4 +1,5 @@
 import { getPayload } from 'payload'
+import { MtText } from '@/components/i18n/MtText'
 import config from '@payload-config'
 import Link from "next/link"
 import { Logo } from "@/components/brand/Logo"
@@ -63,7 +64,7 @@ export async function Hero() {
             href="/services"
             className="mt-10 inline-flex items-center gap-2 rounded-lg bg-terracotta px-8 py-4 text-base font-bold text-soft-beige transition-colors hover:bg-terracotta/85 focus:outline-2 focus:outline-offset-2 focus:outline-terracotta"
           >
-            Book an Event
+            <MtText en="Book an Event" mt="Ibbukkja Avveniment" />
             <span aria-hidden="true">&rarr;</span>
           </Link>
 
@@ -92,7 +93,7 @@ export async function Hero() {
         href="/services"
         className="mt-10 inline-flex items-center gap-2 rounded-lg bg-terracotta px-8 py-4 text-base font-bold text-soft-beige transition-colors hover:bg-terracotta/85 focus:outline-2 focus:outline-offset-2 focus:outline-terracotta"
       >
-        Book an Event
+        <MtText en="Book an Event" mt="Ibbukkja Avveniment" />
         <span aria-hidden="true">&rarr;</span>
       </Link>
 
