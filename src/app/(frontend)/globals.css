@@ -1,4 +1,12 @@
 @import "tailwindcss";
+/* Tailwind v4 requires plugins to be loaded via @plugin in CSS --
+   @tailwindcss/typography was installed and the legal pages use
+   prose/prose-* classes extensively, but without this directive the
+   plugin never loads and every prose-* class silently compiles to
+   NOTHING (no heading sizes, no list bullets/numbers, no spacing) --
+   the root cause of policy pages rendering as undifferentiated body
+   text (Rudie, 2026-07-12). */
+@plugin "@tailwindcss/typography";
 
 @theme {
   /* Brand palette — Malta Food Experience */

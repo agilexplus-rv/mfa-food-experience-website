@@ -21,6 +21,7 @@
     "@payloadcms/email-nodemailer": "^3.85.2",
     "@payloadcms/next": "^3.85.2",
     "@payloadcms/richtext-lexical": "^3.85.2",
+    "@tailwindcss/typography": "^0.5.20",
     "dotenv": "^17.4.2",
     "html5-qrcode": "^2.3.8",
     "jose": "5.10.0",

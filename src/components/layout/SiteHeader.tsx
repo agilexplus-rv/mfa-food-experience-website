@@ -17,16 +17,17 @@ export function SiteHeader() {
   return (
     <header className="sticky top-0 z-50 bg-lunar-green text-soft-beige">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-3">
-        {/* Larger logo on desktop (client requirement NFR-1); constrained on
-            mobile via responsive width override so it doesn't push the
-            hamburger/language-switcher group off-screen on narrow viewports
-            (the "lg" preset is 260px wide with no responsive sizing of its
-            own, which overflowed on iPhone-width screens). */}
+        {/* Logo sizing (Rudie 2026-07-12): "a bit smaller, but not so
+            small" -- stepped down ~15-20% from the previous
+            140/180/260px to 120/150/210px. Still prominent on desktop
+            per the original NFR-1 larger-logo requirement, still
+            responsive-capped on mobile so it doesn't crowd the
+            hamburger/language-switcher group on narrow viewports. */}
         <Link href="/" className="min-w-0 flex-shrink">
           <Logo
             variant="inverted"
             size="lg"
-            className="!w-[140px] !p-0 sm:!w-[180px] md:!w-[260px]"
+            className="!w-[120px] !p-0 sm:!w-[150px] md:!w-[210px]"
           />
         </Link>
 
