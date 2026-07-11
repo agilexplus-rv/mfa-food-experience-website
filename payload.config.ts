@@ -56,16 +56,21 @@ export default buildConfig({
     },
     components: {
       // Brand theming (ADR-008 NFR-1: brand palette + Montserrat) --
-      // applied via a <style> tag rendered above the Payload header on
-      // every admin route (including the login view), overriding
-      // Payload's documented --theme-* CSS variables. See
-      // src/components/admin/AdminThemeStyles.tsx for the full mapping.
+      // applied via admin.components.providers, which wraps EVERY
+      // admin route (login, forgot-password, reset-password,
+      // create-first-user, and the full dashboard) at the RootLayout
+      // level, before template-type branching. This replaces a
+      // previous beforeLogin + header wiring that left /admin/forgot
+      // and /admin/reset completely unstyled -- those routes render
+      // via MinimalTemplate, which has no `header` slot at all (only
+      // the Default/dashboard template does), and beforeLogin is a
+      // LoginView-only slot. See src/components/admin/
+      // AdminGlobalStyles.tsx for the full root-cause writeup.
+      providers: ['@/components/admin/AdminGlobalStyles#default'],
       beforeLogin: [
-        '@/components/admin/AdminThemeStyles#default',
         '@/components/admin/AdminPasswordReveal#default',
       ],
       header: [
-        '@/components/admin/AdminThemeStyles#default',
         '@/components/admin/MfaSetupBanner#default',
       ],
       graphics: {
