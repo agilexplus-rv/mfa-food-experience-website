@@ -84,6 +84,23 @@ export const Events: CollectionConfig = {
       },
     },
     {
+      // Recurring events (Rudie 2026-07-12): occurrences generated from
+      // one "repeat" form submission share a seriesId (UUID). Each
+      // occurrence is an independent row -- independently editable,
+      // cancellable, bookable -- the series link exists only for
+      // "edit this and future events" scoped updates. No RRULE
+      // materialisation at read time; the console generates concrete
+      // rows up front (bounded, max 52 occurrences per series).
+      name: 'seriesId',
+      type: 'text',
+      index: true,
+      admin: {
+        readOnly: true,
+        position: 'sidebar',
+        description: 'Present when this event was created as part of a recurring series.',
+      },
+    },
+    {
       name: 'fullyBookedOverride',
       type: 'checkbox',
       defaultValue: false,

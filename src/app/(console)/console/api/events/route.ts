@@ -95,6 +95,7 @@ export async function GET(req: NextRequest) {
           locationRef: e.locationRef,
           status: e.status,
           fullyBookedOverride: e.fullyBookedOverride ?? false,
+          seriesId: e.seriesId ?? null,
           booked,
           checkedIn,
           remaining,
@@ -132,25 +133,78 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'title, serviceId, date, capacity, pricePerPerson are required' }, { status: 400 })
   }
 
-  try {
-    const event = await p.create({
-      collection: 'events',
-      data: {
-        title: body.title.trim(),
-        service: body.serviceId,
-        date: body.date,
-        startTime: body.startTime || body.date,
-        endTime: body.endTime || body.date,
-        capacity: body.capacity,
-        pricePerPerson: body.pricePerPerson,
-        locationRef: body.locationRef || '',
-        status: body.status || 'scheduled',
-        fullyBookedOverride: body.fullyBookedOverride ?? false,
-      },
-      overrideAccess: true,
-    })
+  // --- Recurrence (Rudie 2026-07-12) ---
+  // body.recurrence = { frequency: 'weekly'|'biweekly'|'monthly', until: 'YYYY-MM-DD' }
+  // Generates one concrete event row per occurrence, all sharing a
+  // seriesId (UUID). Bounded at 52 occurrences as a safety valve
+  // (weekly for a year); until is inclusive. Times shift with the
+  // date: startTime/endTime keep their time-of-day on each new date.
+  const recurrence = body.recurrence as
+    | { frequency?: string; until?: string }
+    | undefined
 
-    return NextResponse.json({ ok: true, id: String(event.id) }, { status: 201 })
+  const occurrenceDates: string[] = [body.date]
+  if (recurrence?.frequency && recurrence?.until) {
+    const stepDays =
+      recurrence.frequency === 'weekly' ? 7 :
+      recurrence.frequency === 'biweekly' ? 14 :
+      recurrence.frequency === 'monthly' ? 0 : -1
+    if (stepDays === -1) {
+      return NextResponse.json({ error: 'invalid_frequency' }, { status: 400 })
+    }
+    const until = new Date(`${recurrence.until}T23:59:59Z`)
+    if (Number.isNaN(until.getTime())) {
+      return NextResponse.json({ error: 'invalid_until_date' }, { status: 400 })
+    }
+    const cursor = new Date(`${body.date}T00:00:00Z`)
+    for (let i = 0; i < 51; i++) {
+      if (stepDays > 0) {
+        cursor.setUTCDate(cursor.getUTCDate() + stepDays)
+      } else {
+        cursor.setUTCMonth(cursor.getUTCMonth() + 1)
+      }
+      if (cursor > until) break
+      occurrenceDates.push(cursor.toISOString().slice(0, 10))
+    }
+  }
+
+  /** Shift an ISO/naive datetime's DATE to a new day, keeping time-of-day. */
+  const shiftToDate = (dateTime: string, newDate: string): string => {
+    const timePart = dateTime.includes('T') ? dateTime.slice(dateTime.indexOf('T')) : 'T00:00:00.000Z'
+    return `${newDate}${timePart}`
+  }
+
+  const seriesId = occurrenceDates.length > 1 ? crypto.randomUUID() : undefined
+  const baseStart = body.startTime || body.date
+  const baseEnd = body.endTime || body.date
+
+  try {
+    const createdIds: string[] = []
+    for (const date of occurrenceDates) {
+      const event = await p.create({
+        collection: 'events',
+        data: {
+          title: body.title.trim(),
+          service: body.serviceId,
+          date,
+          startTime: shiftToDate(baseStart, date),
+          endTime: shiftToDate(baseEnd, date),
+          capacity: body.capacity,
+          pricePerPerson: body.pricePerPerson,
+          locationRef: body.locationRef || '',
+          status: body.status || 'scheduled',
+          fullyBookedOverride: body.fullyBookedOverride ?? false,
+          ...(seriesId ? { seriesId } : {}),
+        },
+        overrideAccess: true,
+      })
+      createdIds.push(String(event.id))
+    }
+
+    return NextResponse.json(
+      { ok: true, id: createdIds[0], created: createdIds.length, seriesId: seriesId ?? null },
+      { status: 201 },
+    )
   } catch (err) {
     console.error('[console/api/events] Create failed:', err)
     return NextResponse.json({ error: 'create_failed' }, { status: 500 })

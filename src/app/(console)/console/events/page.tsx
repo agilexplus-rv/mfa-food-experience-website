@@ -22,6 +22,7 @@ interface EventRow {
   locationRef: string
   status: string
   fullyBookedOverride: boolean
+  seriesId: string | null
   booked: number
   checkedIn: number
   remaining: number
@@ -74,6 +75,12 @@ export default function ConsoleEventsPage() {
     capacity: '', pricePerPerson: '', locationRef: '', status: 'scheduled' as string,
     fullyBookedOverride: false,
   })
+  // Recurrence (create only): 'none' | 'weekly' | 'biweekly' | 'monthly' + until date
+  const [repeatFreq, setRepeatFreq] = useState('none')
+  const [repeatUntil, setRepeatUntil] = useState('')
+  // Series edit scope (edit only, when the event belongs to a series):
+  const [editingSeriesId, setEditingSeriesId] = useState<string | null>(null)
+  const [applyTo, setApplyTo] = useState<'single' | 'future'>('single')
 
   // Delete modal
   const [deleteTarget, setDeleteTarget] = useState<EventRow | null>(null)
@@ -110,6 +117,10 @@ export default function ConsoleEventsPage() {
       capacity: '', pricePerPerson: '', locationRef: '', status: 'scheduled', fullyBookedOverride: false })
     setEditingId(null)
     setFormError(null)
+    setRepeatFreq('none')
+    setRepeatUntil('')
+    setEditingSeriesId(null)
+    setApplyTo('single')
   }
 
   const openCreate = () => {
@@ -119,6 +130,8 @@ export default function ConsoleEventsPage() {
 
   const openEdit = (ev: EventRow) => {
     setEditingId(ev.id)
+    setEditingSeriesId(ev.seriesId || null)
+    setApplyTo('single')
     setForm({
       title: ev.title,
       serviceId: String(ev.serviceId || ''),
@@ -146,6 +159,8 @@ export default function ConsoleEventsPage() {
       const body: Record<string, unknown> = {
         title: form.title.trim(),
         service: form.serviceId,
+        // POST expects serviceId; PATCH allowlists 'service'. Send both.
+        serviceId: form.serviceId,
         date: form.date,
         startTime: form.startTime || form.date,
         endTime: form.endTime || form.date,
@@ -154,6 +169,17 @@ export default function ConsoleEventsPage() {
         locationRef: form.locationRef,
         status: form.status,
         fullyBookedOverride: form.fullyBookedOverride,
+      }
+      if (!editingId && repeatFreq !== 'none') {
+        if (!repeatUntil) {
+          setFormError('Choose a "repeat until" date for the recurring series.')
+          setSaveLoading(false)
+          return
+        }
+        body.recurrence = { frequency: repeatFreq, until: repeatUntil }
+      }
+      if (editingId && editingSeriesId) {
+        body.applyTo = applyTo
       }
       const url = editingId ? `/console/api/events/${editingId}` : '/console/api/events'
       const method = editingId ? 'PATCH' : 'POST'
@@ -237,7 +263,11 @@ export default function ConsoleEventsPage() {
                     <td className="px-4 py-3 text-lunar-green font-semibold">{ev.title}</td>
                     <td className="px-4 py-3 text-text-light">{ev.serviceName || '\u2014'}</td>
                     <td className="px-4 py-3 text-xs text-text-light">
-                      {formatDate(ev.date)}<br />
+                      {formatDate(ev.date)}
+                      {ev.seriesId && (
+                        <span title="Part of a recurring series" aria-label="Recurring series" className="ml-1 text-matte-gold">&#8635;</span>
+                      )}
+                      <br />
                       {formatTime(ev.startTime)} - {formatTime(ev.endTime)}
                     </td>
                     <td className="px-4 py-3 text-center text-lunar-green">{ev.capacity}</td>
@@ -298,6 +328,71 @@ export default function ConsoleEventsPage() {
               className="w-full rounded-lg border border-border px-4 py-2.5 text-sm text-lunar-green focus:outline-none focus:ring-2 focus:ring-lunar-green/30"
               style={{ boxSizing: 'border-box' }} />
           </div>
+
+          {/* Recurrence -- create only. Generates independent event rows
+              sharing a seriesId; each occurrence is editable/cancellable
+              on its own afterwards. */}
+          {!editingId && (
+            <div className="rounded-lg border border-border bg-soft-beige/40 p-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-semibold text-lunar-green mb-1">Repeat</label>
+                  <select value={repeatFreq} onChange={(e) => setRepeatFreq(e.target.value)}
+                    className="w-full rounded-lg border border-border px-4 py-2.5 text-sm text-lunar-green bg-surface focus:outline-none focus:ring-2 focus:ring-lunar-green/30"
+                    style={{ boxSizing: 'border-box' }}>
+                    <option value="none">Does not repeat</option>
+                    <option value="weekly">Weekly</option>
+                    <option value="biweekly">Every 2 weeks</option>
+                    <option value="monthly">Monthly</option>
+                  </select>
+                </div>
+                {repeatFreq !== 'none' && (
+                  <div>
+                    <label className="block text-sm font-semibold text-lunar-green mb-1">Repeat until *</label>
+                    <input type="date" value={repeatUntil} min={form.date}
+                      onChange={(e) => setRepeatUntil(e.target.value)}
+                      className="w-full rounded-lg border border-border px-4 py-2.5 text-sm text-lunar-green focus:outline-none focus:ring-2 focus:ring-lunar-green/30"
+                      style={{ boxSizing: 'border-box' }} />
+                  </div>
+                )}
+              </div>
+              {repeatFreq !== 'none' && (
+                <p className="mt-2 text-xs text-text-light">
+                  Creates one independent event per occurrence (max 52). Each can be
+                  edited or cancelled individually afterwards.
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Series edit scope -- only when editing an event that belongs
+              to a recurring series. */}
+          {editingId && editingSeriesId && (
+            <div className="rounded-lg border border-matte-gold/40 bg-matte-gold/5 p-3">
+              <p className="text-sm font-semibold text-lunar-green mb-2">
+                This event is part of a recurring series. Apply changes to:
+              </p>
+              <div className="flex gap-4">
+                <label className="flex items-center gap-2 text-sm text-lunar-green">
+                  <input type="radio" name="applyTo" checked={applyTo === 'single'}
+                    onChange={() => setApplyTo('single')} className="accent-lunar-green" />
+                  This event only
+                </label>
+                <label className="flex items-center gap-2 text-sm text-lunar-green">
+                  <input type="radio" name="applyTo" checked={applyTo === 'future'}
+                    onChange={() => setApplyTo('future')} className="accent-lunar-green" />
+                  This and future events
+                </label>
+              </div>
+              {applyTo === 'future' && (
+                <p className="mt-2 text-xs text-text-light">
+                  Title, service, capacity, price, location, status and start/end
+                  times propagate to later occurrences. Each occurrence keeps its
+                  own date.
+                </p>
+              )}
+            </div>
+          )}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-sm font-semibold text-lunar-green mb-1">Start Time</label>

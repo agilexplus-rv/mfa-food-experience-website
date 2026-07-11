@@ -7,6 +7,10 @@
     {
       "path": "/api/cron/retention",
       "schedule": "0 4 * * *"
+    },
+    {
+      "path": "/api/cron/complete-events",
+      "schedule": "30 1 * * *"
     }
   ]
 }
