@@ -99,6 +99,26 @@ export async function POST(req: NextRequest) {
 
   if (!body.confirm) {
     // RIGHT OF ACCESS: return summary of existing data.
+    //
+    // Audit (added 2026-07-12): a right-of-access lookup is a PII
+    // read/export by an admin -- exactly what the audit log's
+    // 'export' action exists for. Previously only the erasure branch
+    // wrote an audit entry, leaving no trace of who looked up whose
+    // data. Best-effort (never blocks the actual request).
+    try {
+      await p.create({
+        collection: 'audit_logs',
+        data: {
+          action: 'export',
+          actor: user.id,
+          collection: 'bookings',
+          detail: `Data-subject access lookup: ${email ? `email=${email}` : ''}${email && reference ? ', ' : ''}${reference ? `reference=${reference}` : ''} (${bookings.length} match${bookings.length === 1 ? '' : 'es'})`,
+        },
+        overrideAccess: true,
+      })
+    } catch (err) {
+      console.error('[data-subject] failed to write access audit log:', err)
+    }
     const matches = bookings.map((b) => ({
       reference: b.reference,
       eventTitle:
