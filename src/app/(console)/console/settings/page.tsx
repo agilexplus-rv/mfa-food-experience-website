@@ -17,6 +17,12 @@ const SECTIONS: SettingsSection[] = [
     icon: 'SS',
   },
   {
+    title: 'Social Media',
+    description: 'Configure social media links (Instagram, Facebook, X) shown in the site footer',
+    href: '/console/settings/social-media',
+    icon: 'SM',
+  },
+  {
     title: 'Cancellation Policy',
     description: 'Edit refund tiers, organiser-cancellation text, and the withdrawal-right disclosure',
     href: '/console/settings/cancellation-policy',

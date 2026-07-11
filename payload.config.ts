@@ -21,6 +21,7 @@ import { AuditLog } from './src/payload/collections/AuditLog'
 import { Waitlist } from './src/payload/collections/Waitlist'
 import { CancellationPolicy } from './src/payload/globals/CancellationPolicy'
 import { SiteSettings } from './src/payload/globals/SiteSettings'
+import { SocialMediaSettings } from './src/payload/globals/SocialMediaSettings'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -92,6 +93,7 @@ export default buildConfig({
   globals: [
     CancellationPolicy,
     SiteSettings,
+    SocialMediaSettings,
   ],
   db: dbAdapter,
   email: nodemailerAdapter({

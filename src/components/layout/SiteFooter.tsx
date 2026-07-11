@@ -1,4 +1,7 @@
+import { getPayload } from 'payload'
+import config from '@payload-config'
 import { Logo } from "@/components/brand/Logo"
+import type { ReactElement } from "react"
 import Link from "next/link"
 
 /**
@@ -9,8 +12,12 @@ import Link from "next/link"
  * 2. Navigation — the same nav items as the header.
  * 3. Legal — Cancellation Policy, Customer Policy, Provider Info.
  *
- * Social icons use placeholder hrefs (per task spec); they are inline SVGs
- * in brand-safe Matte Gold (non-text decorative use, per brand-contrast.md).
+ * Social media links are now admin-configurable via the
+ * `social-media-settings` Payload Global. Only platforms with
+ * `published: true` and a non-empty URL are rendered. If the Global
+ * is unavailable (e.g. before migration), no social icons render
+ * (graceful degradation — the footer still works, just without
+ * social links, rather than crashing the page).
  *
  * Brand compliance: 4-colour palette only, Montserrat via the font variable.
  */
@@ -86,13 +93,44 @@ function XIcon() {
   )
 }
 
-const SOCIALS = [
-  { label: "Instagram", href: "#", Icon: InstagramIcon },
-  { label: "Facebook", href: "#", Icon: FacebookIcon },
-  { label: "X", href: "#", Icon: XIcon },
-]
+const ICON_MAP: Record<string, () => ReactElement> = {
+  instagram: InstagramIcon,
+  facebook: FacebookIcon,
+  x: XIcon,
+}
 
-export function SiteFooter() {
+const PLATFORM_LABELS: Record<string, string> = {
+  instagram: 'Instagram',
+  facebook: 'Facebook',
+  x: 'X',
+}
+
+interface SocialLink {
+  platform: string
+  url: string
+  published: boolean
+}
+
+async function getSocialLinks(): Promise<SocialLink[]> {
+  try {
+    const payload = await getPayload({ config })
+    const settings = await payload.findGlobal({
+      slug: 'social-media-settings',
+      overrideAccess: true,
+    })
+    const platforms = (settings.platforms || []) as SocialLink[]
+    return platforms.filter(
+      (p) => p.published && p.url && p.platform,
+    )
+  } catch {
+    // Global not yet migrated or unavailable — render no social links.
+    return []
+  }
+}
+
+export async function SiteFooter() {
+  const socialLinks = await getSocialLinks()
+
   return (
     <footer className="bg-lunar-green text-soft-beige">
       <div className="mx-auto max-w-7xl px-6 py-12">
@@ -104,18 +142,25 @@ export function SiteFooter() {
               Authentic Maltese culinary and cultural experiences, hosted by
               the Malta Food Agency.
             </p>
-            <div className="flex items-center gap-4 text-matte-gold">
-              {SOCIALS.map(({ label, href, Icon }) => (
-                <a
-                  key={label}
-                  href={href}
-                  aria-label={label}
-                  className="transition-colors hover:text-terracotta focus:outline-2 focus:outline-offset-2 focus:outline-matte-gold"
-                >
-                  <Icon />
-                </a>
-              ))}
-            </div>
+            {socialLinks.length > 0 && (
+              <div className="flex items-center gap-4 text-matte-gold">
+                {socialLinks.map((link) => {
+                  const Icon = ICON_MAP[link.platform]
+                  if (!Icon) return null
+                  const label = PLATFORM_LABELS[link.platform] || link.platform
+                  return (
+                    <a
+                      key={link.platform}
+                      href={link.url}
+                      aria-label={label}
+                      className="transition-colors hover:text-terracotta focus:outline-2 focus:outline-offset-2 focus:outline-matte-gold"
+                    >
+                      <Icon />
+                    </a>
+                  )
+                })}
+              </div>
+            )}
           </div>
 
           {/* Nav column */}
