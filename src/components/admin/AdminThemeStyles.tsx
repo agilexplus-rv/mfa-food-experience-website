@@ -175,6 +175,40 @@ export default function AdminThemeStyles() {
           max-width: 100%;
         }
 
+        /* Rudie 2026-07-11: reorder the login form so the Login button
+           sits BETWEEN the password field and "Forgot password?" --
+           Payload's default DOM order is inputWrap -> <a> (forgot) ->
+           .form-submit (button), i.e. the link sits ABOVE the button.
+           .login__form's direct children are exactly three nodes:
+           .login__form__inputWrap, a bare <a>, and a .form-submit div
+           wrapping the actual <button> -- confirmed via inspecting
+           document.querySelector('.login__form').children on the live
+           page (2026-07-11). No override slot exists for
+           this link's position/class in node_modules/@payloadcms/next/
+           dist/views/Login/LoginForm/index.js, so a flex-order
+           override here is the only lever available short of forking
+           the view. Also shrinks the link and right-aligns it, per
+           explicit design direction -- it's a secondary/tertiary
+           action, not a primary one, and shouldn't visually compete
+           with Login. */
+        .login__form {
+          display: flex;
+          flex-direction: column;
+        }
+        .login__form__inputWrap {
+          order: 1;
+        }
+        .login__form > .form-submit {
+          order: 2;
+        }
+        .login__form > a {
+          order: 3;
+          align-self: flex-end;
+          margin-top: 12px;
+          font-size: 0.75rem;
+          text-align: right;
+        }
+
         /* Safety net: ensure Payload/Sonner's toast notification region
            always renders fixed to the viewport, regardless of document
            flow/height changes introduced by the .template-minimal flex
