@@ -14,10 +14,12 @@ interface MediaItem {
 
 interface SiteSettingsData {
   heroBackgroundImage?: string | MediaItem | null
+  contactFormRecipients?: string | null
 }
 
 interface SiteSettingsForm {
   heroBackgroundImageId: string | null
+  contactFormRecipients: string
 }
 
 export default function SiteSettingsPage() {
@@ -25,7 +27,7 @@ export default function SiteSettingsPage() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
-  const [form, setForm] = useState<SiteSettingsForm>({ heroBackgroundImageId: null })
+  const [form, setForm] = useState<SiteSettingsForm>({ heroBackgroundImageId: null, contactFormRecipients: '' })
   const [currentImage, setCurrentImage] = useState<MediaItem | null>(null)
 
   // Media picker state
@@ -43,16 +45,17 @@ export default function SiteSettingsPage() {
       const data = await res.json()
       const s = data.settings as SiteSettingsData
       const img = s.heroBackgroundImage
+      const contactFormRecipients = s.contactFormRecipients || ''
       if (img && typeof img === 'object' && 'id' in img) {
         const m = img as MediaItem
         setCurrentImage(m)
-        setForm({ heroBackgroundImageId: String(m.id) })
+        setForm({ heroBackgroundImageId: String(m.id), contactFormRecipients })
       } else if (img && typeof img === 'string') {
         setCurrentImage({ id: img })
-        setForm({ heroBackgroundImageId: img })
+        setForm({ heroBackgroundImageId: img, contactFormRecipients })
       } else {
         setCurrentImage(null)
-        setForm({ heroBackgroundImageId: null })
+        setForm({ heroBackgroundImageId: null, contactFormRecipients })
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load')
@@ -84,13 +87,13 @@ export default function SiteSettingsPage() {
 
   const handleSelectMedia = (item: MediaItem) => {
     setCurrentImage(item)
-    setForm({ heroBackgroundImageId: String(item.id) })
+    setForm((f) => ({ ...f, heroBackgroundImageId: String(item.id) }))
     setShowPicker(false)
   }
 
   const handleClearImage = () => {
     setCurrentImage(null)
-    setForm({ heroBackgroundImageId: null })
+    setForm((f) => ({ ...f, heroBackgroundImageId: null }))
   }
 
   const handleUpload = async (file: File) => {
@@ -113,7 +116,24 @@ export default function SiteSettingsPage() {
     }
   }
 
+  const validateRecipients = (raw: string): string | null => {
+    const trimmed = raw.trim()
+    if (!trimmed) return null // empty is valid -- falls back to env default
+    const addresses = trimmed.split(';').map((a) => a.trim()).filter(Boolean)
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    const invalid = addresses.filter((a) => !emailPattern.test(a))
+    if (invalid.length > 0) {
+      return `Invalid email address${invalid.length > 1 ? 'es' : ''}: ${invalid.join(', ')}`
+    }
+    return null
+  }
+
   const handleSave = async () => {
+    const recipientsError = validateRecipients(form.contactFormRecipients)
+    if (recipientsError) {
+      setError(recipientsError)
+      return
+    }
     setSaving(true)
     setError(null)
     setSuccess(false)
@@ -123,6 +143,7 @@ export default function SiteSettingsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           heroBackgroundImage: form.heroBackgroundImageId || null,
+          contactFormRecipients: form.contactFormRecipients.trim() || null,
         }),
       })
       if (!res.ok) {
@@ -218,6 +239,20 @@ export default function SiteSettingsPage() {
               <Button variant="secondary" size="sm" onClick={handleClearImage}>Clear</Button>
             )}
           </div>
+        </Card>
+
+        <Card padding>
+          <h2 className="text-sm font-bold text-lunar-green mb-2">Contact Form Recipients</h2>
+          <p className="text-xs text-text-light mb-4">
+            Email address(es) that receive messages sent via the public Contact page. Separate multiple addresses with a semicolon (e.g. info@foodagency.mt; bookings@foodagency.mt). Leave empty to use the server&apos;s default admin alert address.
+          </p>
+          <input
+            type="text"
+            value={form.contactFormRecipients}
+            onChange={(e) => setForm((f) => ({ ...f, contactFormRecipients: e.target.value }))}
+            placeholder="info@foodagency.mt; bookings@foodagency.mt"
+            className="w-full rounded-lg border border-border bg-soft-beige/40 px-4 py-2.5 text-sm text-lunar-green placeholder:text-text-light/60 focus:border-lunar-green focus:outline-2 focus:outline-offset-1 focus:outline-lunar-green"
+          />
         </Card>
 
         <div className="flex gap-3">
