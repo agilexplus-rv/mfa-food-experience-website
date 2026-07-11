@@ -359,7 +359,9 @@ export default function ConsoleEventsPage() {
               {repeatFreq !== 'none' && (
                 <p className="mt-2 text-xs text-text-light">
                   Creates one independent event per occurrence (max 52). Each can be
-                  edited or cancelled individually afterwards.
+                  edited or cancelled individually afterwards. Only the <strong>time of
+                  day</strong> from Start/End Time is applied to each occurrence &mdash;
+                  every event in the series runs at the same time on its own date.
                 </p>
               )}
             </div>
@@ -396,6 +398,11 @@ export default function ConsoleEventsPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-sm font-semibold text-lunar-green mb-1">Start Time</label>
+              {/* For recurring series only the TIME portion propagates:
+                  each generated occurrence gets its own date from the
+                  repeat rule + this time-of-day (see the POST handler's
+                  shiftToDate). The date part of this picker applies to
+                  the first occurrence only. */}
               <input type="datetime-local" value={form.startTime} onChange={(e) => setForm(p => ({ ...p, startTime: e.target.value }))}
                 className="w-full rounded-lg border border-border px-4 py-2.5 text-sm text-lunar-green focus:outline-none focus:ring-2 focus:ring-lunar-green/30"
                 style={{ boxSizing: 'border-box' }} />
