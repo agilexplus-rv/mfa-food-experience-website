@@ -31,6 +31,19 @@ const nextConfig: NextConfig = {
             value: 'strict-origin-when-cross-origin',
           },
           {
+            // EIGHTH root cause (2026-07-12): translate-pa.googleapis.com
+            // blocked in script-src. The widget's supportedLanguages call
+            // is loaded as a JSONP <script src="...&callback=callback">
+            // tag (confirmed via the browser console error: "Refused to
+            // load https://translate-pa.googleapis.com/v1/supportedLanguages
+            // ...&callback=callback because it does not appear in the
+            // script-src directive"), NOT an XHR/fetch -- so connect-src's
+            // existing translate-pa.googleapis.com entry (added for fix #6)
+            // never covered this call at all; script-src and connect-src
+            // are evaluated independently per request type, each governing
+            // a different resource-loading mechanism. Adding the domain to
+            // script-src alongside connect-src is the minimal fix for this
+            // specific mechanism.
             // Content-Security-Policy -- ADR-008 C2.
             //
             // Directives were chosen by tracing what THIS app actually loads
@@ -103,7 +116,7 @@ const nextConfig: NextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://translate.google.com https://translate.googleapis.com https://js.stripe.com https://checkout.stripe.com",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://translate.google.com https://translate.googleapis.com https://translate-pa.googleapis.com https://js.stripe.com https://checkout.stripe.com",
               "frame-src 'self' data: https://translate.google.com https://translate-pa.googleapis.com https://www.openstreetmap.org https://checkout.stripe.com",
               "connect-src 'self' https://api.stripe.com https://translate.googleapis.com https://translate-pa.googleapis.com",
               "style-src 'self' 'unsafe-inline' https://www.gstatic.com",
