@@ -7,6 +7,8 @@ import { GoogleTranslateWidgetHost } from "@/components/i18n/GoogleTranslateWidg
 import { I18nDebugPanel } from "@/components/i18n/I18nDebugPanel"
 import "./globals.css"
 
+export const dynamic = 'force-dynamic'
+
 export const metadata: Metadata = {
   title: "Malta Food Experience",
   description: "Authentic Maltese culinary and cultural experiences hosted by the Malta Food Agency.",
