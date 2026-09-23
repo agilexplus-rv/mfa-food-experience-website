@@ -1,3 +1,5 @@
+import Link from 'next/link'
+
 /**
  * Custom logo for the Payload admin login view, replacing the default
  * generic Payload wordmark with the Malta Food Experience brand.
@@ -11,12 +13,12 @@
  */
 export default function AdminLogo() {
   return (
-    <a href="/" aria-label="Malta Food Experience — go to homepage">
+    <Link href="/" aria-label="Malta Food Experience — go to homepage">
       <img
         src="/brand/logos/Malta Food - Primary.svg"
         alt="Malta Food Experience"
         style={{ width: '220px', maxWidth: '80vw', height: 'auto' }}
       />
-    </a>
+    </Link>
   )
 }

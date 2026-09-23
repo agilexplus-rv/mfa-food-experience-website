@@ -22,7 +22,6 @@
 import { readFileSync } from 'node:fs'
 import { resolve, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import assert from 'node:assert'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const workflowPath = resolve(__dirname, 'deploy.yml')

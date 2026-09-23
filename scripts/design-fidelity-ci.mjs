@@ -14,7 +14,7 @@
 
 import { chromium } from 'playwright'
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs'
-import { resolve, dirname } from 'node:path'
+import { resolve } from 'node:path'
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000'
 const BASELINES_DIR = resolve(process.cwd(), 'design-fidelity', 'baselines')

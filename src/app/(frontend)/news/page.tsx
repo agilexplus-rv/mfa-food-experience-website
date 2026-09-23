@@ -3,6 +3,8 @@ import config from "@payload-config"
 import type { Metadata } from "next"
 import { NewsList } from "@/components/news/NewsList"
 
+export const dynamic = 'force-dynamic'
+
 export const metadata: Metadata = {
   title: "News — Malta Food Experience",
   description:

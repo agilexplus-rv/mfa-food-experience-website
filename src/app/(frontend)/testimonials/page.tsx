@@ -7,6 +7,8 @@ import { Logo } from '@/components/brand/Logo'
 import { TestimonialForm } from '@/components/testimonials/TestimonialForm'
 import { TestimonialList } from '@/components/testimonials/TestimonialList'
 
+export const dynamic = 'force-dynamic'
+
 export const metadata: Metadata = {
   title: 'Testimonials — Malta Food Experience',
   description:

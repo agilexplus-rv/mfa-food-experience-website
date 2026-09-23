@@ -9,8 +9,6 @@
     BASE_URL=http://localhost:3000 node scripts/csp-audit-ci.mjs
 **/
 
-import { strict as assert } from 'node:assert'
-
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000'
 
 // Expected CSP directives — subset that must be present.

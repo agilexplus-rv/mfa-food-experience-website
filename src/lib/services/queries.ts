@@ -38,7 +38,7 @@ export interface ServiceSummary {
   description?: string
 }
 
-export interface ServiceDetail extends ServiceSummary {}
+export type ServiceDetail = ServiceSummary
 
 export interface ServiceEvents {
   events: EventDoc[]
