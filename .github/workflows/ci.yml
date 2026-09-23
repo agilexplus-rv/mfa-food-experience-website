@@ -97,6 +97,7 @@ jobs:
           BASE_URL: http://localhost:3000
       - name: Upload a11y results
         if: always()
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: a11y-results
@@ -129,6 +130,7 @@ jobs:
           BASE_URL: http://localhost:3000
       - name: Upload screenshots
         if: always()
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: design-fidelity-screenshots
