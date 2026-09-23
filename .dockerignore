@@ -1,0 +1,12 @@
+node_modules
+.git
+.next
+.env
+.env.local
+payload.db
+uploads/*
+!uploads/.gitkeep
+*.md
+.DS_Store
+a11y-results
+design-fidelity

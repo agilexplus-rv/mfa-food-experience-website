@@ -1,0 +1,172 @@
+# ci.yml — Malta Food Experience CI/CD gates.
+#
+# Every PR and push triggers these gates. All must be green before
+# auto-merge to main.
+#
+# Gates:
+#   1. typecheck    — tsc --noEmit
+#   2. lint         — eslint
+#   3. build        — next build (per AGENTS.md §5, runs in CI not locally)
+#   4. a11y         — axe-core Playwright audit on key routes
+#   5. design       — Playwright screenshot diff vs baseline
+#   6. csp          — verify no CSP directive regression
+#   7. deploy-guard — machine-check that deploy.yml stays OIDC-clean
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  # ── 1. Typecheck ─────────────────────────────────────────────
+  typecheck:
+    name: Typecheck (tsc)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm run typecheck
+
+  # ── 2. Lint ──────────────────────────────────────────────────
+  lint:
+    name: Lint (eslint)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm run lint
+
+  # ── 3. Build ─────────────────────────────────────────────────
+  build:
+    name: Build (next build)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm run build
+        env:
+          DATABASE_URL: file:./payload.db
+          PAYLOAD_SECRET: ci-build-secret-not-for-production
+
+  # ── 4. a11y audit ────────────────────────────────────────────
+  a11y:
+    name: Accessibility (axe-core)
+    runs-on: ubuntu-latest
+    needs: [build]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npx playwright install --with-deps chromium
+      - name: Start dev server
+        run: |
+          npm run dev &
+          npx wait-on http://localhost:3000 --timeout 60000
+        env:
+          DATABASE_URL: file:./payload.db
+          PAYLOAD_SECRET: ci-a11y-secret
+      - name: Run axe-core audit
+        run: |
+          node scripts/a11y-audit-ci.mjs
+        env:
+          BASE_URL: http://localhost:3000
+      - name: Upload a11y results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: a11y-results
+          path: a11y-results/
+
+  # ── 5. Design fidelity ───────────────────────────────────────
+  design:
+    name: Design fidelity (Playwright)
+    runs-on: ubuntu-latest
+    needs: [build]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npx playwright install --with-deps chromium
+      - name: Start dev server
+        run: |
+          npm run dev &
+          npx wait-on http://localhost:3000 --timeout 60000
+        env:
+          DATABASE_URL: file:./payload.db
+          PAYLOAD_SECRET: ci-design-secret
+      - name: Run design fidelity tests
+        run: |
+          node scripts/design-fidelity-ci.mjs
+        env:
+          BASE_URL: http://localhost:3000
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: design-fidelity-screenshots
+          path: design-fidelity/
+
+  # ── 6. CSP audit ─────────────────────────────────────────────
+  csp:
+    name: CSP audit
+    runs-on: ubuntu-latest
+    needs: [build]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - name: Start dev server
+        run: |
+          npm run dev &
+          npx wait-on http://localhost:3000 --timeout 60000
+        env:
+          DATABASE_URL: file:./payload.db
+          PAYLOAD_SECRET: ci-csp-secret
+      - name: Validate CSP headers
+        run: |
+          node scripts/csp-audit-ci.mjs
+        env:
+          BASE_URL: http://localhost:3000
+
+  # ── 7. Deploy-guard ──────────────────────────────────────────
+  deploy-guard:
+    name: Deploy guard (OIDC)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Run deploy-guard
+        run: node .github/workflows/deploy-guard.test.mjs

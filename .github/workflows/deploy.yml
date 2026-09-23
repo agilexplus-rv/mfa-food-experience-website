@@ -1,0 +1,92 @@
+# deploy.yml — OIDC deployment (distilled from ci-transfer-app).
+#
+# Authentication is OIDC: azure/login exchanges this run's GitHub token for
+# an Azure token against an app registration whose federated credential trusts
+# this repository and the target environment. The three Azure identifiers are
+# environment VARIABLES (`vars.`), NOT secrets — there is no client secret to
+# store. The deploy-guard job in ci.yml fails if a `secrets.*` reference ever
+# appears here.
+#
+# Promotion model:
+#   - merge to main  → auto-deploy to test (foodexperience.agilexplus.dev)
+#   - prod deploy    → manual workflow_dispatch with explicit approval
+#     (foodexperience.mt)
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        type: choice
+        required: true
+        options:
+          - test
+          - prod
+
+concurrency:
+  group: deploy-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  id-token: write       # Required for OIDC azure/login
+  packages: write       # To push Docker images
+
+jobs:
+  # ── Resolve environment ──────────────────────────────────────
+  resolve-env:
+    name: Resolve target environment
+    runs-on: ubuntu-latest
+    outputs:
+      environment: ${{ steps.resolve.outputs.environment }}
+    steps:
+      - id: resolve
+        run: |
+          if [[ "${{ github.event_name }}" == "push" ]]; then
+            echo "environment=test" >> "$GITHUB_OUTPUT"
+          else
+            echo "environment=${{ inputs.environment }}" >> "$GITHUB_OUTPUT"
+          fi
+
+  # ── Deploy ───────────────────────────────────────────────────
+  deploy:
+    name: Deploy (${{ needs.resolve-env.outputs.environment }})
+    runs-on: ubuntu-latest
+    needs: [resolve-env]
+    environment:
+      name: ${{ needs.resolve-env.outputs.environment }}
+      url: ${{ vars.NEXT_PUBLIC_SERVER_URL }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ vars.ACR_FQDN }}/mfa-food-experience:${{ github.sha }}
+            ${{ vars.ACR_FQDN }}/mfa-food-experience:latest
+          build-args: |
+            NEXT_PUBLIC_SERVER_URL=${{ vars.NEXT_PUBLIC_SERVER_URL }}
+
+      - name: Deploy to Azure Container Apps
+        run: |
+          az containerapp update \
+            --resource-group "${{ vars.RESOURCE_GROUP }}" \
+            --name "${{ vars.CONTAINER_APP_NAME }}" \
+            --image "${{ vars.ACR_FQDN }}/mfa-food-experience:${{ github.sha }}" \
+            --set-env-vars \
+              "NEXT_PUBLIC_SERVER_URL=${{ vars.NEXT_PUBLIC_SERVER_URL }}" \
+            --output none
+        shell: bash
