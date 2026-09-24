@@ -14,7 +14,7 @@
 var fs = require("fs");
 var path = require("path");
 
-var srcDir = path.resolve(__dirname, "..", "src");
+var srcDir = path.resolve(__dirname, "src");
 var files = [];
 
 function walk(dir) {
@@ -32,9 +32,6 @@ var count = 0;
 for (var a = 0; a < files.length; a++) {
   var file = files[a];
   var content = fs.readFileSync(file, "utf8");
-
-  // File relative to the project root (e.g. "src/a/b/c.ts")
-  var relFromRoot = path.relative(path.resolve(__dirname, ".."), file);
 
   // Compute how deep this file is inside src/
   var relFromSrc = path.relative(srcDir, path.dirname(file));
