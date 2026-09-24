@@ -54,6 +54,12 @@ COPY infra/patch-lexical.js ./patch-lexical.js
 RUN node ./patch-lexical.js && rm ./patch-lexical.js
 COPY --from=builder /app/payload.config.ts ./payload.config.ts
 COPY --from=builder /app/src ./src
+
+# Replace tsconfig `@/` path aliases with relative imports.
+# Payload's bundled tsx v4 does NOT resolve tsconfig.json `paths` at runtime,
+# so `payload migrate` can't find `@/lib/…` imports inside collection files.
+COPY infra/patch-paths.js ./patch-paths.js
+RUN node ./patch-paths.js && rm ./patch-paths.js
 COPY --from=builder /app/tsconfig.json ./tsconfig.json
 # tsx's CJS resolver (used by `payload migrate`) does not respect
 # `moduleResolution: "bundler"` — it won't resolve extensionless `.ts`
