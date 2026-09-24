@@ -55,6 +55,11 @@ RUN node ./patch-lexical.js && rm ./patch-lexical.js
 COPY --from=builder /app/payload.config.ts ./payload.config.ts
 COPY --from=builder /app/src ./src
 COPY --from=builder /app/tsconfig.json ./tsconfig.json
+# tsx's CJS resolver (used by `payload migrate`) does not respect
+# `moduleResolution: "bundler"` — it won't resolve extensionless `.ts`
+# imports.  Keep `"bundler"` for the Next.js build in CI, but switch
+# to `"node"` for the runtime container so tsx finds the config sources.
+RUN sed -i 's/"moduleResolution": *"bundler"/"moduleResolution": "node"/' tsconfig.json
 COPY --from=builder /app/migrations ./migrations
 COPY --from=builder /app/package.json ./package.json
 
