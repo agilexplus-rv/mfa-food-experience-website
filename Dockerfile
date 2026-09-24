@@ -42,9 +42,30 @@ COPY --from=builder /app/.next/static ./.next/static
 
 # The standalone build prunes node_modules to only what `server.js` traces at
 # runtime, which drops the `payload` CLI binary (`node_modules/.bin/payload`)
-# and `tsx`.  `npx payload migrate` in the entrypoint needs both, plus the
+# and `tsx`.  `payload migrate` in the entrypoint needs both, plus the
 # TypeScript config it loads, so copy the full dependency tree and source.
 COPY --from=builder /app/node_modules ./node_modules
+
+# Lexical v0.41.x `.mjs` files use top-level await (`const mod = await …`).
+# tsx's CJS require hook converts those to `require()`, which Node.js v22+
+# blocks with ERR_REQUIRE_ASYNC_MODULE.  Replace the dynamic dev/prod import
+# with a static ESM import — harmless because NODE_ENV is always 'production'.
+RUN node -e "
+var fs=require('fs'),path=require('path');
+function walk(dir){
+  fs.readdirSync(dir,{withFileTypes:true}).forEach(function(d){
+    var p=path.join(dir,d.name);
+    if(d.isDirectory()&&!/node_modules/.test(p)) walk(p);
+    else if(d.name.endsWith('.node.mjs')){
+      var s=fs.readFileSync(p,'utf8');
+      var m=s.match(/^const mod = await \(process\.env\.NODE_ENV !== 'production' \? import\('\.\/(.*)\\.dev\\.mjs'\) : import\('\.\/(.*)\\.prod\\.mjs'\)\);/m);
+      if(m){ fs.writeFileSync(p, s.replace(m[0], 'import * as mod from \x27./'+m[2]+'.prod.mjs\x27;')); }
+    }
+  });
+}
+walk('node_modules/@lexical');
+walk('node_modules/lexical');
+"
 COPY --from=builder /app/payload.config.ts ./payload.config.ts
 COPY --from=builder /app/src ./src
 COPY --from=builder /app/tsconfig.json ./tsconfig.json

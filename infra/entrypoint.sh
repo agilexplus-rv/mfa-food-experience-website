@@ -7,9 +7,10 @@
 set -euo pipefail
 
 echo "=== Running Payload migrations ==="
-# Use the local `payload` CLI directly (node_modules/.bin/payload) rather than
-# `npx`, so a missing binary fails immediately instead of npx silently trying
-# to fetch `payload` from the registry (which hangs offline containers).
+# Lexical v0.41 TOP-LEVEL AWAIT PATCH: the Dockerfile replaces the dynamic
+# `const mod = await …` dev/prod imports in lexical `.mjs` files with static
+# `import * as mod from` — otherwise tsx's CJS require hook hits Node v22's
+# ERR_REQUIRE_ASYNC_MODULE guard.
 ./node_modules/.bin/payload migrate
 
 echo "=== Starting Next.js server ==="
