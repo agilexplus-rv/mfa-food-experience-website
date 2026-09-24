@@ -35,11 +35,19 @@ ENV PORT=3000
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nextjs
 
-# Copy the standalone build output (includes server.js and node_modules).
+# Copy the standalone build output (includes server.js and a pruned node_modules).
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
-# Payload migrations + package.json (needed for `npx payload migrate`).
+
+# The standalone build prunes node_modules to only what `server.js` traces at
+# runtime, which drops the `payload` CLI binary (`node_modules/.bin/payload`)
+# and `tsx`.  `npx payload migrate` in the entrypoint needs both, plus the
+# TypeScript config it loads, so copy the full dependency tree and source.
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/payload.config.ts ./payload.config.ts
+COPY --from=builder /app/src ./src
+COPY --from=builder /app/tsconfig.json ./tsconfig.json
 COPY --from=builder /app/migrations ./migrations
 COPY --from=builder /app/package.json ./package.json
 
