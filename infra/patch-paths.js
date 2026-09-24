@@ -42,14 +42,26 @@ for (var a = 0; a < files.length; a++) {
   //   from '@/...'         same with single quotes
   //   require("@/...")     require() calls
   var pattern = /(from\s*["']|require\(["'])@\/([^"']+["'])/g;
-  var changed = false;
   content = content.replace(pattern, function (match, prefix, rest) {
-    changed = true;
     count++;
     return prefix + up + rest;
   });
 
-  if (changed) {
+  // Also add .ts extension to any remaining relative imports that lack one.
+  // tsx's ESM loader does not add .ts extensions automatically (same root
+  // cause as the path-alias issue: tsx's register hook delegates to Node's
+  // default resolver when it doesn't recognise the file).
+  var relNoExt = /(from\s*["']|require\(["']|import\(["'])(\.\.?\/[^"']+)(["'])/g;
+  content = content.replace(relNoExt, function (match, prefix, specifier, quote) {
+    // Skip if it already has a recognised extension, is a Node bare specifier
+    // (starts with 'node:'), or is a package name (no leading '.')
+    if (!specifier.startsWith(".") && !specifier.startsWith("/")) return match;
+    if (/\.(ts|tsx|js|jsx|mjs|cjs|json|css|svg|png|jpg|woff2?)$/.test(specifier)) return match;
+    count++;
+    return prefix + specifier + ".ts" + quote;
+  });
+
+  if (content !== fs.readFileSync(file, "utf8")) {
     fs.writeFileSync(file, content, "utf8");
   }
 }

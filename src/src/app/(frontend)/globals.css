@@ -1,0 +1,116 @@
+@import "tailwindcss";
+/* Tailwind v4 requires plugins to be loaded via @plugin in CSS --
+   @tailwindcss/typography was installed and the legal pages use
+   prose/prose-* classes extensively, but without this directive the
+   plugin never loads and every prose-* class silently compiles to
+   NOTHING (no heading sizes, no list bullets/numbers, no spacing) --
+   the root cause of policy pages rendering as undifferentiated body
+   text (Rudie, 2026-07-12). */
+@plugin "@tailwindcss/typography";
+
+@theme {
+  /* Brand palette — Malta Food Experience */
+  --color-lunar-green: #33483D;
+  --color-terracotta: #C9643D;
+  --color-matte-gold: #B8974D;
+  --color-soft-beige: #F9F4EF;
+
+  /* Semantic tokens */
+  --color-primary: var(--color-lunar-green);
+  --color-primary-light: #4A6B59;
+  --color-secondary: var(--color-terracotta);
+  --color-accent: var(--color-matte-gold);
+  --color-background: var(--color-soft-beige);
+  --color-surface: #FFFFFF;
+  --color-text: var(--color-lunar-green);
+  --color-text-light: #6B7F74;
+  --color-border: #D4C8B8;
+
+  /* Typography — Montserrat via next/font */
+  --font-sans: var(--font-montserrat), ui-sans-serif, system-ui, sans-serif;
+}
+
+html {
+  /* Prevent the mobile nav drawer (translated off-screen via
+     translate-x-full when closed) from creating horizontal
+     document overflow / a spurious horizontal scrollbar on
+     narrow viewports. */
+  overflow-x: hidden;
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  overflow-x: hidden;
+  width: 100%;
+}
+
+/* Skip-to-content link (WCAG 2.4.1 Bypass Blocks, Level A) */
+.skip-to-content {
+  position: absolute;
+  top: -100%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  padding: 8px 16px;
+  background: var(--color-lunar-green);
+  color: var(--color-soft-beige);
+  font-weight: 700;
+  font-size: 0.875rem;
+  border-radius: 0 0 6px 6px;
+  text-decoration: none;
+  transition: top 0.2s ease;
+}
+.skip-to-content:focus {
+  top: 0;
+  outline: 2px solid var(--color-matte-gold);
+  outline-offset: 2px;
+}
+
+/* Print styles — hide console chrome for roster/table printing */
+@media print {
+  /* Hide sidebar and top bar */
+  aside,
+  header[class*="sticky"],
+  .console-sidebar,
+  .console-topbar {
+    display: none !important;
+  }
+
+  /* Remove soft-beige background for clean print */
+  body {
+    background: white !important;
+    color: #33483D !important;
+  }
+
+  /* Full-width content */
+  main {
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+  }
+
+  /* Hide interactive elements that don't make sense on paper */
+  button,
+  .no-print {
+    display: none !important;
+  }
+
+  /* Ensure tables don't overflow */
+  table {
+    page-break-inside: auto;
+    font-size: 11px;
+  }
+  tr {
+    page-break-inside: avoid;
+  }
+  thead {
+    display: table-header-group;
+  }
+
+  /* Hide filters, search bars, pagination */
+  .print-hide {
+    display: none !important;
+  }
+}
