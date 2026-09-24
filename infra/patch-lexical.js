@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 // infra/patch-lexical.js
 // Run in the Docker runner stage to remove top-level `await` from Lexical
 // v0.41 `.mjs` files so tsx's CJS require hook in `payload migrate` works
