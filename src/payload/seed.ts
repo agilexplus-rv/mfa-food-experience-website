@@ -76,6 +76,40 @@ export async function seed(p?: Payload) {
   // ── Policies ──────────────────────────────────────────────────
   // Check per-slug so new policies are seedable on redeploy.
 
+  /**
+   * Normalize a Lexical rich-text body so it passes Payload's validation.
+   *
+   * Text nodes need `detail`, `format`, `mode`, and `style` fields.
+   * Element nodes (paragraph, heading, list, listitem) need `textFormat`
+   * and `textStyle`.  These are always set to zero/empty defaults because
+   * our seed content uses no inline formatting.
+   */
+  function normalizeLexicalBody(body: unknown): unknown {
+    if (typeof body !== 'object' || body === null) return body
+    const obj = body as Record<string, unknown>
+    if (obj.type === 'text') {
+      obj.detail ??= 0
+      obj.format ??= 0
+      obj.mode ??= 'normal'
+      obj.style ??= ''
+    }
+    if (
+      obj.type === 'paragraph' ||
+      obj.type === 'heading' ||
+      obj.type === 'list' ||
+      obj.type === 'listitem' ||
+      obj.type === 'root'
+    ) {
+      obj.textFormat ??= 0
+      obj.textStyle ??= ''
+    }
+    // Recurse into children
+    if (Array.isArray(obj.children)) {
+      obj.children = obj.children.map(normalizeLexicalBody)
+    }
+    return obj
+  }
+
   async function ensurePolicy(slug: string, title: string, body: unknown) {
     const existing = await payload.find({
       collection: 'policies',
@@ -88,7 +122,7 @@ export async function seed(p?: Payload) {
     }
     await payload.create({
       collection: 'policies',
-      data: { slug, title, body },
+      data: { slug, title, body: normalizeLexicalBody(body) },
       overrideAccess: true,
     })
     console.log(`Seed: Created policy "${title}" (${slug})`)
