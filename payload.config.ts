@@ -81,10 +81,7 @@ export default buildConfig({
       // the Default/dashboard template does), and beforeLogin is a
       // LoginView-only slot. See src/components/admin/
       // AdminGlobalStyles.tsx for the full root-cause writeup.
-      providers: [
-        '@/components/admin/AdminGlobalStyles#default',
-        '@/components/admin/CreateFirstUserProvider#default',
-      ],
+      providers: ['@/components/admin/AdminGlobalStyles#default'],
       beforeLogin: [
         '@/components/admin/AdminPasswordReveal#default',
       ],
