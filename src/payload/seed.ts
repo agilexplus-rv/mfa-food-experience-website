@@ -120,12 +120,18 @@ export async function seed(p?: Payload) {
       console.log(`Seed: Policy "${title}" (${slug}) already exists - skipping.`)
       return
     }
-    await payload.create({
-      collection: 'policies',
-      data: { slug, title, body: normalizeLexicalBody(body) },
-      overrideAccess: true,
-    })
-    console.log(`Seed: Created policy "${title}" (${slug})`)
+    const data = { slug, title, body: normalizeLexicalBody(body) }
+    try {
+      await payload.create({
+        collection: 'policies',
+        data,
+        overrideAccess: true,
+      })
+      console.log(`Seed: Created policy "${title}" (${slug})`)
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err)
+      throw new Error(`Failed to create policy "${title}" (${slug}): ${msg}`, { cause: err })
+    }
   }
 
   await ensurePolicy('cancellation-policy', 'Cancellation Policy', {
