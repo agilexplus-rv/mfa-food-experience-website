@@ -65,6 +65,24 @@ export async function createMfaVerifiedToken(
     .sign(getSecret())
 }
 
+/**
+ * Returns true only if `token` is a genuine, unexpired mfa-verified token
+ * issued for `userId`. Signature verification is essential here: cookie
+ * presence alone is trivially forgeable by any client.
+ */
+export async function verifyMfaVerifiedToken(
+  token: string | undefined,
+  userId: string,
+): Promise<boolean> {
+  if (!token) return false
+  try {
+    const { payload } = await jwtVerify(token, getSecret())
+    return payload.mfa === true && payload.sub === userId
+  } catch {
+    return false
+  }
+}
+
 export const MFA_PENDING_COOKIE = MFA_PENDING_COOKIE_NAME
 export const MFA_VERIFIED_COOKIE = MFA_VERIFIED_COOKIE_NAME
 export const MFA_COOKIE_OPTIONS = {

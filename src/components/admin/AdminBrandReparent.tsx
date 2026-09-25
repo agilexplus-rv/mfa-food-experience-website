@@ -19,7 +19,8 @@ import { useEffect } from 'react'
  * the .admin-brand-inject node (rendered as a sibling BEFORE the
  * page section by AdminGlobalStyles) and physically relocates it to
  * be the FIRST child of .template-minimal__wrap, but only when that
- * wrap is inside a .forgot-password or .reset-password section --
+ * wrap is inside a .forgot-password or .reset-password section (or
+ * of the .create-first-user div inside the wrap -- see below) --
  * never touches the login page, which already has its own correct
  * brand placement and would otherwise get a duplicate.
  *
@@ -31,8 +32,14 @@ import { useEffect } from 'react'
  */
 export default function AdminBrandReparent() {
   useEffect(() => {
+    // /admin/create-first-user differs from forgot/reset: its
+    // MinimalTemplate section gets NO view class (getRouteData.js's
+    // baseClasses map has no createFirstUser entry), and the
+    // .create-first-user class sits on a div INSIDE
+    // .template-minimal__wrap -- so target that div directly. Its
+    // first child is still inside the same wrap as the form.
     const wrap = document.querySelector<HTMLElement>(
-      'section.forgot-password .template-minimal__wrap, section.reset-password .template-minimal__wrap',
+      'section.forgot-password .template-minimal__wrap, section.reset-password .template-minimal__wrap, .template-minimal__wrap > .create-first-user',
     )
     const brand = document.querySelector<HTMLElement>('.admin-brand-inject')
     if (!wrap || !brand) return

@@ -138,6 +138,18 @@ function MfaVerifyForm() {
             {submitting ? 'Verifying…' : 'Verify Code'}
           </button>
         </form>
+
+        {/* Deliberately NOT a self-service "set up again" link to
+            /mfa-setup: re-enrolling replaces the stored TOTP secret,
+            so offering it here -- before the second factor has been
+            proven -- would let anyone holding only the password swap
+            in their own authenticator. Recovery goes through an
+            administrator resetting mfaEnabled on the user record. */}
+        <p className="mfa-help">
+          Lost access to your authenticator app? Contact an administrator to
+          reset two-factor authentication, then sign in again to scan a new
+          QR code.
+        </p>
       </div>
       <style>{mfaStyles}</style>
     </div>
@@ -240,7 +252,7 @@ const mfaStyles = `
     border-color: #33483D;
   }
   .mfa-error {
-    color: #C9643D;
+    color: #9C4E2F;
     font-size: 0.875rem;
     text-align: center;
     margin: 0 0 16px;
@@ -260,4 +272,10 @@ const mfaStyles = `
   }
   .mfa-button:hover { background: color-mix(in srgb, #33483D 85%, transparent); }
   .mfa-button:disabled { opacity: 0.7; cursor: not-allowed; }
+  .mfa-help {
+    color: #58685E;
+    font-size: 0.75rem;
+    line-height: 1.5;
+    margin: 20px 0 0;
+  }
 `

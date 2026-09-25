@@ -5,6 +5,7 @@ import config from '@payload-config'
 import { verifySession } from '@/lib/rbac/verify-session'
 import { encryptTotpSecret } from '@/lib/mfa/encryption'
 import { generateTotpSecret, buildTotpUri } from '@/lib/mfa/totp'
+import { verifyMfaVerifiedToken, MFA_VERIFIED_COOKIE } from '@/lib/mfa/session'
 
 let _payload: Payload | null = null
 async function payload(): Promise<Payload> {
@@ -24,6 +25,23 @@ export async function POST(req: NextRequest) {
 
   if (!currentUser) {
     return NextResponse.json({ error: 'unauthenticated' }, { status: 401 })
+  }
+
+  // A password-only session must not be able to replace an existing TOTP
+  // secret -- otherwise it could enroll its own authenticator and then pass
+  // verify-setup, bypassing 2FA. Re-enrollment requires proof of the
+  // current second factor.
+  if (
+    currentUser.mfaEnabled &&
+    !(await verifyMfaVerifiedToken(
+      req.cookies.get(MFA_VERIFIED_COOKIE)?.value,
+      String(currentUser.id),
+    ))
+  ) {
+    return NextResponse.json(
+      { error: 'Two-factor verification required to re-enroll. Log in again.' },
+      { status: 403 },
+    )
   }
 
   const secret = generateTotpSecret()

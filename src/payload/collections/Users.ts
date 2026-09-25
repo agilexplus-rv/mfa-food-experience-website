@@ -87,6 +87,12 @@ export const Users: CollectionConfig = {
       name: 'mfaEnabled',
       type: 'checkbox',
       defaultValue: false,
+      // Only admins may toggle this via the REST/admin API; otherwise a user
+      // could PATCH their own record with { mfaEnabled: false } to disable
+      // 2FA. The MFA routes write it with overrideAccess: true.
+      access: {
+        update: ({ req: { user } }) => (user as { role?: string } | null)?.role === 'admin',
+      },
       admin: {
         position: 'sidebar',
         description:
@@ -98,6 +104,10 @@ export const Users: CollectionConfig = {
       name: 'totpSecret',
       type: 'text',
       saveToJWT: false,
+      access: {
+        read: ({ req: { user } }) => (user as { role?: string } | null)?.role === 'admin',
+        update: ({ req: { user } }) => (user as { role?: string } | null)?.role === 'admin',
+      },
       admin: {
         readOnly: true,
         position: 'sidebar',

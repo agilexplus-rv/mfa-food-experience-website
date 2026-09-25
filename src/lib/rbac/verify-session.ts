@@ -39,7 +39,7 @@ import type { NextRequest } from 'next/server'
 export async function verifySession(
   req: NextRequest,
   p: Payload,
-): Promise<{ id: string | number; email: string; role: string } | null> {
+): Promise<{ id: string | number; email: string; role: string; mfaEnabled: boolean } | null> {
   const cookiePrefix = p.config.cookiePrefix || 'payload'
   const token = req.cookies.get(`${cookiePrefix}-token`)?.value
   if (!token) return null
@@ -56,7 +56,13 @@ export async function verifySession(
 
   if (!decoded.id || decoded.collection !== 'users') return null
 
-  let user: { id: string | number; email: string; role?: string; sessions?: { id: string }[] } | null
+  let user: {
+    id: string | number
+    email: string
+    role?: string
+    mfaEnabled?: boolean
+    sessions?: { id: string }[]
+  } | null
   try {
     const result = await p.findByID({
       collection: 'users',
@@ -78,5 +84,6 @@ export async function verifySession(
     id: user.id,
     email: user.email,
     role: user.role || 'door_staff',
+    mfaEnabled: user.mfaEnabled === true,
   }
 }

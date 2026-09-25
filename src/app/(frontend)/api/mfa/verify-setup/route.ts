@@ -7,6 +7,7 @@ import { decryptTotpSecret } from '@/lib/mfa/encryption'
 import { verifyTotpCode } from '@/lib/mfa/totp'
 import {
   createMfaVerifiedToken,
+  verifyMfaVerifiedToken,
   MFA_VERIFIED_COOKIE,
   MFA_COOKIE_OPTIONS,
 } from '@/lib/mfa/session'
@@ -28,6 +29,22 @@ export async function POST(req: NextRequest) {
 
   if (!currentUser) {
     return NextResponse.json({ error: 'unauthenticated' }, { status: 401 })
+  }
+
+  // Same guard as /api/mfa/enroll: once MFA is enabled, this endpoint must
+  // not mint an mfa-verified cookie for a session that hasn't proven the
+  // current second factor.
+  if (
+    currentUser.mfaEnabled &&
+    !(await verifyMfaVerifiedToken(
+      req.cookies.get(MFA_VERIFIED_COOKIE)?.value,
+      String(currentUser.id),
+    ))
+  ) {
+    return NextResponse.json(
+      { error: 'Two-factor verification required to re-enroll. Log in again.' },
+      { status: 403 },
+    )
   }
 
   let body: Record<string, unknown>

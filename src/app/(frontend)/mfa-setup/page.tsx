@@ -154,7 +154,7 @@ export default function MfaSetupPage() {
       <div className="notranslate mfa-container">
         <div className="mfa-card">
           <h1 className="mfa-title">Setup Error</h1>
-          <p style={{ color: '#C9643D', marginBottom: 16 }}>{error}</p>
+          <p style={{ color: '#9C4E2F', marginBottom: 16 }}>{error}</p>
           <button className="mfa-button" onClick={startEnrollment}>
             Try Again
           </button>
@@ -358,7 +358,7 @@ const mfaStyles = `
     border-color: #33483D;
   }
   .mfa-error {
-    color: #C9643D;
+    color: #9C4E2F;
     font-size: 0.875rem;
     text-align: center;
     margin: 0 0 16px;
