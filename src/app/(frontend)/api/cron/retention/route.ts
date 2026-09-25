@@ -65,21 +65,28 @@ export async function GET(req: NextRequest) {
   // We fetch with depth=2 to resolve event.date, then filter in-app
   // because Payload's query DSL does not support "event.date < X"
   // as a where clause (relationship date traversal).
-  const result = await p.find({
-    collection: 'bookings',
-    where: {
-      anonymisedAt: { equals: null },
-      status: { in: ['confirmed', 'cancelled', 'checked_in'] },
-    },
-    depth: 2,
-    limit: 1000,
-    overrideAccess: true,
-  })
 
-  const errors: string[] = []
+  let errors: string[] = []
   let processed = 0
 
-  const bookings = result.docs as unknown as BookingDoc[]
+  let bookings: BookingDoc[] = []
+
+  try {
+    const result = await p.find({
+      collection: 'bookings',
+      where: {
+        anonymisedAt: { equals: null },
+        status: { in: ['confirmed', 'cancelled', 'checked_in'] },
+      },
+      depth: 2,
+      limit: 1000,
+      overrideAccess: true,
+    })
+    bookings = result.docs as unknown as BookingDoc[]
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err)
+    errors.push(`bookings.find: ${msg}`)
+  }
 
   for (const booking of bookings) {
     try {
@@ -122,18 +129,24 @@ export async function GET(req: NextRequest) {
   }
 
   // Also process pending bookings older than 90 days
-  const pendingResult = await p.find({
-    collection: 'bookings',
-    where: {
-      anonymisedAt: { equals: null },
-      status: { equals: 'pending' },
-      createdAt: { less_than: cutoff90d.toISOString() },
-    },
-    limit: 1000,
-    overrideAccess: true,
-  })
+  let pendingBookings: BookingDoc[] = []
 
-  const pendingBookings = pendingResult.docs as unknown as BookingDoc[]
+  try {
+    const pendingResult = await p.find({
+      collection: 'bookings',
+      where: {
+        anonymisedAt: { equals: null },
+        status: { equals: 'pending' },
+        createdAt: { less_than: cutoff90d.toISOString() },
+      },
+      limit: 1000,
+      overrideAccess: true,
+    })
+    pendingBookings = pendingResult.docs as unknown as BookingDoc[]
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err)
+    errors.push(`pendingBookings.find: ${msg}`)
+  }
 
   for (const booking of pendingBookings) {
     try {
@@ -158,18 +171,26 @@ export async function GET(req: NextRequest) {
 
   // Anonymise rejected testimonials older than 30 days
   const cutoff30d = daysAgo(30)
-  const testimonialResult = await p.find({
-    collection: 'testimonials',
-    where: {
-      anonymisedAt: { equals: null },
-      approved: { equals: false },
-      updatedAt: { less_than: cutoff30d.toISOString() },
-    },
-    limit: 1000,
-    overrideAccess: true,
-  })
+  let testimonialDocs: { id: string | number }[] = []
 
-  for (const t of testimonialResult.docs) {
+  try {
+    const testimonialResult = await p.find({
+      collection: 'testimonials',
+      where: {
+        anonymisedAt: { equals: null },
+        approved: { equals: false },
+        updatedAt: { less_than: cutoff30d.toISOString() },
+      },
+      limit: 1000,
+      overrideAccess: true,
+    })
+    testimonialDocs = testimonialResult.docs as unknown as { id: string | number }[]
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err)
+    errors.push(`testimonials.find: ${msg}`)
+  }
+
+  for (const t of testimonialDocs) {
     try {
       await p.update({
         collection: 'testimonials',
