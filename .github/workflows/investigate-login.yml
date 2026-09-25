@@ -48,7 +48,7 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Run login probe
-        run: node scripts/investigate-login-hang.mjs
+        run: node scripts/probe-v3.mjs
         env:
           BASE_URL: ${{ github.event.inputs.base_url || 'https://foodexperience.agilexplus.dev' }}
           ADMIN_EMAIL: ${{ github.event.inputs.admin_email }}
