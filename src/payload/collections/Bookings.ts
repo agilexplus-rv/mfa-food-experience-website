@@ -130,16 +130,17 @@ export const Bookings: CollectionConfig = {
       name: 'paymentMethod',
       type: 'select',
       options: [
-        { label: 'Stripe', value: 'stripe' },
+        { label: 'Viva', value: 'viva' },
+        { label: 'Stripe (legacy)', value: 'stripe' },
         { label: 'Cash', value: 'cash' },
         { label: 'Bank Transfer', value: 'bank_transfer' },
         { label: 'Comped', value: 'comped' },
         { label: 'Pending Payment', value: 'pending_payment' },
       ],
-      defaultValue: 'stripe',
+      defaultValue: 'viva',
       admin: {
         description:
-          'How this booking was paid. stripe = automated Stripe Checkout (set automatically by webhook); cash/bank_transfer/pending_payment = manual staff-created bookings; comped = free/no charge (e.g. staff/VIP).',
+          'How this booking was paid. viva = VIVA Smart Checkout (set automatically by webhook); stripe = legacy Stripe; cash/bank_transfer/pending_payment = manual staff-created bookings; comped = free/no charge.',
       },
     },
     {
@@ -158,6 +159,35 @@ export const Bookings: CollectionConfig = {
         description: 'Explicit consent to store dietary information, per ADR-008 DPIA measure 5.',
       },
     },
+    // ── VIVA Wallet fields ──
+    {
+      name: 'vivaOrderCode',
+      type: 'text',
+      admin: {
+        readOnly: true,
+        position: 'sidebar',
+        description: 'VIVA payment OrderCode, set at checkout (replaces Stripe Checkout Session id).',
+      },
+    },
+    {
+      name: 'vivaTransactionId',
+      type: 'text',
+      admin: {
+        readOnly: true,
+        position: 'sidebar',
+        description: 'VIVA TransactionId (UUID), set once payment completes via webhook.',
+      },
+    },
+    {
+      name: 'vivaRefundId',
+      type: 'text',
+      admin: {
+        readOnly: true,
+        position: 'sidebar',
+        description: 'VIVA refund TransactionId, set when a refund is issued via the cancel flow.',
+      },
+    },
+    // ── Legacy Stripe fields (kept for existing data; not used for new bookings) ──
     {
       name: 'stripeCheckoutSessionId',
       type: 'text',

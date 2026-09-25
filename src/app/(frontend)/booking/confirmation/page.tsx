@@ -9,27 +9,38 @@ export const metadata: Metadata = {
 export const dynamic = 'force-dynamic'
 
 interface PageProps {
-  searchParams: Promise<{ session_id?: string }>
+  searchParams: Promise<{
+    t?: string    // VIVA TransactionId
+    s?: string    // VIVA OrderCode
+    session_id?: string  // legacy Stripe
+  }>
 }
 
 /**
- * /booking/confirmation — Stripe Checkout success_url target (ADR-004
- * step 4). Stripe only gives us back its own session_id; the actual
- * booking is resolved server/client-side via /api/bookings/by-session,
- * then polled via /api/bookings/[id]/status every 2s until the webhook
- * has flipped it to 'confirmed' (webhook delivery is asynchronous and
- * may arrive after the redirect).
+ * /booking/confirmation — VIVA Smart Checkout success_url target
+ * (or legacy Stripe Checkout success_url for existing bookings).
+ *
+ * VIVA appends ?t={TransactionId}&s={OrderCode} to the configured success
+ * URL. We resolve the booking by OrderCode (stored as vivaOrderCode) and
+ * poll /api/bookings/[id]/status until the webhook flips it to 'confirmed'.
+ *
+ * Legacy Stripe: ?session_id={CHECKOUT_SESSION_ID} falls through to the
+ * old lookup path.
  *
  * This page displays PII (attendee name, email, booking reference) and
  * is excluded from Google Translate per ADR-006 Sec 4 (C17 / DPIA P5).
  */
 export default async function BookingConfirmationPage({ searchParams }: PageProps) {
-  const { session_id: sessionId } = await searchParams
+  const { t, s, session_id: sessionId } = await searchParams
+
+  // VIVA: use orderCode (s param) as the lookup key
+  const vivaOrderCode = s
+  const effectiveSessionId = sessionId ?? (vivaOrderCode ? `viva:${vivaOrderCode}` : undefined)
 
   return (
     <section className="notranslate mx-auto max-w-2xl px-6 py-20 text-center">
-      {sessionId ? (
-        <ConfirmationStatus sessionId={sessionId} />
+      {effectiveSessionId ? (
+        <ConfirmationStatus sessionId={effectiveSessionId} />
       ) : (
         <div>
           <h1 className="text-3xl font-black tracking-[-0.02em] text-lunar-green">Missing booking reference</h1>

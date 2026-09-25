@@ -60,16 +60,26 @@ async function seed() {
   }
 
   // ── Policies ──────────────────────────────────────────────────
-  const existingPolicies = await payload.find({ collection: 'policies', limit: 1 })
-  if (existingPolicies.totalDocs > 0) {
-    console.log(`Seed: ${existingPolicies.totalDocs} polic${existingPolicies.totalDocs === 1 ? 'y' : 'ies'} already exist - skipping.`)
-  } else {
+  // Check per-slug so new policies are seedable on redeploy.
+
+  async function ensurePolicy(slug: string, title: string, body: unknown) {
+    const existing = await payload.find({
+      collection: 'policies',
+      where: { slug: { equals: slug } },
+      limit: 1,
+    })
+    if (existing.totalDocs > 0) {
+      console.log(`Seed: Policy "${title}" (${slug}) already exists - skipping.`)
+      return
+    }
     await payload.create({
       collection: 'policies',
-      data: {
-        slug: 'cancellation-policy',
-        title: 'Cancellation Policy',
-        body: {
+      data: { slug, title, body },
+    })
+    console.log(`Seed: Created policy "${title}" (${slug})`)
+  }
+
+  await ensurePolicy('cancellation-policy', 'Cancellation Policy', {
           root: {
             type: 'root',
             format: '',
@@ -155,17 +165,9 @@ async function seed() {
               },
             ],
           },
-        },
-      },
-    })
-    console.log('Seed: Created policy "Cancellation Policy" (cancellation-policy)')
+  })
 
-    await payload.create({
-      collection: 'policies',
-      data: {
-        slug: 'customer-policy',
-        title: 'Customer Policy',
-        body: {
+    await ensurePolicy('customer-policy', 'Customer Policy', {
           root: {
             type: 'root',
             format: '',
@@ -258,17 +260,9 @@ async function seed() {
               },
             ],
           },
-        },
-      },
-    })
-    console.log('Seed: Created policy "Customer Policy" (customer-policy)')
+  })
 
-    await payload.create({
-      collection: 'policies',
-      data: {
-        slug: 'provider-info',
-        title: 'Provider Information',
-        body: {
+    await ensurePolicy('provider-info', 'Provider Information', {
           root: {
             type: 'root',
             format: '',
@@ -348,11 +342,325 @@ async function seed() {
               },
             ],
           },
-        },
+  })
+
+    // ── Cookie Policy ──────────────────────────────────────
+    await ensurePolicy('cookie-policy', 'Cookie Policy', {
+      root: {
+        type: 'root',
+        format: '',
+        indent: 0,
+        version: 1,
+        direction: 'ltr',
+        children: [
+          {
+            type: 'heading',
+            tag: 'h2',
+            children: [{ type: 'text', text: 'What Are Cookies' }],
+          },
+          {
+            type: 'paragraph',
+            children: [
+              { type: 'text', text: 'Cookies are small text files placed on your device when you visit a website. They are widely used to make websites work, improve usability, and provide information to the site owners.' },
+            ],
+          },
+          {
+            type: 'heading',
+            tag: 'h2',
+            children: [{ type: 'text', text: 'How We Use Cookies' }],
+          },
+          {
+            type: 'paragraph',
+            children: [
+              { type: 'text', text: 'This website uses only essential cookies necessary for its operation:' },
+            ],
+          },
+          {
+            type: 'list',
+            listType: 'unordered',
+            children: [
+              {
+                type: 'listitem',
+                children: [
+                  { type: 'text', text: 'Session cookie: maintains your booking session while you complete a reservation. This cookie expires when you close your browser.', format: 'bold' },
+                ],
+              },
+              {
+                type: 'listitem',
+                children: [
+                  { type: 'text', text: 'Language cookie: remembers your language preference to display content in Maltese or English. This cookie persists for 30 days.', format: 'bold' },
+                ],
+              },
+              {
+                type: 'listitem',
+                children: [
+                  { type: 'text', text: 'Consent cookie: stores your cookie consent preference. This cookie persists for 12 months.', format: 'bold' },
+                ],
+              },
+            ],
+          },
+          {
+            type: 'heading',
+            tag: 'h2',
+            children: [{ type: 'text', text: 'Third-Party Cookies' }],
+          },
+          {
+            type: 'paragraph',
+            children: [
+              { type: 'text', text: 'We do not use advertising, analytics, or social media cookies. No third-party tracking cookies are set by this site.' },
+            ],
+          },
+          {
+            type: 'heading',
+            tag: 'h2',
+            children: [{ type: 'text', text: 'Managing Cookies' }],
+          },
+          {
+            type: 'paragraph',
+            children: [
+              { type: 'text', text: 'Most browsers allow you to refuse or delete cookies through their settings. Blocking essential cookies may prevent the booking system from functioning correctly. For guidance, visit ' },
+              { type: 'link', url: 'https://www.aboutcookies.org/', children: [{ type: 'text', text: 'aboutcookies.org' }] },
+              { type: 'text', text: '.' },
+            ],
+          },
+          {
+            type: 'heading',
+            tag: 'h2',
+            children: [{ type: 'text', text: 'Updates' }],
+          },
+          {
+            type: 'paragraph',
+            children: [
+              { type: 'text', text: 'This policy was last reviewed on 1 September 2026. We may update it from time to time. Changes will be posted on this page.' },
+            ],
+          },
+        ],
       },
     })
-    console.log('Seed: Created policy "Provider Information" (provider-info)')
-  }
+
+    // ── Privacy Notice ─────────────────────────────────────
+    await ensurePolicy('privacy-notice', 'Privacy Notice', {
+      root: {
+        type: 'root',
+        format: '',
+        indent: 0,
+        version: 1,
+        direction: 'ltr',
+        children: [
+          {
+            type: 'heading',
+            tag: 'h2',
+            children: [{ type: 'text', text: 'Who We Are' }],
+          },
+          {
+            type: 'paragraph',
+            children: [
+              { type: 'text', text: 'The Malta Food Agency ("the Agency," "we," "us") is the data controller for personal data collected through the Malta Food Experience website (foodexperience.agilexplus.dev). We are committed to protecting your privacy in accordance with the General Data Protection Regulation (EU) 2016/679 and the Data Protection Act (Chapter 586 of the Laws of Malta).' },
+            ],
+          },
+          {
+            type: 'heading',
+            tag: 'h2',
+            children: [{ type: 'text', text: 'What Personal Data We Collect' }],
+          },
+          {
+            type: 'paragraph',
+            children: [
+              { type: 'text', text: 'When you make a booking, we collect:' },
+            ],
+          },
+          {
+            type: 'list',
+            listType: 'unordered',
+            children: [
+              { type: 'listitem', children: [{ type: 'text', text: 'Your name and email address' }] },
+              { type: 'listitem', children: [{ type: 'text', text: 'The name(s) of additional attendees' }] },
+              { type: 'listitem', children: [{ type: 'text', text: 'Dietary requirements and allergy information (where provided)' }] },
+              { type: 'listitem', children: [{ type: 'text', text: 'Transaction identifiers (not full card details)' }] },
+              { type: 'listitem', children: [{ type: 'text', text: 'Your IP address, for fraud prevention and rate-limiting' }] },
+            ],
+          },
+          {
+            type: 'heading',
+            tag: 'h2',
+            children: [{ type: 'text', text: 'Why We Process Your Data' }],
+          },
+          {
+            type: 'paragraph',
+            children: [
+              { type: 'text', text: 'We process your data on the following lawful bases:' },
+            ],
+          },
+          {
+            type: 'list',
+            listType: 'unordered',
+            children: [
+              { type: 'listitem', children: [{ type: 'text', text: 'Contractual necessity: to process your booking, send your confirmation and QR code, and communicate essential event information.', format: 'bold' }] },
+              { type: 'listitem', children: [{ type: 'text', text: 'Legitimate interest: to prevent fraud and misuse of the booking system.', format: 'bold' }] },
+              { type: 'listitem', children: [{ type: 'text', text: 'Consent: for any optional communications you have agreed to receive.', format: 'bold' }] },
+            ],
+          },
+          {
+            type: 'heading',
+            tag: 'h2',
+            children: [{ type: 'text', text: 'Data Retention' }],
+          },
+          {
+            type: 'paragraph',
+            children: [
+              { type: 'text', text: 'Booking records are retained for two years after the event date, after which personal data is anonymised. Financial transaction records are retained for six years as required by Maltese tax law.' },
+            ],
+          },
+          {
+            type: 'heading',
+            tag: 'h2',
+            children: [{ type: 'text', text: 'Data Sharing' }],
+          },
+          {
+            type: 'paragraph',
+            children: [
+              { type: 'text', text: 'We share your data with:' },
+            ],
+          },
+          {
+            type: 'list',
+            listType: 'unordered',
+            children: [
+              { type: 'listitem', children: [{ type: 'text', text: 'Viva Wallet: to process payments. Viva acts as a data processor. Their privacy policy is available at vivapayments.com.', format: 'bold' }] },
+              { type: 'listitem', children: [{ type: 'text', text: 'Azure (Microsoft): for website hosting. Data is stored within the EU (West Europe region).', format: 'bold' }] },
+            ],
+          },
+          {
+            type: 'paragraph',
+            children: [
+              { type: 'text', text: 'We do not sell, rent, or share your data with any other third parties.' },
+            ],
+          },
+          {
+            type: 'heading',
+            tag: 'h2',
+            children: [{ type: 'text', text: 'Your Rights' }],
+          },
+          {
+            type: 'paragraph',
+            children: [
+              { type: 'text', text: 'Under the GDPR, you have the right to access, rectify, erase, restrict, or port your personal data, and to object to processing. To exercise any of these rights, contact us at ' },
+              { type: 'text', text: 'denise.grima-connell@gov.mt', format: 'bold' },
+              { type: 'text', text: '. We will respond within one month. You also have the right to lodge a complaint with the Office of the Information and Data Protection Commissioner (idpc.org.mt).' },
+            ],
+          },
+          {
+            type: 'heading',
+            tag: 'h2',
+            children: [{ type: 'text', text: 'Contact' }],
+          },
+          {
+            type: 'paragraph',
+            children: [
+              { type: 'text', text: 'Data Protection Officer: Malta Food Agency. Email: denise.grima-connell@gov.mt.', format: 'bold' },
+            ],
+          },
+          {
+            type: 'paragraph',
+            children: [
+              { type: 'text', text: 'This privacy notice was last updated on 1 September 2026.' },
+            ],
+          },
+        ],
+      },
+    })
+
+    // ── Accessibility Statement ──────────────────────────────
+    await ensurePolicy('accessibility-statement', 'Accessibility Statement', {
+      root: {
+        type: 'root',
+        format: '',
+        indent: 0,
+        version: 1,
+        direction: 'ltr',
+        children: [
+          {
+            type: 'heading',
+            tag: 'h2',
+            children: [{ type: 'text', text: 'Our Commitment' }],
+          },
+          {
+            type: 'paragraph',
+            children: [
+              { type: 'text', text: 'The Malta Food Agency is committed to making the Malta Food Experience website accessible to everyone, including people with disabilities. We aim to conform to Level AA of the Web Content Accessibility Guidelines (WCAG) 2.2.' },
+            ],
+          },
+          {
+            type: 'heading',
+            tag: 'h2',
+            children: [{ type: 'text', text: 'How We Deliver Accessibility' }],
+          },
+          {
+            type: 'list',
+            listType: 'unordered',
+            children: [
+              { type: 'listitem', children: [{ type: 'text', text: 'Skip link: a "Skip to main content" link is the first focusable element on every page, allowing keyboard and screen-reader users to bypass repetitive navigation.' }] },
+              { type: 'listitem', children: [{ type: 'text', text: 'Semantic HTML: we use standard HTML5 landmark elements (header, main, footer, nav) so assistive technology can navigate the page structure.' }] },
+              { type: 'listitem', children: [{ type: 'text', text: 'Keyboard navigation: all interactive elements (links, buttons, form fields) are operable by keyboard alone, with visible focus indicators.' }] },
+              { type: 'listitem', children: [{ type: 'text', text: 'Colour contrast: text meets or exceeds WCAG 2.2 AA contrast ratios (4.5:1 for normal text, 3:1 for large text).' }] },
+              { type: 'listitem', children: [{ type: 'text', text: 'Lablelled forms: every form input has an associated label element.' }] },
+              { type: 'listitem', children: [{ type: 'text', text: 'Langage: the page language is declared as English, with Maltese available via the language switcher.' }] },
+              { type: 'listitem', children: [{ type: 'text', text: 'Alt text: images include descriptive alternative text.' }] },
+              { type: 'listitem', children: [{ type: 'text', text: 'Resize and reflow: content remains readable when zoomed to 200% or when viewed on small screens.' }] },
+            ],
+          },
+          {
+            type: 'heading',
+            tag: 'h2',
+            children: [{ type: 'text', text: 'Known Limitations' }],
+          },
+          {
+            type: 'paragraph',
+            children: [
+              { type: 'text', text: 'We are working to address the following known issues:' },
+            ],
+          },
+          {
+            type: 'list',
+            listType: 'unordered',
+            children: [
+              { type: 'listitem', children: [{ type: 'text', text: 'The Google Translate widget may affect screen-reader behaviour. We offer information in both English and Maltese as an alternative.' }] },
+              { type: 'listitem', children: [{ type: 'text', text: 'The interactive calendar on the "Book Now" page relies on date-picker controls that may present challenges for some assistive technology combinations.' }] },
+            ],
+          },
+          {
+            type: 'heading',
+            tag: 'h2',
+            children: [{ type: 'text', text: 'Feedback and Contact' }],
+          },
+          {
+            type: 'paragraph',
+            children: [
+              { type: 'text', text: 'We welcome feedback on the accessibility of this site. If you encounter a barrier, please contact us at ' },
+              { type: 'text', text: 'denise.grima-connell@gov.mt', format: 'bold' },
+              { type: 'text', text: '. We aim to respond within five working days.' },
+            ],
+          },
+          {
+            type: 'heading',
+            tag: 'h2',
+            children: [{ type: 'text', text: 'Enforcement' }],
+          },
+          {
+            type: 'paragraph',
+            children: [
+              { type: 'text', text: 'The Malta Communications Authority (MCA) is responsible for enforcing the EU Web Accessibility Directive in Malta. If you are not satisfied with our response, you may contact the MCA.' },
+            ],
+          },
+          {
+            type: 'paragraph',
+            children: [
+              { type: 'text', text: 'This statement was prepared on 1 September 2026. It will be reviewed annually.' },
+            ],
+          },
+        ],
+      },
+    })
 
   console.log('Seed: Done.')
   process.exit(0)

@@ -4,8 +4,8 @@ import type { Payload } from 'payload'
 import config from '@payload-config'
 
 import { verifySession } from '@/lib/rbac/verify-session'
-import { getStripe, StripeNotConfiguredError } from '@/lib/stripe/client'
-import { isStripeConfigured } from '@/lib/env'
+import { refundTransaction, VivaNotConfiguredError } from '@/lib/viva/client'
+import { isVivaConfigured } from '@/lib/env'
 
 let _payload: Payload | null = null
 async function payload(): Promise<Payload> {
@@ -51,6 +51,8 @@ export async function POST(
     status: string
     event: string | number | { id: string | number }
     persons: number
+    vivaTransactionId?: string | null
+    vivaRefundId?: string | null
     stripePaymentIntentId?: string | null
     stripeRefundId?: string | null
   }
@@ -62,43 +64,30 @@ export async function POST(
     )
   }
 
-  // --- Stripe refund ---
+  // --- VIVA refund ---
   let refundResult: { refundId?: string; refundStatus?: string } = {}
 
-  if (b.stripePaymentIntentId && isStripeConfigured()) {
+  if (b.vivaTransactionId && isVivaConfigured()) {
     try {
-      const stripe = getStripe()
-      // Check for existing refund on this payment intent
-      const existingRefunds = await stripe.refunds.list({
-        payment_intent: b.stripePaymentIntentId,
-        limit: 5,
+      const refund = await refundTransaction({
+        transactionId: b.vivaTransactionId,
+        amount: 0, // full refund — VIVA's fastrefund defaults to full amount when 0
+        merchantTrns: b.reference,
       })
-      const alreadyRefunded = existingRefunds.data.find(
-        (r) => r.status === 'succeeded' || r.status === 'pending',
-      )
-      if (alreadyRefunded) {
-        refundResult = { refundId: alreadyRefunded.id, refundStatus: alreadyRefunded.status ?? 'unknown' }
-      } else {
-        const refund = await stripe.refunds.create({
-          payment_intent: b.stripePaymentIntentId,
-        })
-        refundResult = { refundId: refund.id, refundStatus: refund.status ?? 'unknown' }
-      }
+      refundResult = { refundId: refund.transactionId, refundStatus: 'succeeded' }
     } catch (err) {
-      if (err instanceof StripeNotConfiguredError) {
-        // Graceful degrade: no Stripe keys configured
-        console.warn('[cancel] Stripe not configured, skipping refund for booking', b.reference)
+      if (err instanceof VivaNotConfiguredError) {
+        console.warn('[cancel] VIVA not configured, skipping refund for booking', b.reference)
       } else {
-        console.error('[cancel] Stripe refund failed for booking', b.reference, err)
+        console.error('[cancel] VIVA refund failed for booking', b.reference, err)
         return NextResponse.json(
           { error: 'refund_failed', message: 'Cancellation aborted: refund could not be processed.' },
           { status: 500 },
         )
       }
     }
-  } else if (isStripeConfigured() && !b.stripePaymentIntentId) {
-    // Payment was never completed (no PaymentIntent) — still allow cancellation
-    console.info('[cancel] No PaymentIntent on booking', b.reference, '— skipping refund, cancelling directly')
+  } else if (isVivaConfigured() && !b.vivaTransactionId) {
+    console.info('[cancel] No vivaTransactionId on booking', b.reference, '— skipping refund, cancelling directly')
   }
 
   // Mark booking as cancelled
@@ -108,7 +97,7 @@ export async function POST(
     data: {
       status: 'cancelled',
       ...(refundResult.refundId
-        ? { stripeRefundId: refundResult.refundId, refundStatus: refundResult.refundStatus }
+        ? { vivaRefundId: refundResult.refundId, refundStatus: refundResult.refundStatus }
         : {}),
     },
     overrideAccess: true,

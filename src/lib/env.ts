@@ -23,6 +23,38 @@ export function isStripeWebhookConfigured(): boolean {
   return Boolean(process.env.STRIPE_WEBHOOK_SECRET)
 }
 
+// ── VIVA Wallet ────────────────────────────────────────────────────
+
+/** Whether VIVA Wallet is configured (client id + secret present). */
+export function isVivaConfigured(): boolean {
+  return Boolean(process.env.VIVA_CLIENT_ID && process.env.VIVA_CLIENT_SECRET)
+}
+
+/** Whether VIVA webhook secret is configured. */
+export function isVivaWebhookConfigured(): boolean {
+  return Boolean(process.env.VIVA_WEBHOOK_SECRET)
+}
+
+/** VIVA source code for the payment source (required for order creation). */
+export function vivaSourceCode(): string {
+  return process.env.VIVA_SOURCE_CODE || 'Default'
+}
+
+/** VIVA API key (optional — used by some endpoints). */
+export function vivaApiKey(): string | undefined {
+  return process.env.VIVA_API_KEY
+}
+
+/** VIVA merchant ID (for webhook verification). */
+export function vivaMerchantId(): string | undefined {
+  return process.env.VIVA_MERCHANT_ID
+}
+
+/** Whether we're in VIVA demo/sandbox mode. */
+export function isVivaDemo(): boolean {
+  return process.env.VIVA_DEMO_MODE === 'true'
+}
+
 export function serverUrl(): string {
   return process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000'
 }

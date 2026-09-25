@@ -104,5 +104,12 @@ jobs:
               "PAYLOAD_SECRET=${{ vars.PAYLOAD_SECRET }}" \
               "HOSTNAME=0.0.0.0" \
               "PORT=3000" \
+              "VIVA_CLIENT_ID=${{ secrets.VIVA_CLIENT_ID }}" \
+              "VIVA_CLIENT_SECRET=${{ secrets.VIVA_CLIENT_SECRET }}" \
+              "VIVA_API_KEY=${{ secrets.VIVA_API_KEY }}" \
+              "VIVA_SOURCE_CODE=${{ vars.VIVA_SOURCE_CODE }}" \
+              "VIVA_MERCHANT_ID=${{ vars.VIVA_MERCHANT_ID }}" \
+              "VIVA_WEBHOOK_SECRET=${{ secrets.VIVA_WEBHOOK_SECRET }}" \
+              "VIVA_DEMO_MODE=${{ vars.VIVA_DEMO_MODE }}" \
             --output none
         shell: bash

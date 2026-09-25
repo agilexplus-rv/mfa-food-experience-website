@@ -21,6 +21,7 @@ export const STATUS_COLORS: Record<string, string> = {
   disabled: 'bg-gray-200 text-gray-600',
   expiring: 'bg-matte-gold/20 text-matte-gold',
   // Payment methods
+  viva: 'bg-lunar-green/20 text-lunar-green',
   stripe: 'bg-lunar-green/20 text-lunar-green',
   cash: 'bg-lunar-green/20 text-lunar-green',
   bank_transfer: 'bg-matte-gold/20 text-matte-gold',

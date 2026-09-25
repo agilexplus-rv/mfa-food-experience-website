@@ -70,7 +70,7 @@ function formatCountdown(msRemaining: number): string {
  *    NOT consumed until payment completes — ADR-005), and the
  *    cancellation-policy acknowledgement checkbox.
  * 4. On submit, call /api/checkout and redirect to the returned
- *    Stripe URL. Button text is "Pay now" per ADR-004 / EU Legal D.5.
+ VIVA Smart Checkout URL. Button text is "Pay now" per ADR-004 / EU Legal D.5.
  * 5. If the hold expires before submit, block submission and offer to
  *    re-acquire a fresh hold rather than silently failing at checkout.
  *
@@ -308,7 +308,7 @@ export function BookingForm({ eventId, pricePerPerson, maxSeats, withdrawalRight
             insufficient_seats: 'There aren\u2019t enough seats left for this booking.',
             invalid_coupon: 'Your discount code is no longer valid — remove it and try again.',
             invalid_input: 'Please check the details you entered and try again.',
-            stripe_error: 'We couldn\u2019t start the payment — please try again in a moment.',
+            payment_error: 'We couldn\u2019t start the payment — please try again in a moment.',
             bot_check_required: 'Please complete the security check below.',
             bot_check_failed: 'Security check failed — please try again.',
           }

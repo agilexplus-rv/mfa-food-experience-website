@@ -1,8 +1,8 @@
 import { getPayload } from 'payload'
 import config from '@payload-config'
 
-import { getStripe, StripeNotConfiguredError } from '@/lib/stripe/client'
-import { isStripeConfigured } from '@/lib/env'
+import { refundTransaction, VivaNotConfiguredError } from '@/lib/viva/client'
+import { isVivaConfigured } from '@/lib/env'
 import {
   resolveTierForDaysBefore,
   type CancellationPolicyData,
@@ -14,8 +14,8 @@ export interface RefundInput {
   reference: string
   status: string
   totalAmount: number
-  stripePaymentIntentId?: string | null
-  stripeRefundId?: string | null
+  vivaTransactionId?: string | null
+  vivaRefundId?: string | null
   eventDate: string | null
   /** When true, ignore the cancellation-policy tier and issue a full refund. */
   overrideTier?: boolean
@@ -31,7 +31,7 @@ export interface RefundResult {
 }
 
 /**
- * Compute and issue a Stripe refund for a booking cancellation.
+ * Compute and issue a VIVA refund for a booking cancellation.
  *
  * Applies the cancellation-policy tier logic to determine the refund
  * percentage unless `overrideTier` is true (staff full-refund override).
@@ -49,7 +49,7 @@ export async function processCancellationRefund(
   if (input.overrideTier) {
     overridden = true
     tierLabel = 'Full refund (staff override)'
-    tier = null // signal full refund
+    tier = null
   } else if (input.eventDate) {
     try {
       const payload = await getPayload({ config })
@@ -78,28 +78,24 @@ export async function processCancellationRefund(
           tierLabel = 'No tier matched (cancellation too late)'
         }
       } else {
-        // Policy exists but is disabled or has no tiers — full refund default
         tierLabel = 'Full refund (policy disabled)'
       }
     } catch {
-      // If the policy global doesn't exist yet, default to full refund
       tierLabel = 'Full refund (policy unavailable)'
     }
   }
 
-  const refundPct =
-    overridden || !tier ? 100 : tier.refundPercentage
+  const refundPct = overridden || !tier ? 100 : tier.refundPercentage
   const refundAmountCents = Math.round(
     (input.totalAmount * refundPct) / 100,
   )
 
-  // --- Stripe refund ---
+  // --- VIVA refund ---
   let refundId: string | undefined
   let refundStatus = 'none'
 
-  if (input.stripeRefundId) {
-    // Already refunded — idempotency guard
-    refundId = input.stripeRefundId
+  if (input.vivaRefundId) {
+    refundId = input.vivaRefundId
     refundStatus = 'succeeded'
     return {
       refundId,
@@ -112,7 +108,6 @@ export async function processCancellationRefund(
   }
 
   if (refundAmountCents === 0) {
-    // Zero refund — skip Stripe, record appropriately
     refundStatus = 'none'
     return {
       refundId: undefined,
@@ -124,57 +119,34 @@ export async function processCancellationRefund(
     }
   }
 
-  if (input.stripePaymentIntentId && isStripeConfigured()) {
+  if (input.vivaTransactionId && isVivaConfigured()) {
     try {
-      const stripe = getStripe()
-
-      // Check for existing refund on this payment intent
-      const existingRefunds = await stripe.refunds.list({
-        payment_intent: input.stripePaymentIntentId,
-        limit: 5,
-      })
-      const alreadyRefunded = existingRefunds.data.find(
-        (r) => r.status === 'succeeded' || r.status === 'pending',
-      )
-      if (alreadyRefunded) {
-        refundId = alreadyRefunded.id
-        refundStatus = alreadyRefunded.status ?? 'succeeded'
-        return {
-          refundId,
-          refundStatus,
-          refundAmountCents,
-          tier,
-          tierLabel,
-          overridden,
-        }
-      }
-
-      // Issue the refund with the computed amount
-      const refund = await stripe.refunds.create({
-        payment_intent: input.stripePaymentIntentId,
+      const result = await refundTransaction({
+        transactionId: input.vivaTransactionId,
         amount: refundAmountCents,
+        merchantTrns: input.reference,
       })
-      refundId = refund.id
-      refundStatus = refund.status ?? 'pending'
+      refundId = result.transactionId
+      refundStatus = 'succeeded'
     } catch (err) {
-      if (err instanceof StripeNotConfiguredError) {
+      if (err instanceof VivaNotConfiguredError) {
         console.warn(
-          '[console/cancel] Stripe not configured, skipping refund for booking',
+          '[console/cancel] VIVA not configured, skipping refund for booking',
           input.reference,
         )
         refundStatus = 'none'
       } else {
         console.error(
-          '[console/cancel] Stripe refund failed for booking',
+          '[console/cancel] VIVA refund failed for booking',
           input.reference,
           err,
         )
-        throw err // re-throw so the route can return a 500
+        throw err
       }
     }
-  } else if (isStripeConfigured() && !input.stripePaymentIntentId) {
+  } else if (isVivaConfigured() && !input.vivaTransactionId) {
     console.info(
-      '[console/cancel] No PaymentIntent on booking',
+      '[console/cancel] No vivaTransactionId on booking',
       input.reference,
       '— skipping refund, cancelling directly',
     )

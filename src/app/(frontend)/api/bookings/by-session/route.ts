@@ -10,15 +10,15 @@ async function payload(): Promise<Payload> {
 }
 
 /**
- * GET /api/bookings/by-session?session_id=cs_test_...
+ * GET /api/bookings/by-session?session_id=...
  *
- * Resolves a Stripe Checkout Session id (the only identifier Stripe's
- * success_url/cancel_url redirect carries, per ADR-004) back to a
- * booking id, so the confirmation/cancel pages can then poll
- * /api/bookings/[id]/status. `stripeCheckoutSessionId` is written onto
- * the booking at checkout time (src/app/(frontend)/api/checkout/route.ts),
- * i.e. before the webhook fires, so this lookup works even in the brief
- * window between redirect-back and webhook delivery.
+ * Resolves a payment session identifier back to a booking.
+ *
+ * - Legacy Stripe: session_id is a Stripe Checkout Session id (e.g. cs_test_...)
+ *   → lookup via stripeCheckoutSessionId.
+ * - VIVA: session_id is "viva:{orderCode}" → lookup via vivaOrderCode.
+ *
+ * The confirmation/cancel pages then poll /api/bookings/[id]/status.
  *
  * Same data-minimisation posture as the status endpoint: no PII returned.
  */
@@ -29,12 +29,24 @@ export async function GET(req: NextRequest) {
   }
 
   const p = await payload()
-  const result = await p.find({
-    collection: 'bookings',
-    where: { stripeCheckoutSessionId: { equals: sessionId } },
-    limit: 1,
-    overrideAccess: true,
-  })
+
+  let result
+  if (sessionId.startsWith('viva:')) {
+    const orderCode = sessionId.slice(5)
+    result = await p.find({
+      collection: 'bookings',
+      where: { vivaOrderCode: { equals: orderCode } },
+      limit: 1,
+      overrideAccess: true,
+    })
+  } else {
+    result = await p.find({
+      collection: 'bookings',
+      where: { stripeCheckoutSessionId: { equals: sessionId } },
+      limit: 1,
+      overrideAccess: true,
+    })
+  }
 
   const booking = result.docs[0] as { id: string | number; reference: string; status: string } | undefined
   if (!booking) {

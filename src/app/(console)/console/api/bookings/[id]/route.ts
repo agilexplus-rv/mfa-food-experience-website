@@ -93,8 +93,8 @@ export async function POST(
         reference: b.reference,
         status: b.status,
         totalAmount: b.totalAmount || 0,
-        stripePaymentIntentId: b.stripePaymentIntentId,
-        stripeRefundId: b.stripeRefundId,
+        vivaTransactionId: b.vivaTransactionId,
+        vivaRefundId: b.vivaRefundId,
         eventDate,
         overrideTier,
       })
@@ -117,7 +117,7 @@ export async function POST(
     try {
       const updateData: Record<string, unknown> = { status: 'cancelled' }
       if (refundResult.refundId) {
-        updateData.stripeRefundId = refundResult.refundId
+        updateData.vivaRefundId = refundResult.refundId
         updateData.refundStatus = refundResult.refundStatus
       } else if (refundResult.refundStatus === 'none') {
         updateData.refundStatus = 'none'
