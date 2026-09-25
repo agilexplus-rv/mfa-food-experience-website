@@ -23,6 +23,8 @@ import { CancellationPolicy } from './src/payload/globals/CancellationPolicy.ts'
 import { SiteSettings } from './src/payload/globals/SiteSettings.ts'
 import { SocialMediaSettings } from './src/payload/globals/SocialMediaSettings.ts'
 
+import { seed } from './src/payload/seed.ts'
+
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 
@@ -136,6 +138,9 @@ export default buildConfig({
   }),
   secret: process.env.PAYLOAD_SECRET || 'dev-secret-change-in-production',
   serverURL: process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000',
+  onInit: async (payload) => {
+    await seed(payload)
+  },
   typescript: {
     outputFile: path.resolve(dirname, 'src/payload-types.ts'),
   },

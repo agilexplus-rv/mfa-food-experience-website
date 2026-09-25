@@ -1,13 +1,24 @@
 // Seed script for the Malta Food Experience data model.
-// NOTE: run inside the Next/Payload process via `npm run db:seed` which uses tsx.
-// If the standalone tsx runner hits the @next/env CJS/ESM interop error,
-// seed via the dev server instead (see docs/adr/ADR-001-cms-choice.md).
+// This is now run as a Payload onInit hook so it shares the Payload CLI's
+// runtime (import resolution, DB connection, etc.).  The standalone tsx runner
+// is kept for local dev (`npm run db:seed`) but is not used in production.
+//
+// When called from onInit, the caller passes a Payload instance so we don't
+// need our own getPayload() call.
 
-import config from '@payload-config'
-import { getPayload } from 'payload'
+import type { Payload } from 'payload'
 
-async function seed() {
-  const payload = await getPayload({ config })
+export async function seed(p?: Payload) {
+  // When called from onInit, the caller passes a Payload instance.
+  // In standalone mode (npm run db:seed), create our own.
+  let payload: Payload
+  if (p) {
+    payload = p
+  } else {
+    const mod = await import('@payload-config')
+    const { getPayload } = await import('payload')
+    payload = await getPayload({ config: mod.default })
+  }
 
   // ── Services ──────────────────────────────────────────────────
   const existing = await payload.find({ collection: 'services', limit: 1 })
@@ -667,10 +678,13 @@ async function seed() {
     })
 
   console.log('Seed: Done.')
-  process.exit(0)
 }
 
-seed().catch((err) => {
-  console.error('Seed failed:', err)
-  process.exit(1)
-})
+// Standalone invocation (npm run db:seed)
+const isStandalone = process.argv[1]?.endsWith('src/payload/seed.ts') || process.argv[1]?.endsWith('seed.ts')
+if (isStandalone) {
+  seed().catch((err) => {
+    console.error('Seed failed:', err)
+    process.exit(1)
+  })
+}

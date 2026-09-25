@@ -13,8 +13,5 @@ echo "=== Running Payload migrations ==="
 # ERR_REQUIRE_ASYNC_MODULE guard.
 ./node_modules/.bin/payload migrate
 
-echo "=== Seeding database (idempotent — skips existing data) ==="
-npx tsx src/payload/seed.ts
-
-echo "=== Starting Next.js server ==="
+echo "=== Starting Next.js server (seed runs via Payload onInit) ==="
 exec node server.js
