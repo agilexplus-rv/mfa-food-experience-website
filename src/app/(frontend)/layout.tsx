@@ -12,6 +12,12 @@ export const dynamic = 'force-dynamic'
 export const metadata: Metadata = {
   title: "Malta Food Experience",
   description: "Authentic Maltese culinary and cultural experiences hosted by the Malta Food Agency.",
+  icons: [
+    { rel: 'icon', url: '/brand/logos/Malta%20Food%20-%20Primary.svg', type: 'image/svg+xml' },
+    // PNG fallback for older browsers / Safari pinned tabs
+    { rel: 'icon', url: '/brand/logos/Malta%20Food%20-%20Primary-01.png', type: 'image/png' },
+    { rel: 'apple-touch-icon', url: '/brand/logos/Malta%20Food%20-%20Primary-01.png' },
+  ],
 }
 
 export default function RootLayout({

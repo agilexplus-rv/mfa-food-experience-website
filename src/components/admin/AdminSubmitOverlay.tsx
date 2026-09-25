@@ -49,6 +49,7 @@ export default function AdminSubmitOverlay() {
 
   useEffect(() => {
     const forms = () => Array.from(document.querySelectorAll<HTMLFormElement>('form.form'))
+    let timeoutId: ReturnType<typeof setTimeout> | null = null
 
     const check = () => {
       const anyProcessing = forms().some((f) => f.getAttribute('data-form-ready') === 'false')
@@ -56,6 +57,20 @@ export default function AdminSubmitOverlay() {
       if (anyProcessing) {
         const isLogin = !!document.querySelector('section.login')
         setLabel(isLogin ? 'Logging in…' : 'Submitting…')
+        // 30 s failsafe: if the form never resolves (stuck mutation, lost
+        // response, JS error that swallowed the resolve), auto-dismiss so
+        // the user isn't locked out permanently.
+        if (!timeoutId) {
+          timeoutId = setTimeout(() => {
+            setVisible(false)
+            timeoutId = null
+          }, 30_000)
+        }
+      } else {
+        if (timeoutId) {
+          clearTimeout(timeoutId)
+          timeoutId = null
+        }
       }
     }
 
@@ -71,7 +86,10 @@ export default function AdminSubmitOverlay() {
       subtree: true,
     })
 
-    return () => observer.disconnect()
+    return () => {
+      observer.disconnect()
+      if (timeoutId) clearTimeout(timeoutId)
+    }
   }, [])
 
   if (!visible) return null

@@ -53,6 +53,7 @@ export default buildConfig({
     },
     meta: {
       titleSuffix: '- Malta Food Experience',
+      favicon: '/brand/logos/Malta%20Food%20-%20Primary.svg',
     },
     // Snag #6 (2026-07-12): all admin errors/notifications (including
     // login and forgot-password failures) should surface as a

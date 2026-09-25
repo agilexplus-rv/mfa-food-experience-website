@@ -98,10 +98,13 @@ export default function AdminThemeStyles() {
           font-weight: 700;
           padding: 0.875rem 1.5rem;
           transition: background-color 150ms ease;
-          border: none;
+          border: 1px solid transparent;
+          box-sizing: border-box;
         }
         .btn--style-primary:hover {
           background: color-mix(in srgb, #33483D 85%, transparent);
+          border-color: transparent;
+          outline: none;
         }
         .btn--style-primary .btn__content,
         .btn--style-primary .btn__label {

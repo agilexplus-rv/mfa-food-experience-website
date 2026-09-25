@@ -1,5 +1,5 @@
 export type LogoVariant = "primary" | "inverted" | "white" | "black"
-export type LogoSize = "sm" | "md" | "lg" | "xl"
+export type LogoSize = "sm" | "md" | "lg" | "xl" | "xxl"
 
 const logoMap: Record<LogoVariant, string> = {
   primary: "/brand/logos/Malta Food - Primary.svg",
@@ -13,6 +13,7 @@ const sizeMap: Record<LogoSize, number> = {
   md: 180,
   lg: 260,
   xl: 360,
+  xxl: 480,
 }
 
 export interface LogoProps {
