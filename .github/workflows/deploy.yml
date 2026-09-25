@@ -102,6 +102,7 @@ jobs:
               "NEXT_PUBLIC_SERVER_URL=${{ vars.NEXT_PUBLIC_SERVER_URL }}" \
               "DATABASE_URL=${{ vars.DATABASE_URL }}" \
               "PAYLOAD_SECRET=${{ vars.PAYLOAD_SECRET }}" \
+              "CRON_SECRET=${{ secrets.CRON_SECRET }}" \
               "HOSTNAME=0.0.0.0" \
               "PORT=3000" \
               "VIVA_CLIENT_ID=${{ secrets.VIVA_CLIENT_ID }}" \
