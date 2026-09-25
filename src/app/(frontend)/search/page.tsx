@@ -20,7 +20,7 @@ function ResultCard({ item }: { item: SearchResultItem }) {
       href={item.href}
       className="block rounded-xl border border-border bg-surface p-5 shadow-sm transition-all duration-200 hover:shadow-md focus:outline-2 focus:outline-offset-2 focus:outline-matte-gold"
     >
-      <span className="text-xs font-semibold uppercase tracking-wide text-matte-gold">
+      <span className="text-xs font-semibold uppercase tracking-wide text-accent-text">
         {item.type === 'service'
           ? 'Experience'
           : item.type === 'event'

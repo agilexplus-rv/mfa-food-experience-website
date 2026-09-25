@@ -28,7 +28,7 @@ export function NewsCard({ title, date, slug, image, excerpt }: NewsCardProps) {
       <div className="flex flex-1 flex-col p-6">
         <time
           dateTime={date.slice(0, 10)}
-          className="text-sm font-semibold text-matte-gold"
+          className="text-sm font-semibold text-accent-text"
         >
           {formatDay(date)}
         </time>
@@ -38,14 +38,14 @@ export function NewsCard({ title, date, slug, image, excerpt }: NewsCardProps) {
           </Link>
         </h2>
         {excerpt ? (
-          <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-lunar-green/70">
+          <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-text-light">
             {excerpt}
           </p>
         ) : null}
         <div className="mt-4 pt-2">
           <Link
             href={`/news/${slug}`}
-            className="inline-flex items-center text-sm font-bold text-terracotta transition-colors hover:text-terracotta/80 focus:outline-2 focus:outline-offset-2 focus:outline-terracotta"
+            className="inline-flex items-center text-sm font-bold text-terracotta-dark transition-colors hover:text-terracotta/80 focus:outline-2 focus:outline-offset-2 focus:outline-terracotta"
             aria-label={`Read more about ${title}`}
           >
             Read more

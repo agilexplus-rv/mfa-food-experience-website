@@ -3,6 +3,10 @@ import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
   output: 'standalone',
+
+  // Suppress the X-Powered-By header that leaks the tech stack.
+  poweredByHeader: false,
+
   serverExternalPackages: [
     'nodemailer',
     '@payloadcms/email-nodemailer',
@@ -30,6 +34,24 @@ const nextConfig: NextConfig = {
           {
             key: 'Referrer-Policy',
             value: 'strict-origin-when-cross-origin',
+          },
+          {
+            // Permissions-Policy — restrict browser features the app does not use.
+            // Only `payment` is allowed (self) for VIVA Smart Checkout.
+            // `fullscreen` is allowed (self) for map/embedded content.
+            key: 'Permissions-Policy',
+            value: [
+              'camera=()',
+              'microphone=()',
+              'geolocation=()',
+              'payment=(self)',
+              'usb=()',
+              'accelerometer=()',
+              'autoplay=()',
+              'display-capture=()',
+              'picture-in-picture=()',
+              'fullscreen=(self)',
+            ].join(', '),
           },
           {
             // EIGHTH root cause (2026-07-12): translate-pa.googleapis.com

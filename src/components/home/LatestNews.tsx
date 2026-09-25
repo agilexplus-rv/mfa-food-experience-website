@@ -53,7 +53,7 @@ export async function LatestNews() {
                 <div className="p-6">
                   <time
                     dateTime={item.date.slice(0, 10)}
-                    className="text-sm font-semibold text-matte-gold"
+                    className="text-sm font-semibold text-accent-text"
                   >
                     {formatDay(item.date)}
                   </time>

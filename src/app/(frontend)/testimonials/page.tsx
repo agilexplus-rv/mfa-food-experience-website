@@ -84,7 +84,7 @@ export default async function TestimonialsPage() {
       </header>
 
       {/* Omnibus statement (FR-11.2) */}
-      <p className="mx-auto mt-6 max-w-2xl text-center text-sm italic text-matte-gold">
+      <p className="mx-auto mt-6 max-w-2xl text-center text-sm italic text-accent-text">
         Testimonials are submitted by site visitors and moderated for
         appropriateness before publication. They are not verified as originating
         from attendees of a specific event.
@@ -113,7 +113,7 @@ export default async function TestimonialsPage() {
         </h2>
         <p className="mt-2 text-sm text-text-light">
           Fields marked with{' '}
-          <span aria-hidden="true" className="text-terracotta">
+          <span aria-hidden="true" className="text-terracotta-dark">
             *
           </span>{' '}
           are required.

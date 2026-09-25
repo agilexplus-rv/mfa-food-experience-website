@@ -127,7 +127,7 @@ export default async function LegalPolicyPage({ params }: PageProps) {
     <main className={`${montserrat.variable} bg-soft-beige`}>
       <section className="mx-auto max-w-3xl px-6 py-16">
         <header className="border-b border-lunar-green/20 pb-6">
-          <span className="text-xs font-semibold uppercase tracking-wide text-matte-gold">
+          <span className="text-xs font-semibold uppercase tracking-wide text-accent-text">
             Legal
           </span>
           <h1 className="mt-2 font-black text-3xl tracking-tight text-lunar-green sm:text-4xl">
@@ -144,13 +144,13 @@ export default async function LegalPolicyPage({ params }: PageProps) {
               prose-p:text-lunar-green/80 prose-p:leading-relaxed
               prose-li:text-lunar-green/80 prose-li:leading-relaxed
               prose-strong:text-lunar-green
-              prose-a:text-terracotta prose-a:underline hover:prose-a:text-terracotta/80
+              prose-a:text-terracotta-dark prose-a:underline hover:prose-a:text-terracotta/80
               [&>p:empty]:hidden
             "
             dangerouslySetInnerHTML={{ __html: bodyHtml }}
           />
         ) : (
-          <p className="mt-10 text-lunar-green/60">
+          <p className="mt-10 text-text-light">
             This policy document is being prepared. Please check back soon.
           </p>
         )}
@@ -177,7 +177,7 @@ async function CancellationPolicyPage({
     <main className={`${montserrat.variable} bg-soft-beige`}>
       <section className="mx-auto max-w-3xl px-6 py-16">
         <header className="border-b border-lunar-green/20 pb-6">
-          <span className="text-xs font-semibold uppercase tracking-wide text-matte-gold">
+          <span className="text-xs font-semibold uppercase tracking-wide text-accent-text">
             Legal
           </span>
           <h1 className="mt-2 font-black text-3xl tracking-tight text-lunar-green sm:text-4xl">
@@ -195,10 +195,10 @@ async function CancellationPolicyPage({
         {!policy.enabled ? (
           /* Cancellations disabled — clear message, no table */
           <div className="mt-10 rounded-xl border border-dashed border-terracotta/30 bg-terracotta/5 px-6 py-8">
-            <p className="text-center text-lg font-semibold text-terracotta">
+            <p className="text-center text-lg font-semibold text-terracotta-dark">
               Cancellations are not currently accepted for this experience.
             </p>
-            <p className="mt-2 text-center text-sm text-lunar-green/60">
+            <p className="mt-2 text-center text-sm text-text-light">
               Please contact us directly if you have questions about your booking.
             </p>
           </div>
@@ -239,14 +239,14 @@ async function CancellationPolicyPage({
           </div>
         ) : (
           /* Enabled but no tiers configured */
-          <p className="mt-10 text-lunar-green/60">
+          <p className="mt-10 text-text-light">
             Cancellation terms are being finalised. Please check back soon.
           </p>
         )}
 
         {/* Organiser cancellation */}
         {policy.organiserCancellationText && (
-          <div className="mt-12 rounded-xl border border-matte-gold/30 bg-matte-gold/5 px-6 py-6">
+          <div className="mt-12 rounded-xl border border-matte-gold/30 bg-accent-text/5 px-6 py-6">
             <h2 className="text-lg font-bold text-lunar-green">
               If we cancel the event
             </h2>
@@ -259,10 +259,10 @@ async function CancellationPolicyPage({
         {/* Withdrawal right disclosure — legally required */}
         {policy.withdrawalRightDisclosure && (
           <div className="mt-12 border-t border-lunar-green/15 pt-8">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-matte-gold">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-accent-text">
               Your right of withdrawal
             </h2>
-            <p className="mt-3 text-sm text-lunar-green/70 leading-relaxed whitespace-pre-line">
+            <p className="mt-3 text-sm text-text-light leading-relaxed whitespace-pre-line">
               {policy.withdrawalRightDisclosure}
             </p>
           </div>

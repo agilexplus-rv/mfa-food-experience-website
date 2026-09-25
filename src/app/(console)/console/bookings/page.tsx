@@ -353,7 +353,7 @@ export default function ConsoleBookingsPage() {
                             <button
                               onClick={() => handleAction(b, 'no-show')}
                               disabled={actionId === b.id}
-                              className="rounded-md border border-matte-gold px-2 py-0.5 text-[10px] font-semibold text-matte-gold hover:bg-matte-gold hover:text-white disabled:opacity-40 transition-colors"
+                              className="rounded-md border border-accent-text px-2 py-0.5 text-[10px] font-semibold text-accent-text hover:bg-accent-text hover:text-white disabled:opacity-40 transition-colors"
                             >
                               {actionId === b.id && actionType === 'no-show' ? '...' : 'No-show'}
                             </button>

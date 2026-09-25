@@ -47,7 +47,7 @@ export default async function BookingConfirmationPage({ searchParams }: PageProp
           <p className="mt-4 text-text-light">
             We couldn&apos;t find a payment reference for this page. If you completed a payment, check your email
             for your confirmation, or{' '}
-            <a href="/contact" className="font-semibold text-terracotta underline">
+            <a href="/contact" className="font-semibold text-terracotta-dark underline">
               contact us
             </a>
             .

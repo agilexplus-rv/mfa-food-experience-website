@@ -1,7 +1,7 @@
 import { type ReactNode } from 'react'
 
 export const STATUS_COLORS: Record<string, string> = {
-  pending: 'bg-matte-gold/20 text-matte-gold',
+  pending: 'bg-accent-text/20 text-accent-text',
   confirmed: 'bg-lunar-green/20 text-lunar-green',
   cancelled: 'bg-terracotta/20 text-[#9C4E2F]',
   checked_in: 'bg-lunar-green/20 text-lunar-green',
@@ -10,7 +10,7 @@ export const STATUS_COLORS: Record<string, string> = {
   none: 'bg-gray-100 text-gray-600',
   succeeded: 'bg-lunar-green/20 text-lunar-green',
   failed: 'bg-terracotta/20 text-[#9C4E2F]',
-  waiting: 'bg-matte-gold/20 text-matte-gold',
+  waiting: 'bg-accent-text/20 text-accent-text',
   notified: 'bg-lunar-green/20 text-lunar-green',
   expired: 'bg-gray-100 text-gray-600',
   admin: 'bg-terracotta/20 text-[#9C4E2F]',
@@ -19,12 +19,12 @@ export const STATUS_COLORS: Record<string, string> = {
   deactivated: 'bg-terracotta/20 text-[#9C4E2F]',
   exhausted: 'bg-terracotta/20 text-[#9C4E2F]',
   disabled: 'bg-gray-200 text-gray-600',
-  expiring: 'bg-matte-gold/20 text-matte-gold',
+  expiring: 'bg-accent-text/20 text-accent-text',
   // Payment methods
   viva: 'bg-lunar-green/20 text-lunar-green',
   stripe: 'bg-lunar-green/20 text-lunar-green',
   cash: 'bg-lunar-green/20 text-lunar-green',
-  bank_transfer: 'bg-matte-gold/20 text-matte-gold',
+  bank_transfer: 'bg-accent-text/20 text-accent-text',
   comped: 'bg-soft-beige text-text-light',
   pending_payment: 'bg-terracotta/20 text-[#9C4E2F]',
 }

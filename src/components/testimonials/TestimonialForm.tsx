@@ -38,7 +38,7 @@ export function TestimonialForm({ events }: TestimonialFormProps) {
   const requiredAsterisk = (
     <>
       {' '}
-      <span aria-hidden="true" className="text-terracotta">
+      <span aria-hidden="true" className="text-terracotta-dark">
         *
       </span>
       <span className="sr-only">required</span>
@@ -123,7 +123,7 @@ export function TestimonialForm({ events }: TestimonialFormProps) {
           className={`rounded-md border-l-4 px-4 py-3 text-sm font-semibold ${
             result.ok
               ? 'border-lunar-green bg-soft-beige/60 text-lunar-green'
-              : 'border-terracotta bg-soft-beige/60 text-terracotta'
+              : 'border-terracotta bg-soft-beige/60 text-terracotta-dark'
           }`}
         >
           {result.message}
@@ -133,7 +133,7 @@ export function TestimonialForm({ events }: TestimonialFormProps) {
       <button
         type="submit"
         disabled={pending}
-        className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-terracotta px-6 py-3.5 text-base font-bold text-soft-beige transition-colors hover:bg-terracotta/85 focus:outline-2 focus:outline-offset-2 focus:outline-terracotta disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+        className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-terracotta-dark px-6 py-3.5 text-base font-bold text-white transition-colors hover:bg-terracotta/85 focus:outline-2 focus:outline-offset-2 focus:outline-terracotta disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
       >
         {pending ? 'Submitting\u2026' : 'Submit testimonial'}
         <span aria-hidden="true">&rarr;</span>

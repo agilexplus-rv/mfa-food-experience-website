@@ -62,7 +62,7 @@ export async function Hero() {
 
           <Link
             href="/services"
-            className="mt-10 inline-flex items-center gap-2 rounded-lg bg-terracotta px-8 py-4 text-base font-bold text-soft-beige transition-colors hover:bg-terracotta/85 focus:outline-2 focus:outline-offset-2 focus:outline-terracotta"
+            className="mt-10 inline-flex items-center gap-2 rounded-lg bg-terracotta-dark px-8 py-4 text-base font-bold text-white transition-colors hover:bg-terracotta/85 focus:outline-2 focus:outline-offset-2 focus:outline-terracotta"
           >
             <MtText en="Book an Event" mt="Ibbukkja Avveniment" />
             <span aria-hidden="true">&rarr;</span>
@@ -84,14 +84,14 @@ export async function Hero() {
         Authentic Maltese Culinary Experiences
       </h1>
 
-      <p className="mt-6 max-w-lg text-lg leading-relaxed text-lunar-green/70">
+      <p className="mt-6 max-w-lg text-lg leading-relaxed text-text-light">
         Discover the flavours of Malta with hands-on classes, guided
         tastings, and cultural experiences hosted by the Malta Food Agency.
       </p>
 
       <Link
         href="/services"
-        className="mt-10 inline-flex items-center gap-2 rounded-lg bg-terracotta px-8 py-4 text-base font-bold text-soft-beige transition-colors hover:bg-terracotta/85 focus:outline-2 focus:outline-offset-2 focus:outline-terracotta"
+        className="mt-10 inline-flex items-center gap-2 rounded-lg bg-terracotta-dark px-8 py-4 text-base font-bold text-white transition-colors hover:bg-terracotta/85 focus:outline-2 focus:outline-offset-2 focus:outline-terracotta"
       >
         <MtText en="Book an Event" mt="Ibbukkja Avveniment" />
         <span aria-hidden="true">&rarr;</span>

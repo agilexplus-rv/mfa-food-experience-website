@@ -105,7 +105,7 @@ export function MobileNav() {
         }`}
       >
         <div className="flex items-center justify-between border-b border-soft-beige/20 px-4 py-4">
-          <span className="text-sm font-bold uppercase tracking-wider text-matte-gold">
+          <span className="text-sm font-bold uppercase tracking-wider text-soft-beige">
             Menu
           </span>
           <button
@@ -123,7 +123,7 @@ export function MobileNav() {
 
         {/* Site search — mobile lives here in the drawer. */}
         <div className="border-b border-soft-beige/20 px-4 py-3">
-          <span className="mb-2 block text-xs font-semibold uppercase tracking-wider text-soft-beige/60">
+          <span className="mb-2 block text-xs font-semibold uppercase tracking-wider text-soft-beige/80">
             Search
           </span>
           <SiteSearch />
@@ -133,7 +133,7 @@ export function MobileNav() {
             viewports (< md). Its own small section, flags + EN|MT pills,
             sitting above the nav links inside the drawer. */}
         <div className="flex items-center justify-between border-b border-soft-beige/20 px-4 py-3">
-          <span className="text-xs font-semibold uppercase tracking-wider text-soft-beige/60">
+          <span className="text-xs font-semibold uppercase tracking-wider text-soft-beige/80">
             Language
           </span>
           <LanguageSwitcher />

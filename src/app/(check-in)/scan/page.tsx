@@ -497,10 +497,10 @@ export default function ScanPage() {
   const resultBanner =
     !result ? null : result.error === 'queued' ? (
       // Scope 1: queued state — distinct from hard error
-      <div className="rounded-xl border-2 border-matte-gold bg-matte-gold/5 p-6">
+      <div className="rounded-xl border-2 border-accent-text bg-accent-text/5 p-6">
         <div className="flex items-center gap-3 mb-3">
           <span className="text-3xl">&#x1F4E5;</span>
-          <h2 className="text-xl font-bold text-matte-gold">Queued</h2>
+          <h2 className="text-xl font-bold text-accent-text">Queued</h2>
         </div>
         <p className="text-sm text-text mb-4">
           Scan saved. It will sync automatically when the connection is restored.
@@ -573,7 +573,7 @@ export default function ScanPage() {
       <div
         className={`rounded-xl border-2 p-6 ${
           result.error === 'already_checked_in'
-            ? 'border-matte-gold bg-matte-gold/5'
+            ? 'border-accent-text bg-accent-text/5'
             : 'border-terracotta bg-terracotta/5'
         }`}
       >
@@ -584,8 +584,8 @@ export default function ScanPage() {
           <h2
             className={`text-xl font-bold ${
               result.error === 'already_checked_in'
-                ? 'text-matte-gold'
-                : 'text-terracotta'
+                ? 'text-accent-text'
+                : 'text-terracotta-dark'
             }`}
           >
             {result.error === 'already_checked_in'
@@ -635,7 +635,7 @@ export default function ScanPage() {
           <p className="mt-1 text-xs text-text-light">
             Logged in as <span className="font-semibold">{user.email}</span>
             {user.role === 'door_staff' && (
-              <span className="ml-1 rounded-full bg-matte-gold/20 px-1.5 py-0.5 text-[10px] font-semibold text-matte-gold">
+              <span className="ml-1 rounded-full bg-accent-text/20 px-1.5 py-0.5 text-[10px] font-semibold text-accent-text">
                 Door Staff
               </span>
             )}
@@ -692,15 +692,15 @@ export default function ScanPage() {
 
       {/* Scope 1: Queue indicator */}
       {queueLength > 0 && !syncing && (
-        <div className="mb-4 rounded-lg border border-matte-gold/50 bg-matte-gold/5 p-2 text-center text-xs font-semibold text-matte-gold">
+        <div className="mb-4 rounded-lg border border-matte-gold/50 bg-accent-text/5 p-2 text-center text-xs font-semibold text-accent-text">
           {queueLength} scan{queueLength !== 1 ? 's' : ''} queued — will sync when back online
         </div>
       )}
 
       {/* Scope 1: Sync progress */}
       {syncing && (
-        <div className="mb-4 rounded-lg border border-matte-gold/50 bg-matte-gold/5 p-2 text-center text-xs font-semibold text-matte-gold flex items-center justify-center gap-2">
-          <span className="inline-block w-3 h-3 border-2 border-matte-gold border-t-transparent rounded-full animate-spin" />
+        <div className="mb-4 rounded-lg border border-matte-gold/50 bg-accent-text/5 p-2 text-center text-xs font-semibold text-accent-text flex items-center justify-center gap-2">
+          <span className="inline-block w-3 h-3 border-2 border-accent-text border-t-transparent rounded-full animate-spin" />
           {syncProgress || 'Syncing...'}
         </div>
       )}
@@ -766,7 +766,7 @@ export default function ScanPage() {
               )}
 
               {cameraError && (
-                <div className="mt-3 rounded-lg bg-matte-gold/10 border border-matte-gold/30 p-3 text-sm text-lunar-green">
+                <div className="mt-3 rounded-lg bg-accent-text/10 border border-matte-gold/30 p-3 text-sm text-lunar-green">
                   {cameraError}
                 </div>
               )}
@@ -862,8 +862,8 @@ export default function ScanPage() {
                                 : b.status === 'confirmed'
                                   ? 'bg-lunar-green/20 text-lunar-green'
                                   : b.status === 'cancelled'
-                                    ? 'bg-terracotta/20 text-terracotta'
-                                    : 'bg-matte-gold/20 text-matte-gold'
+                                    ? 'bg-terracotta/20 text-terracotta-dark'
+                                    : 'bg-accent-text/20 text-accent-text'
                             }`}
                           >
                             {b.status.replace('_', ' ')}

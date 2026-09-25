@@ -45,7 +45,7 @@ export function SiteSearch() {
         onChange={(e) => setQuery(e.target.value)}
         placeholder="Search…"
         aria-label="Search the site"
-        className="h-9 w-32 rounded-full border border-soft-beige/30 bg-lunar-green/80 px-4 text-sm text-soft-beige placeholder:text-soft-beige/50 focus:border-matte-gold focus:outline-2 focus:outline-offset-1 focus:outline-matte-gold sm:w-40 box-border"
+        className="h-9 w-32 rounded-full border border-soft-beige/30 bg-lunar-green/80 px-4 text-sm text-soft-beige placeholder:text-soft-beige/60 focus:border-matte-gold focus:outline-2 focus:outline-offset-1 focus:outline-matte-gold sm:w-40 box-border"
       />
       <button
         type="submit"

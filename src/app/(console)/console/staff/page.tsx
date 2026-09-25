@@ -230,7 +230,7 @@ export default function StaffPage() {
                       <button
                         onClick={() => handleResetPassword(u)}
                         disabled={resettingPwId === u.id}
-                        className="rounded-md border border-matte-gold text-matte-gold px-2.5 py-1 text-xs font-semibold hover:bg-matte-gold hover:text-white disabled:opacity-40 transition-colors"
+                        className="rounded-md border border-accent-text text-accent-text px-2.5 py-1 text-xs font-semibold hover:bg-accent-text hover:text-white disabled:opacity-40 transition-colors"
                       >
                         {resettingPwId === u.id ? '...' : 'Reset PW'}
                       </button>

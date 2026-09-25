@@ -58,12 +58,12 @@ export async function ComingEvents() {
                 className="flex h-full flex-col rounded-lg border border-matte-gold/20 bg-white p-6 shadow-sm"
               >
                 <h3 className="font-bold text-xl text-lunar-green">{event.title}</h3>
-                <p className="mt-1 text-sm text-lunar-green/60">
+                <p className="mt-1 text-sm text-text-light">
                   {formatDay(event.date)} · {formatTimeRange(event.startTime, event.endTime)}
                 </p>
-                <p className="mt-2 font-semibold text-terracotta text-lg">
+                <p className="mt-2 font-semibold text-terracotta-dark text-lg">
                   {formatPrice(event.pricePerPerson ?? 0)}
-                  <span className="text-sm font-regular text-lunar-green/60"> / person</span>
+                  <span className="text-sm font-regular text-text-light"> / person</span>
                 </p>
 
                 {/* Spacer pushes the action row to the bottom for equal-height alignment */}
@@ -72,11 +72,11 @@ export async function ComingEvents() {
                 {/* Compact action row: seats pill + smaller Book button */}
                 <div className="mt-4 flex items-center justify-between gap-3 border-t border-matte-gold/20 pt-4">
                   {fullyBooked ? (
-                    <span className="inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-full bg-terracotta/15 px-3 py-1 text-xs font-semibold text-terracotta">
+                    <span className="inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-full bg-terracotta/15 px-3 py-1 text-xs font-semibold text-terracotta-dark">
                       Fully booked
                     </span>
                   ) : (
-                    <span className="inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-full bg-matte-gold/20 px-3 py-1 text-xs font-semibold text-matte-gold">
+                    <span className="inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-full bg-accent-text/20 px-3 py-1 text-xs font-semibold text-accent-text">
                       {remaining} {remaining === 1 ? 'seat' : 'seats'} left
                     </span>
                   )}
@@ -90,7 +90,7 @@ export async function ComingEvents() {
                       'focus:outline-2 focus:outline-offset-2 focus:outline-terracotta',
                       fullyBooked
                         ? 'cursor-not-allowed bg-lunar-green/10 text-lunar-green/50'
-                        : 'bg-terracotta text-soft-beige hover:bg-terracotta/85',
+                        : 'bg-terracotta-dark text-white hover:bg-terracotta/85',
                     ].join(' ')}
                   >
                     {fullyBooked ? <MtText en="Full" mt="Mimli" /> : <MtText en="Book" mt="Ibbukkja" />}

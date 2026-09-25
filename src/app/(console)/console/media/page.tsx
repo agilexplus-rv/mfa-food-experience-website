@@ -283,7 +283,7 @@ export default function MediaLibraryPage() {
                 <div>
                   <p className="text-sm font-semibold text-lunar-green">{uploadFile.name}</p>
                   <p className="text-xs text-text-light mt-1">{formatFileSize(uploadFile.size)}</p>
-                  <p className="text-xs text-matte-gold mt-1">Click to change file</p>
+                  <p className="text-xs text-accent-text mt-1">Click to change file</p>
                 </div>
               ) : (
                 <div>

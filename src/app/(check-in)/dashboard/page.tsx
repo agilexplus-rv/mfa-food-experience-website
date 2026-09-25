@@ -56,9 +56,9 @@ const STATUS_OPTIONS = [
 ]
 
 const STATUS_COLORS: Record<string, string> = {
-  pending: 'bg-matte-gold/20 text-matte-gold',
+  pending: 'bg-accent-text/20 text-accent-text',
   confirmed: 'bg-lunar-green/20 text-lunar-green',
-  cancelled: 'bg-terracotta/20 text-terracotta',
+  cancelled: 'bg-terracotta/20 text-terracotta-dark',
   checked_in: 'bg-lunar-green/20 text-lunar-green',
 }
 
@@ -287,7 +287,7 @@ export default function DashboardPage() {
   if (error && !user) {
     return (
       <div className="mx-auto max-w-2xl px-4 py-16 text-center">
-        <p className="text-terracotta">{error}</p>
+        <p className="text-terracotta-dark">{error}</p>
       </div>
     )
   }
@@ -303,7 +303,7 @@ export default function DashboardPage() {
           <p className="mt-1 text-sm text-text-light">
             Search and manage bookings
             {user?.role === 'door_staff' && (
-              <span className="ml-2 rounded-full bg-matte-gold/20 px-2 py-0.5 text-xs font-semibold text-matte-gold">
+              <span className="ml-2 rounded-full bg-accent-text/20 px-2 py-0.5 text-xs font-semibold text-accent-text">
                 Door Staff
               </span>
             )}
@@ -485,8 +485,8 @@ export default function DashboardPage() {
                         {refundText && (
                           <span className={`ml-1 inline-block rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${
                             refundText === 'succeeded' ? 'bg-lunar-green/20 text-lunar-green' :
-                            refundText === 'pending' ? 'bg-matte-gold/20 text-matte-gold' :
-                            'bg-terracotta/20 text-terracotta'
+                            refundText === 'pending' ? 'bg-accent-text/20 text-accent-text' :
+                            'bg-terracotta/20 text-terracotta-dark'
                           }`}>
                             refund: {refundText}
                           </span>
@@ -528,7 +528,7 @@ export default function DashboardPage() {
                               <button
                                 onClick={() => handleNoShow(b.id)}
                                 disabled={noShowId === b.id}
-                                className="rounded-md border border-matte-gold px-2 py-0.5 text-[10px] font-semibold text-matte-gold hover:bg-matte-gold hover:text-white disabled:opacity-40 transition-colors"
+                                className="rounded-md border border-accent-text px-2 py-0.5 text-[10px] font-semibold text-accent-text hover:bg-accent-text hover:text-white disabled:opacity-40 transition-colors"
                               >
                                 {noShowId === b.id ? '...' : 'No-show'}
                               </button>

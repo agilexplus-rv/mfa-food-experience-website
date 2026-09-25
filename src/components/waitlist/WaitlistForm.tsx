@@ -111,7 +111,7 @@ export function WaitlistForm({ eventId }: WaitlistFormProps) {
           </div>
         </div>
         {result && !result.ok && (
-          <p className="text-sm text-terracotta">{result.message}</p>
+          <p className="text-sm text-terracotta-dark">{result.message}</p>
         )}
         <button
           type="submit"

@@ -147,7 +147,7 @@ export default function ConsoleShell({ children }: { children: React.ReactNode }
                 className={[
                   'mb-1 flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold transition-colors',
                   isActive
-                    ? 'bg-matte-gold/20 text-matte-gold'
+                    ? 'bg-matte-gold/20 text-soft-beige'
                     : 'text-soft-beige/70 hover:bg-white/10 hover:text-soft-beige',
                 ].join(' ')}
               >
@@ -156,7 +156,7 @@ export default function ConsoleShell({ children }: { children: React.ReactNode }
                 </span>
                 <span className="flex-1">{item.label}</span>
                 {item.badge && (
-                  <span className="rounded-full bg-matte-gold/30 px-1.5 py-0.5 text-[9px] font-bold text-matte-gold">
+                  <span className="rounded-full bg-matte-gold/30 px-1.5 py-0.5 text-[9px] font-bold text-soft-beige">
                     {item.badge}
                   </span>
                 )}
@@ -171,7 +171,7 @@ export default function ConsoleShell({ children }: { children: React.ReactNode }
             href="/"
             target="_blank"
             rel="noopener noreferrer"
-            className="block rounded-lg px-3 py-2 text-xs font-semibold text-soft-beige/50 hover:bg-white/10 hover:text-soft-beige/80 transition-colors"
+            className="block rounded-lg px-3 py-2 text-xs font-semibold text-soft-beige/70 hover:bg-white/10 hover:text-soft-beige/80 transition-colors"
           >
             View Public Site &rarr;
           </a>

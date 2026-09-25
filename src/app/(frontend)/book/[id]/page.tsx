@@ -73,7 +73,7 @@ export default async function BookEventPage({ params }: PageProps) {
   return (
     <section className="mx-auto max-w-4xl px-6 py-16">
       <header className="mx-auto max-w-2xl text-center">
-        <span className="text-xs font-semibold uppercase tracking-wide text-matte-gold">
+        <span className="text-xs font-semibold uppercase tracking-wide text-accent-text">
           Reserve your seat
         </span>
         <h1 className="mt-3 text-3xl font-black tracking-[-0.02em] text-lunar-green sm:text-4xl">
@@ -84,19 +84,19 @@ export default async function BookEventPage({ params }: PageProps) {
       <div className="mx-auto mt-8 max-w-2xl rounded-xl border border-border bg-surface p-6 shadow-sm">
         <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm sm:grid-cols-3">
           <div>
-            <dt className="text-xs font-semibold uppercase tracking-wide text-lunar-green/50">Date</dt>
+            <dt className="text-xs font-semibold uppercase tracking-wide text-text-light">Date</dt>
             <dd className="font-semibold text-lunar-green">{formatDay(event.date, 'long')}</dd>
           </div>
           <div>
-            <dt className="text-xs font-semibold uppercase tracking-wide text-lunar-green/50">Time</dt>
+            <dt className="text-xs font-semibold uppercase tracking-wide text-text-light">Time</dt>
             <dd className="font-semibold text-lunar-green">{formatTimeRange(event.startTime, event.endTime)}</dd>
           </div>
           <div>
-            <dt className="text-xs font-semibold uppercase tracking-wide text-lunar-green/50">Per person</dt>
+            <dt className="text-xs font-semibold uppercase tracking-wide text-text-light">Per person</dt>
             <dd className="font-semibold text-lunar-green">{formatPrice(event.pricePerPerson)}</dd>
           </div>
           <div className="col-span-2 sm:col-span-3">
-            <dt className="text-xs font-semibold uppercase tracking-wide text-lunar-green/50">Location</dt>
+            <dt className="text-xs font-semibold uppercase tracking-wide text-text-light">Location</dt>
             <dd className="font-semibold text-lunar-green">{event.locationRef}</dd>
           </div>
         </dl>

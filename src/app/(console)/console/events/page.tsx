@@ -282,7 +282,7 @@ export default function ConsoleEventsPage() {
                     <td className="px-4 py-3 text-xs text-text-light">
                       {formatDate(ev.date)}
                       {ev.seriesId && (
-                        <span title="Part of a recurring series" aria-label="Recurring series" className="ml-1 text-matte-gold">&#8635;</span>
+                        <span title="Part of a recurring series" aria-label="Recurring series" className="ml-1 text-accent-text">&#8635;</span>
                       )}
                       <br />
                       {formatTime(ev.startTime)} - {formatTime(ev.endTime)}
@@ -298,7 +298,7 @@ export default function ConsoleEventsPage() {
                         </button>
                         <button
                           onClick={() => window.location.href = '/console/events/' + ev.id + '/attendees'}
-                          className="rounded-md border border-matte-gold px-2 py-0.5 text-[10px] font-semibold text-matte-gold hover:bg-matte-gold hover:text-white transition-colors"
+                          className="rounded-md border border-accent-text px-2 py-0.5 text-[10px] font-semibold text-accent-text hover:bg-accent-text hover:text-white transition-colors"
                         >
                           Attendees
                         </button>
@@ -387,7 +387,7 @@ export default function ConsoleEventsPage() {
           {/* Series edit scope -- only when editing an event that belongs
               to a recurring series. */}
           {editingId && editingSeriesId && (
-            <div className="rounded-lg border border-matte-gold/40 bg-matte-gold/5 p-3">
+            <div className="rounded-lg border border-matte-gold/40 bg-accent-text/5 p-3">
               <p className="text-sm font-semibold text-lunar-green mb-2">
                 This event is part of a recurring series. Apply changes to:
               </p>

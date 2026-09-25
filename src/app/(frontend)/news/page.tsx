@@ -84,7 +84,7 @@ export default async function NewsPage() {
           <h1 className="font-black text-3xl tracking-tight text-lunar-green sm:text-4xl">
             News
           </h1>
-          <p className="mt-4 text-lg text-lunar-green/70">
+          <p className="mt-4 text-lg text-text-light">
             No news right now. Please check back soon for updates from the
             Malta Food Agency.
           </p>
@@ -100,7 +100,7 @@ export default async function NewsPage() {
           <h1 className="font-black text-3xl tracking-tight text-lunar-green sm:text-4xl">
             News
           </h1>
-          <p className="mt-2 text-lg text-lunar-green/70">
+          <p className="mt-2 text-lg text-text-light">
             Latest updates and announcements from the Malta Food Agency.
           </p>
         </header>

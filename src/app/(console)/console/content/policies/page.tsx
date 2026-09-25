@@ -247,7 +247,7 @@ export default function PoliciesPage() {
               <label className="block text-sm font-semibold text-lunar-green mb-1">
                 Last Reviewed
                 {JSON.stringify(form.body) !== originalBody && (
-                  <span className="ml-1 text-xs text-matte-gold">(auto-updated on save)</span>
+                  <span className="ml-1 text-xs text-accent-text">(auto-updated on save)</span>
                 )}
               </label>
               <input

@@ -98,7 +98,7 @@ export function ConfirmationStatus({ sessionId }: { sessionId: string }) {
         <h1 className="text-3xl font-black tracking-[-0.02em] text-lunar-green">We couldn&apos;t find this booking</h1>
         <p className="mt-4 text-text-light">
           If your payment went through, check your email for a confirmation, or{' '}
-          <a href="/contact" className="font-semibold text-terracotta underline">
+          <a href="/contact" className="font-semibold text-terracotta-dark underline">
             contact us
           </a>{' '}
           with your payment reference.
@@ -130,15 +130,15 @@ export function ConfirmationStatus({ sessionId }: { sessionId: string }) {
       </h1>
       <dl className="mx-auto mt-8 grid max-w-md grid-cols-2 gap-4 rounded-xl border border-border bg-surface p-6 text-left text-sm">
         <div>
-          <dt className="text-xs font-semibold uppercase tracking-wide text-lunar-green/50">Reference</dt>
+          <dt className="text-xs font-semibold uppercase tracking-wide text-text-light">Reference</dt>
           <dd className="font-mono font-semibold text-lunar-green">{booking.reference}</dd>
         </div>
         <div>
-          <dt className="text-xs font-semibold uppercase tracking-wide text-lunar-green/50">Seats</dt>
+          <dt className="text-xs font-semibold uppercase tracking-wide text-text-light">Seats</dt>
           <dd className="font-semibold text-lunar-green">{booking.persons}</dd>
         </div>
         <div className="col-span-2">
-          <dt className="text-xs font-semibold uppercase tracking-wide text-lunar-green/50">Amount paid</dt>
+          <dt className="text-xs font-semibold uppercase tracking-wide text-text-light">Amount paid</dt>
           <dd className="font-semibold text-lunar-green">
             {new Intl.NumberFormat('en-MT', { style: 'currency', currency: 'EUR' }).format(booking.totalAmount)}
           </dd>

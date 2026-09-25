@@ -49,10 +49,10 @@ function AvailabilityBadge({ availability }: { availability: EventAvailability }
 
   if (status === 'fully_booked') {
     label = 'Fully booked'
-    className += ' bg-terracotta/15 text-terracotta'
+    className += ' bg-terracotta/15 text-terracotta-dark'
   } else if (status === 'limited') {
     label = `${remaining} seat${remaining === 1 ? '' : 's'} left`
-    className += ' bg-matte-gold/20 text-matte-gold'
+    className += ' bg-accent-text/20 text-accent-text'
   } else {
     className += ' bg-lunar-green/10 text-lunar-green'
   }
@@ -92,13 +92,13 @@ export function EventCard({
 
       <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
         <div>
-          <dt className="text-xs font-semibold uppercase tracking-wide text-lunar-green/50">
+          <dt className="text-xs font-semibold uppercase tracking-wide text-text-light">
             Next date
           </dt>
           <dd className="font-semibold text-lunar-green">{formatDay(date)}</dd>
         </div>
         <div>
-          <dt className="text-xs font-semibold uppercase tracking-wide text-lunar-green/50">
+          <dt className="text-xs font-semibold uppercase tracking-wide text-text-light">
             Per person
           </dt>
           <dd className="font-semibold text-lunar-green">
@@ -118,7 +118,7 @@ export function EventCard({
             'focus:outline-2 focus:outline-offset-2 focus:outline-terracotta',
             fullyBooked
               ? 'cursor-not-allowed bg-lunar-green/10 text-lunar-green/50'
-              : 'bg-terracotta text-soft-beige hover:bg-terracotta/85',
+              : 'bg-terracotta-dark text-white hover:bg-terracotta/85',
           ].join(' ')}
         >
           {fullyBooked ? <MtText en="Fully booked" mt="Kollox mibbukkjat" /> : <MtText en="Book" mt="Ibbukkja" />}

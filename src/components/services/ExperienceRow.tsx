@@ -61,7 +61,7 @@ export function ExperienceRow({
           imageOnLeft ? 'md:order-2' : 'md:order-1'
         } ${index % 2 === 0 ? 'order-2 md:order-2' : 'order-1 md:order-1'}`}
       >
-        <span className="text-xs font-semibold uppercase tracking-wide text-matte-gold">
+        <span className="text-xs font-semibold uppercase tracking-wide text-accent-text">
           Experience
         </span>
         <h2 className="mt-2 text-2xl font-bold tracking-tight text-lunar-green group-hover:text-terracotta transition-colors">
@@ -75,7 +75,7 @@ export function ExperienceRow({
         <div className="mt-5">
           <Link
             href={`/services/${slug}`}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-terracotta px-5 py-2.5 text-sm font-bold text-soft-beige transition-colors hover:bg-terracotta/85 focus:outline-2 focus:outline-offset-2 focus:outline-terracotta"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-terracotta-dark px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-terracotta/85 focus:outline-2 focus:outline-offset-2 focus:outline-terracotta"
           >
             View upcoming dates
             <span aria-hidden="true">&rarr;</span>

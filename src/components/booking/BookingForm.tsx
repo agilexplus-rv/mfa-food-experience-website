@@ -338,7 +338,7 @@ export function BookingForm({ eventId, pricePerPerson, maxSeats, withdrawalRight
       <div
         className={`rounded-xl border px-5 py-4 text-sm ${
           holdExpired
-            ? 'border-terracotta/40 bg-terracotta/10 text-terracotta'
+            ? 'border-terracotta/40 bg-terracotta/10 text-terracotta-dark'
             : 'border-matte-gold/40 bg-matte-gold/10 text-lunar-green'
         }`}
       >
@@ -386,7 +386,7 @@ export function BookingForm({ eventId, pricePerPerson, maxSeats, withdrawalRight
       <fieldset className="space-y-4">
         <legend className="text-sm font-semibold text-lunar-green">Your details</legend>
         <div>
-          <label htmlFor="leadAttendeeName" className="block text-xs font-semibold uppercase tracking-wide text-lunar-green/60">
+          <label htmlFor="leadAttendeeName" className="block text-xs font-semibold uppercase tracking-wide text-text-light">
             Full name *
           </label>
           <input
@@ -399,7 +399,7 @@ export function BookingForm({ eventId, pricePerPerson, maxSeats, withdrawalRight
           />
         </div>
         <div>
-          <label htmlFor="email" className="block text-xs font-semibold uppercase tracking-wide text-lunar-green/60">
+          <label htmlFor="email" className="block text-xs font-semibold uppercase tracking-wide text-text-light">
             Email *
           </label>
           <input
@@ -413,7 +413,7 @@ export function BookingForm({ eventId, pricePerPerson, maxSeats, withdrawalRight
           <p className="mt-1 text-xs text-text-light">Your booking confirmation and QR entry code will be sent here.</p>
         </div>
         <div>
-          <label htmlFor="phone" className="block text-xs font-semibold uppercase tracking-wide text-lunar-green/60">
+          <label htmlFor="phone" className="block text-xs font-semibold uppercase tracking-wide text-text-light">
             Phone (optional)
           </label>
           <input
@@ -451,7 +451,7 @@ export function BookingForm({ eventId, pricePerPerson, maxSeats, withdrawalRight
 
       {/* Coupon */}
       <div>
-        <label htmlFor="coupon" className="block text-xs font-semibold uppercase tracking-wide text-lunar-green/60">
+        <label htmlFor="coupon" className="block text-xs font-semibold uppercase tracking-wide text-text-light">
           Discount code (optional)
         </label>
         <div className="mt-1.5 flex gap-2">
@@ -478,7 +478,7 @@ export function BookingForm({ eventId, pricePerPerson, maxSeats, withdrawalRight
           <p className="mt-1.5 text-xs font-semibold text-lunar-green">Code applied — total updated below.</p>
         )}
         {couponStatus.state === 'invalid' && (
-          <p className="mt-1.5 text-xs font-semibold text-terracotta">{couponStatus.message}</p>
+          <p className="mt-1.5 text-xs font-semibold text-terracotta-dark">{couponStatus.message}</p>
         )}
       </div>
 
@@ -488,7 +488,7 @@ export function BookingForm({ eventId, pricePerPerson, maxSeats, withdrawalRight
           @at-compliance EU-Legal-5 */}
       {withdrawalRightDisclosure && (
         <div className="rounded-xl border border-matte-gold/30 bg-matte-gold/5 px-5 py-4 text-sm">
-          <p className="text-lunar-green/75 leading-relaxed">
+          <p className="text-text-light leading-relaxed">
             {withdrawalRightDisclosure}
           </p>
         </div>
@@ -507,7 +507,7 @@ export function BookingForm({ eventId, pricePerPerson, maxSeats, withdrawalRight
           {cancellationEnabled === false ? (
             <>
               I understand that this booking{' '}
-              <strong className="font-semibold text-terracotta">cannot be cancelled or refunded</strong>
+              <strong className="font-semibold text-terracotta-dark">cannot be cancelled or refunded</strong>
               {'. '}
             </>
           ) : (

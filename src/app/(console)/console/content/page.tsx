@@ -118,7 +118,7 @@ export default function ContentLandingPage() {
                     </span>
                   )}
                   {section.title === 'Testimonials' && pending !== undefined && pending > 0 && (
-                    <span className="inline-block rounded-full bg-matte-gold/20 px-2 py-0.5 text-[10px] font-bold text-matte-gold">
+                    <span className="inline-block rounded-full bg-accent-text/20 px-2 py-0.5 text-[10px] font-bold text-accent-text">
                       {pending} pending
                     </span>
                   )}

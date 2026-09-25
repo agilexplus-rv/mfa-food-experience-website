@@ -22,7 +22,7 @@ export default function BookingCancelPage() {
       <div className="mt-8">
         <Link
           href="/services"
-          className="inline-flex items-center gap-1.5 rounded-lg bg-terracotta px-6 py-3 text-sm font-bold text-soft-beige transition-colors hover:bg-terracotta/85"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-terracotta-dark px-6 py-3 text-sm font-bold text-white transition-colors hover:bg-terracotta/85"
         >
           Browse experiences
           <span aria-hidden="true">&rarr;</span>

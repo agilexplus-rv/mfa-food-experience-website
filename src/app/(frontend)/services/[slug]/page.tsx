@@ -59,7 +59,7 @@ export default async function ServicePage({ params }: PageProps) {
   return (
     <section className="mx-auto max-w-7xl px-6 py-16">
       <header className="mx-auto max-w-3xl text-center">
-        <span className="text-xs font-semibold uppercase tracking-wide text-matte-gold">
+        <span className="text-xs font-semibold uppercase tracking-wide text-accent-text">
           Experience
         </span>
         <h1 className="mt-3 text-4xl font-black tracking-[-0.02em] text-lunar-green sm:text-5xl">

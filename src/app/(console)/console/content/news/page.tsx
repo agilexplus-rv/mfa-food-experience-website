@@ -283,7 +283,7 @@ export default function NewsManagementPage() {
                         <button
                           onClick={() => handleTogglePublish(n)}
                           disabled={actionId === n.id}
-                          className="rounded-md border border-matte-gold px-2 py-0.5 text-[10px] font-semibold text-matte-gold hover:bg-matte-gold hover:text-white disabled:opacity-40 transition-colors"
+                          className="rounded-md border border-accent-text px-2 py-0.5 text-[10px] font-semibold text-accent-text hover:bg-accent-text hover:text-white disabled:opacity-40 transition-colors"
                         >
                           {actionId === n.id ? '...' : n.published ? 'Unpublish' : 'Publish'}
                         </button>

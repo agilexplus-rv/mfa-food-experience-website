@@ -146,7 +146,7 @@ export async function SiteFooter() {
               the Malta Food Agency.
             </p>
             {socialLinks.length > 0 && (
-              <div className="flex items-center gap-4 text-matte-gold">
+              <div className="flex items-center gap-4 text-soft-beige">
                 {socialLinks.map((link) => {
                   const Icon = ICON_MAP[link.platform]
                   if (!Icon) return null
@@ -168,7 +168,7 @@ export async function SiteFooter() {
 
           {/* Nav column */}
           <nav aria-label="Footer navigation" className="flex flex-col gap-2">
-            <h2 className="mb-1 text-xs font-bold uppercase tracking-wider text-matte-gold">
+            <h2 className="mb-1 text-xs font-bold uppercase tracking-wider text-soft-beige">
               Explore
             </h2>
             {NAV_LINKS.map((link) => (
@@ -184,7 +184,7 @@ export async function SiteFooter() {
 
           {/* Legal column */}
           <nav aria-label="Legal" className="flex flex-col gap-2">
-            <h2 className="mb-1 text-xs font-bold uppercase tracking-wider text-matte-gold">
+            <h2 className="mb-1 text-xs font-bold uppercase tracking-wider text-soft-beige">
               Legal
             </h2>
             {LEGAL_LINKS.map((link) => (
@@ -201,7 +201,7 @@ export async function SiteFooter() {
 
         {/* Bottom bar */}
         <div className="mt-10 border-t border-soft-beige/20 pt-6">
-          <p className="text-xs text-soft-beige/60">
+          <p className="text-xs text-soft-beige/80">
             &copy; {new Date().getFullYear()} Malta Food Agency. All rights
             reserved.
           </p>

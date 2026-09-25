@@ -14,7 +14,7 @@ export function ContactForm() {
         Send a message
       </h2>
       <p className="mt-2 text-sm text-text-light">
-        Fields marked with <span aria-hidden="true" className="text-terracotta">*</span> are required.
+        Fields marked with <span aria-hidden="true" className="text-terracotta-dark">*</span> are required.
       </p>
 
       <form action={formAction} className="mt-6 space-y-5">
@@ -24,7 +24,7 @@ export function ContactForm() {
             htmlFor="name"
             className="block text-sm font-semibold text-lunar-green"
           >
-            Name <span aria-hidden="true" className="text-terracotta">*</span>
+            Name <span aria-hidden="true" className="text-terracotta-dark">*</span>
             <span className="sr-only">required</span>
           </label>
           <input
@@ -45,7 +45,7 @@ export function ContactForm() {
             htmlFor="email"
             className="block text-sm font-semibold text-lunar-green"
           >
-            Email <span aria-hidden="true" className="text-terracotta">*</span>
+            Email <span aria-hidden="true" className="text-terracotta-dark">*</span>
             <span className="sr-only">required</span>
           </label>
           <input
@@ -66,7 +66,7 @@ export function ContactForm() {
             htmlFor="message"
             className="block text-sm font-semibold text-lunar-green"
           >
-            Message <span aria-hidden="true" className="text-terracotta">*</span>
+            Message <span aria-hidden="true" className="text-terracotta-dark">*</span>
             <span className="sr-only">required</span>
           </label>
           <textarea
@@ -83,7 +83,7 @@ export function ContactForm() {
         <button
           type="submit"
           disabled={pending}
-          className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-terracotta px-6 py-3.5 text-base font-bold text-soft-beige transition-colors hover:bg-terracotta/85 focus:outline-2 focus:outline-offset-2 focus:outline-terracotta disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+          className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-terracotta-dark px-6 py-3.5 text-base font-bold text-white transition-colors hover:bg-terracotta/85 focus:outline-2 focus:outline-offset-2 focus:outline-terracotta disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
         >
           {pending ? 'Sending…' : 'Send message'}
           {!pending && <span aria-hidden="true">&rarr;</span>}
@@ -98,7 +98,7 @@ export function ContactForm() {
             'mt-6 rounded-md border-l-4 px-4 py-3 text-sm font-semibold ' +
             (state.ok
               ? 'border-lunar-green bg-lunar-green/10 text-lunar-green'
-              : 'border-terracotta bg-terracotta/10 text-terracotta')
+              : 'border-terracotta bg-terracotta/10 text-terracotta-dark')
           }
         >
           {state.message}
