@@ -99,8 +99,6 @@ export default buildConfig({
       views: {
         createFirstUser: {
           Component: '@/components/admin/CreateFirstUserView#default',
-          path: '/create-first-user',
-          exact: true,
         },
       },
     },
