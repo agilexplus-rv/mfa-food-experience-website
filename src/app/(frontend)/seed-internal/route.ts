@@ -4,10 +4,8 @@ import config from '@payload-config'
 import { seed } from '@/payload/seed'
 
 /**
- * POST /api/seed — Runs the seed script (idempotent).
- *
+ * POST /seed-internal — Run the seed (idempotent).
  * Called from entrypoint.sh after the server starts.
- * Uses overrideAccess to bypass admin-only write restrictions.
  */
 export async function POST() {
   try {

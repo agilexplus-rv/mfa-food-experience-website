@@ -20,7 +20,7 @@ SERVER_PID=$!
 # Wait for the server to be ready (up to 60 seconds).
 echo "Waiting for server to become ready..."
 for i in $(seq 1 30); do
-  if curl -sf http://localhost:3000/api/health > /dev/null 2>&1; then
+  if curl -sf http://localhost:3000/health > /dev/null 2>&1; then
     echo "Server ready after ${i}s"
     break
   fi
@@ -28,7 +28,7 @@ for i in $(seq 1 30); do
 done
 
 echo "=== Seeding database (idempotent — skips existing data) ==="
-curl -sf -X POST http://localhost:3000/api/seed 2>&1 || echo "Seed endpoint returned non-zero (may be OK if already seeded)"
+curl -sf -X POST http://localhost:3000/seed-internal 2>&1 || echo "Seed endpoint returned non-zero (may be OK if already seeded)"
 
 echo "=== Seed complete, bringing server to foreground ==="
 wait $SERVER_PID
