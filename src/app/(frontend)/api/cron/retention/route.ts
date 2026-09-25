@@ -5,6 +5,21 @@ import config from '@payload-config'
 
 import { cronSecret } from '@/lib/env'
 
+// Unwrap a Drizzle DrizzleQueryError to its underlying Postgres error
+// (the wrapper's message only contains the SQL, the real reason lives on
+// `cause`). We stringify it fully so the cron summary actually tells us why.
+function describeError(err: unknown): string {
+  const cause = (err as { cause?: unknown } | null)?.cause
+  if (cause) {
+    const c = cause as Record<string, unknown>
+    const bits = [c.message, c.code, c.detail, c.hint, c.where]
+      .filter((v): v is string => typeof v === 'string' && v.length > 0)
+    if (bits.length > 0) return bits.join(' | ')
+    return JSON.stringify(cause)
+  }
+  return err instanceof Error ? err.message : String(err)
+}
+
 let _payload: Payload | null = null
 async function payload(): Promise<Payload> {
   if (!_payload) _payload = await getPayload({ config })
@@ -84,7 +99,7 @@ export async function GET(req: NextRequest) {
     })
     bookings = result.docs as unknown as BookingDoc[]
   } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : String(err)
+    const msg = describeError(err)
     errors.push(`bookings.find: ${msg}`)
   }
 
@@ -123,7 +138,7 @@ export async function GET(req: NextRequest) {
 
       processed++
     } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err)
+      const msg = describeError(err)
       errors.push(`bookings/${booking.id}: ${msg}`)
     }
   }
@@ -144,7 +159,7 @@ export async function GET(req: NextRequest) {
     })
     pendingBookings = pendingResult.docs as unknown as BookingDoc[]
   } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : String(err)
+    const msg = describeError(err)
     errors.push(`pendingBookings.find: ${msg}`)
   }
 
@@ -164,7 +179,7 @@ export async function GET(req: NextRequest) {
       })
       processed++
     } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err)
+      const msg = describeError(err)
       errors.push(`bookings/${booking.id}: ${msg}`)
     }
   }
@@ -186,7 +201,7 @@ export async function GET(req: NextRequest) {
     })
     testimonialDocs = testimonialResult.docs as unknown as { id: string | number }[]
   } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : String(err)
+    const msg = describeError(err)
     errors.push(`testimonials.find: ${msg}`)
   }
 
@@ -203,7 +218,7 @@ export async function GET(req: NextRequest) {
       })
       processed++
     } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err)
+      const msg = describeError(err)
       errors.push(`testimonials/${t.id}: ${msg}`)
     }
   }
