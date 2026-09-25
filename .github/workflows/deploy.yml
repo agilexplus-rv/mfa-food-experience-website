@@ -98,7 +98,6 @@ jobs:
             --resource-group "${{ vars.RESOURCE_GROUP }}" \
             --name "${{ vars.CONTAINER_APP_NAME }}" \
             --image "${{ vars.ACR_FQDN }}/mfa-food-experience:${{ github.sha }}" \
-            --secrets "cron-secret=${{ secrets.CRON_SECRET }}" \
             --set-env-vars \
               "NEXT_PUBLIC_SERVER_URL=${{ vars.NEXT_PUBLIC_SERVER_URL }}" \
               "DATABASE_URL=${{ vars.DATABASE_URL }}" \
