@@ -49,7 +49,7 @@ export async function Hero() {
 
         {/* Content layer */}
         <div className="relative z-10 flex flex-col items-center">
-          <Logo variant="primary" size="xxl" className="max-w-[90vw]" />
+          <Logo variant="primary" size="xxl" />
 
           <h1 className="mt-4 max-w-2xl text-4xl font-black tracking-[-0.02em] text-soft-beige sm:text-5xl lg:text-6xl">
             Authentic Maltese Culinary Experiences
@@ -78,7 +78,7 @@ export async function Hero() {
   return (
     <section className="relative flex min-h-[calc(100vh-4.5rem)] flex-col items-center justify-center bg-soft-beige px-6 py-10 text-center">
       {/* Larger brand mark — hero scale */}
-      <Logo variant="primary" size="xxl" className="max-w-[90vw]" />
+      <Logo variant="primary" size="xxl" />
 
       <h1 className="mt-4 max-w-2xl text-4xl font-black tracking-[-0.02em] text-lunar-green sm:text-5xl lg:text-6xl">
         Authentic Maltese Culinary Experiences
