@@ -34,6 +34,9 @@ const NAV_LINKS = [
 const LEGAL_LINKS = [
   { label: "Cancellation Policy", href: "/legal/cancellation-policy" },
   { label: "Customer Policy", href: "/legal/customer-policy" },
+  { label: "Cookie Policy", href: "/legal/cookie-policy" },
+  { label: "Privacy Notice", href: "/legal/privacy-notice" },
+  { label: "Accessibility", href: "/legal/accessibility-statement" },
   { label: "Provider Info", href: "/legal/provider-info" },
 ]
 

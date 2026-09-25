@@ -17,12 +17,14 @@ async function seed() {
     await payload.create({
       collection: 'services',
       data: { name: 'Classes', slug: 'classes', visible: true, order: 1 },
+      overrideAccess: true,
     })
     console.log('Seed: Created service "Classes" (visible=true)')
 
     await payload.create({
       collection: 'services',
       data: { name: 'Tastings', slug: 'tastings', visible: false, order: 2 },
+      overrideAccess: true,
     })
     console.log('Seed: Created service "Tastings" (visible=false, per FR-1.2)')
   }
@@ -44,6 +46,7 @@ async function seed() {
           password: adminPassword,
           role: 'admin',
         },
+        overrideAccess: true,
       })
       console.log(`Seed: Created admin user: ${adminEmail}`)
     } else {
@@ -75,6 +78,7 @@ async function seed() {
     await payload.create({
       collection: 'policies',
       data: { slug, title, body },
+      overrideAccess: true,
     })
     console.log(`Seed: Created policy "${title}" (${slug})`)
   }
