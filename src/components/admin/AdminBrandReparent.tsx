@@ -19,10 +19,11 @@ import { useEffect } from 'react'
  * the .admin-brand-inject node (rendered as a sibling BEFORE the
  * page section by AdminGlobalStyles) and physically relocates it to
  * be the FIRST child of .template-minimal__wrap, but only when that
- * wrap is inside a .forgot-password or .reset-password section (or
- * of the .create-first-user div inside the wrap -- see below) --
+ * wrap is inside a .forgot-password or .reset-password section --
  * never touches the login page, which already has its own correct
- * brand placement and would otherwise get a duplicate.
+ * brand placement and would otherwise get a duplicate. (/admin/
+ * create-first-user renders its own logo via the custom
+ * CreateFirstUserView, so it is intentionally not targeted here.)
  *
  * Why DOM manipulation instead of a "cleaner" React-only fix: no
  * override slot exists for these views' rendered content (see above),
@@ -32,14 +33,8 @@ import { useEffect } from 'react'
  */
 export default function AdminBrandReparent() {
   useEffect(() => {
-    // /admin/create-first-user differs from forgot/reset: its
-    // MinimalTemplate section gets NO view class (getRouteData.js's
-    // baseClasses map has no createFirstUser entry), and the
-    // .create-first-user class sits on a div INSIDE
-    // .template-minimal__wrap -- so target that div directly. Its
-    // first child is still inside the same wrap as the form.
     const wrap = document.querySelector<HTMLElement>(
-      'section.forgot-password .template-minimal__wrap, section.reset-password .template-minimal__wrap, .template-minimal__wrap > .create-first-user',
+      'section.forgot-password .template-minimal__wrap, section.reset-password .template-minimal__wrap',
     )
     const brand = document.querySelector<HTMLElement>('.admin-brand-inject')
     if (!wrap || !brand) return

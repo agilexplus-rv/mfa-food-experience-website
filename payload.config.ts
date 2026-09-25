@@ -92,6 +92,15 @@ export default buildConfig({
         Logo: '@/components/admin/AdminLogo#default',
         Icon: '@/components/admin/AdminIcon#default',
       },
+      // Replaces Payload's built-in create-first-user view with a branded
+      // two-step flow (account -> TOTP enrollment with QR code). The key
+      // MUST be `createFirstUser` -- getRouteData.js resolves overrides by
+      // the config.admin.routes key, not the PascalCase component name.
+      views: {
+        createFirstUser: {
+          Component: '@/components/admin/CreateFirstUserView#default',
+        },
+      },
     },
   },
   editor: lexicalEditor(),

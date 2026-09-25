@@ -246,8 +246,7 @@ export default function AdminThemeStyles() {
            there and the login page's own native .login__brand block
            remains the only visible logo -- no duplicate. */
         .forgot-password .admin-brand-inject,
-        .reset-password .admin-brand-inject,
-        .create-first-user .admin-brand-inject {
+        .reset-password .admin-brand-inject {
           display: flex;
           justify-content: center;
           margin-bottom: 32px;
@@ -312,40 +311,6 @@ export default function AdminThemeStyles() {
         .reset-password input {
           box-sizing: border-box !important;
           max-width: 100%;
-        }
-
-        /* /admin/create-first-user (CreateFirstUserView) renders a bare
-           div.create-first-user > h1 + p + form inside
-           .template-minimal__wrap, with no FormHeader -- so the
-           .form-header rules above don't reach it. Give it the same
-           brand heading/description treatment, the same input sizing
-           fix as login/forgot/reset, and a full-width Create button.
-           Payload's own stylesheet makes .create-first-user a flex
-           column with an 8px gap, so margins here stack on top of that. */
-        .create-first-user h1 {
-          color: #33483D;
-          font-family: var(--font-sans, 'Montserrat', ui-sans-serif, system-ui, sans-serif);
-          font-weight: 700;
-          font-size: 1.25rem;
-          margin: 0 0 8px;
-          text-align: center;
-        }
-        .create-first-user > p {
-          color: #58685E;
-          font-size: 0.875rem;
-          line-height: 1.5;
-          margin: 0 0 24px;
-          text-align: center;
-        }
-        .create-first-user .field-type {
-          margin-bottom: 16px;
-        }
-        .create-first-user input {
-          box-sizing: border-box !important;
-          max-width: 100%;
-        }
-        .create-first-user .btn--style-primary {
-          width: 100%;
         }
 
         .login__form .field-type {

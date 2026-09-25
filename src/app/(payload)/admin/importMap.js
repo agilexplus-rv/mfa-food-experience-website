@@ -30,6 +30,7 @@ import AdminLogo from '@/components/admin/AdminLogo'
 import AdminIcon from '@/components/admin/AdminIcon'
 import AdminPasswordReveal from '@/components/admin/AdminPasswordReveal'
 import MfaSetupBanner from '@/components/admin/MfaSetupBanner'
+import CreateFirstUserView from '@/components/admin/CreateFirstUserView'
 
 /** @type import('payload').ImportMap */
 export const importMap = {
@@ -64,5 +65,6 @@ export const importMap = {
   "@/components/admin/AdminLogo#default": AdminLogo,
   "@/components/admin/AdminIcon#default": AdminIcon,
   "@/components/admin/AdminPasswordReveal#default": AdminPasswordReveal,
-  "@/components/admin/MfaSetupBanner#default": MfaSetupBanner
+  "@/components/admin/MfaSetupBanner#default": MfaSetupBanner,
+  "@/components/admin/CreateFirstUserView#default": CreateFirstUserView
 }
