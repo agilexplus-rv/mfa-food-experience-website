@@ -1,4 +1,3 @@
-import { use } from 'react'
 import type { Metadata } from 'next'
 
 import CreateFirstUserView from '@/components/admin/CreateFirstUserView'
@@ -18,8 +17,8 @@ type Args = {
 export const generateMetadata = async ({ params, searchParams }: Args): Promise<Metadata> =>
   generatePageMetadata({ config, params, searchParams })
 
-const Page = ({ params, searchParams }: Args) => {
-  const { segments } = use(params)
+const Page = async ({ params, searchParams }: Args) => {
+  const { segments } = await params
   // Bypass Payload's internal view override (which does not activate
   // reliably for the createFirstUser key) and render our branded
   // two-step setup component directly.
