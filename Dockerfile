@@ -73,7 +73,7 @@ COPY --from=builder /app/package.json ./package.json
 COPY infra/entrypoint.sh ./entrypoint.sh
 RUN chmod +x ./entrypoint.sh
 
-RUN mkdir -p /app/uploads && chown -R nextjs:nodejs /app
+RUN mkdir -p /app/public/storage /app/uploads && chown -R nextjs:nodejs /app
 
 USER nextjs
 EXPOSE 3000
