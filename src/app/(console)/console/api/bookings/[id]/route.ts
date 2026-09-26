@@ -33,6 +33,7 @@ export async function POST(
   }
 
   const { id } = await params
+  const numericId = Number(id)
   const p = await payload()
   const action = req.nextUrl.searchParams.get('action')
 
@@ -45,7 +46,7 @@ export async function POST(
   try {
     booking = await p.findByID({
       collection: 'bookings',
-      id,
+      id: numericId,
       depth: 2,
       overrideAccess: true,
     })
@@ -125,7 +126,7 @@ export async function POST(
 
       await p.update({
         collection: 'bookings',
-        id,
+        id: numericId,
         data: updateData,
         overrideAccess: true,
       })
@@ -253,7 +254,7 @@ export async function POST(
       // Best-effort: call the existing resend-confirmation endpoint
       await p.update({
         collection: 'bookings',
-        id,
+        id: numericId,
         data: { status: b.status },
         overrideAccess: true,
       })
@@ -268,7 +269,7 @@ export async function POST(
     try {
       await p.update({
         collection: 'bookings',
-        id,
+        id: numericId,
         data: { noShow: true },
         overrideAccess: true,
       })

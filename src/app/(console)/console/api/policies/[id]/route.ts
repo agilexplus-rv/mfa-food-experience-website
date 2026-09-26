@@ -28,6 +28,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   }
 
   const { id } = await params
+  const numericId = Number(id)
   const p = await payload()
   const body = await req.json().catch(() => null)
   if (!body) return NextResponse.json({ error: 'request body required' }, { status: 400 })
@@ -47,7 +48,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
     await p.update({
       collection: 'policies',
-      id,
+      id: numericId,
       data,
       overrideAccess: true,
     })

@@ -113,7 +113,7 @@ export async function POST(req: NextRequest) {
         slug: body.slug.trim().toLowerCase(),
         visible: body.visible ?? false,
         order: body.order ?? 0,
-        imagery: body.imageryId || undefined,
+        imagery: body.imageryId ? Number(body.imageryId) : undefined,
       },
       overrideAccess: true,
     })

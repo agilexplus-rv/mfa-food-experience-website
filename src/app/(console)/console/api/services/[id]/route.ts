@@ -32,6 +32,7 @@ export async function PATCH(
   }
 
   const { id } = await params
+  const numericId = Number(id)
   const p = await payload()
   const body = await req.json().catch(() => null)
   if (!body) return NextResponse.json({ error: 'invalid_body' }, { status: 400 })
@@ -39,7 +40,7 @@ export async function PATCH(
   try {
     await p.update({
       collection: 'services',
-      id,
+      id: numericId,
       data: body,
       overrideAccess: true,
     })
@@ -68,6 +69,7 @@ export async function DELETE(
   }
 
   const { id } = await params
+  const numericId = Number(id)
   const p = await payload()
 
   // Check for referencing events
@@ -92,7 +94,7 @@ export async function DELETE(
   try {
     await p.delete({
       collection: 'services',
-      id,
+      id: numericId,
       overrideAccess: true,
     })
     return NextResponse.json({ ok: true })

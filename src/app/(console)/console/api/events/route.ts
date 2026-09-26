@@ -185,7 +185,7 @@ export async function POST(req: NextRequest) {
         collection: 'events',
         data: {
           title: body.title.trim(),
-          service: body.serviceId,
+          service: Number(body.serviceId),
           date,
           startTime: shiftToDate(baseStart, date),
           endTime: shiftToDate(baseEnd, date),

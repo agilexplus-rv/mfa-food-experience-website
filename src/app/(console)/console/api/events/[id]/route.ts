@@ -32,12 +32,13 @@ export async function GET(
   }
 
   const { id } = await params
+  const numericId = Number(id)
   const p = await payload()
 
   try {
     const ev = await p.findByID({
       collection: 'events',
-      id,
+      id: numericId,
       depth: 1,
       overrideAccess: true,
     })
@@ -66,6 +67,7 @@ export async function PATCH(
   }
 
   const { id } = await params
+  const numericId = Number(id)
   const p = await payload()
   const body = await req.json().catch(() => null)
   if (!body) return NextResponse.json({ error: 'invalid_body' }, { status: 400 })
@@ -88,14 +90,14 @@ export async function PATCH(
   try {
     const current = await p.findByID({
       collection: 'events',
-      id,
+      id: numericId,
       overrideAccess: true,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     }) as any
 
     await p.update({
       collection: 'events',
-      id,
+      id: numericId,
       data: body,
       overrideAccess: true,
     })
@@ -163,6 +165,7 @@ export async function DELETE(
   }
 
   const { id } = await params
+  const numericId = Number(id)
   const p = await payload()
 
   // Check for existing bookings
@@ -187,7 +190,7 @@ export async function DELETE(
   try {
     await p.delete({
       collection: 'events',
-      id,
+      id: numericId,
       overrideAccess: true,
     })
     return NextResponse.json({ ok: true })

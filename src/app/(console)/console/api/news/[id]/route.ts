@@ -28,6 +28,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   }
 
   const { id } = await params
+  const numericId = Number(id)
   const p = await payload()
   const body = await req.json().catch(() => null)
   if (!body) return NextResponse.json({ error: 'request body required' }, { status: 400 })
@@ -43,7 +44,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
     await p.update({
       collection: 'news_items',
-      id,
+      id: numericId,
       data,
       overrideAccess: true,
     })
@@ -69,12 +70,13 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   }
 
   const { id } = await params
+  const numericId = Number(id)
   const p = await payload()
 
   try {
     await p.delete({
       collection: 'news_items',
-      id,
+      id: numericId,
       overrideAccess: true,
     })
 

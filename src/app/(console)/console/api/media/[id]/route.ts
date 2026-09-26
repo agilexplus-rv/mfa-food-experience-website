@@ -28,6 +28,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   }
 
   const { id } = await params
+  const numericId = Number(id)
   const p = await payload()
 
   try {
@@ -56,7 +57,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
 
     await p.delete({
       collection: 'media',
-      id,
+      id: numericId,
       overrideAccess: true,
     })
 
