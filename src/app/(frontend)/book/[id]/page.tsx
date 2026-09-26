@@ -8,7 +8,8 @@ import { getAvailability } from '@/lib/availability'
 import { BookingForm } from '@/components/booking/BookingForm'
 import { WaitlistForm } from '@/components/waitlist/WaitlistForm'
 import { formatPrice } from '@/lib/availability-types'
-import { getCancellationPolicy } from '@/lib/policies/cancellation'
+import { coolingOffHours, getCancellationPolicy } from '@/lib/policies/cancellation'
+import { getTermsAndConditions } from '@/lib/policies/terms'
 import { formatDay, formatTimeRange } from '@/lib/format-date'
 
 export const dynamic = 'force-dynamic'
@@ -69,6 +70,7 @@ export default async function BookEventPage({ params }: PageProps) {
   // Fetch cancellation policy for the withdrawal-right disclosure
   // and to know whether cancellations are enabled at all.
   const cancellationPolicy = await getCancellationPolicy().catch(() => null)
+  const terms = await getTermsAndConditions().catch(() => null)
 
   return (
     <section className="mx-auto max-w-4xl px-6 py-16">
@@ -105,11 +107,11 @@ export default async function BookEventPage({ params }: PageProps) {
       <div className="mt-10">
         {event.status !== 'scheduled' ? (
           <div className="mx-auto max-w-2xl rounded-xl border border-dashed border-border bg-surface/60 px-6 py-16 text-center">
-            <p className="text-lg font-semibold text-lunar-green">This event is no longer bookable</p>
+            <p className="text-lg font-semibold text-lunar-green">This experience is no longer bookable</p>
             <p className="mt-2 text-sm text-text-light">
               {event.status === 'cancelled'
-                ? 'This event has been cancelled.'
-                : 'This event has already taken place.'}
+                ? 'This experience has been cancelled.'
+                : 'This experience has already taken place.'}
             </p>
           </div>
         ) : availability.status === 'fully_booked' ? (
@@ -130,6 +132,10 @@ export default async function BookEventPage({ params }: PageProps) {
             withdrawalRightDisclosure={cancellationPolicy?.withdrawalRightDisclosure ?? null}
             cancellationEnabled={cancellationPolicy?.enabled ?? true}
             termsAndConditionsUrl="/legal/terms-and-conditions"
+            termsTitle={terms?.title}
+            termsHtml={terms?.html || undefined}
+            termsCheckboxLabel={terms?.checkboxLabel}
+            coolingOffHours={coolingOffHours(cancellationPolicy)}
           />
         )}
       </div>

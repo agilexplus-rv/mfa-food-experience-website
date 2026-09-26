@@ -20,6 +20,9 @@ export interface CancellationPolicyData {
   tiers?: CancellationTier[] | null
   organiserCancellationText?: string | null
   withdrawalRightDisclosure?: string | null
+  /** Voluntary cooling-off period: full refund within N hours of booking. */
+  coolingOffEnabled?: boolean | null
+  coolingOffHours?: number | null
   updatedAt?: string
   createdAt?: string
 }
@@ -35,6 +38,22 @@ export async function getCancellationPolicy(): Promise<CancellationPolicyData> {
   return (await payload.findGlobal({
     slug: 'cancellation-policy',
   })) as unknown as CancellationPolicyData
+}
+
+/**
+ * Cooling-off window in hours, or 0 when the voluntary cooling-off
+ * period is switched off.
+ */
+export function coolingOffHours(policy: Pick<CancellationPolicyData, 'coolingOffEnabled' | 'coolingOffHours'> | null | undefined): number {
+  if (!policy?.coolingOffEnabled) return 0
+  const h = Number(policy.coolingOffHours)
+  return Number.isFinite(h) && h > 0 ? h : 0
+}
+
+/** Human-readable duration for a cooling-off window, e.g. "24 hours", "3 days". */
+export function formatCoolingOffPeriod(hours: number): string {
+  if (hours % 24 === 0 && hours >= 48) return `${hours / 24} days`
+  return `${hours} hour${hours === 1 ? '' : 's'}`
 }
 
 /**
@@ -130,10 +149,10 @@ export function formatTierLabel(tier: CancellationTier): string {
  * Examples:
  *   minDaysBeforeEvent = 7  → "7 days before"
  *   minDaysBeforeEvent = 1  → "1 day before"
- *   minDaysBeforeEvent = 0  → "Day of event"
+ *   minDaysBeforeEvent = 0  → "Day of the experience"
  */
 export function formatDaysBeforeLabel(days: number): string {
-  if (days === 0) return 'Day of event'
+  if (days === 0) return 'Day of the experience'
   if (days === 1) return '1 day before'
   return `${days} days before`
 }

@@ -32,6 +32,7 @@ const NAV_LINKS = [
 ]
 
 const LEGAL_LINKS = [
+  { label: "Terms & Conditions", href: "/legal/terms-and-conditions" },
   { label: "Cancellation Policy", href: "/legal/cancellation-policy" },
   { label: "Customer Policy", href: "/legal/customer-policy" },
   { label: "Cookie Policy", href: "/legal/cookie-policy" },

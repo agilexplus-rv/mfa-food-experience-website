@@ -1,6 +1,6 @@
 import type { CollectionConfig } from 'payload'
 import { validatePasswordStrength } from '@/lib/rbac/password'
-import { auditLog, diffChanges } from '@/lib/audit/helper'
+import { auditLog, diffChanges, requestMeta } from '@/lib/audit/helper'
 
 export const Users: CollectionConfig = {
   slug: 'users',
@@ -159,6 +159,10 @@ export const Users: CollectionConfig = {
             if (!result.valid) {
               throw new Error('Weak password: ' + result.errors.join(' '))
             }
+            // The hashed password is stripped from the saved doc, so
+            // afterChange can't detect a password change by diffing --
+            // flag it here for the audit hook instead.
+            if (operation === 'update') req.context.auditPasswordChanged = true
           }
         }
         // Prevent non-admin users from changing their own role.
@@ -191,6 +195,33 @@ export const Users: CollectionConfig = {
           }
         }
 
+        // Always retain at least one active admin: block demoting or
+        // deactivating the last one (e.g. via overrideAccess API calls).
+        if (operation === 'update' && originalDoc) {
+          const orig = originalDoc as { id?: string | number; role?: string; active?: boolean }
+          const losesAdmin =
+            orig.role === 'admin' &&
+            orig.active !== false &&
+            ((data?.role !== undefined && data.role !== 'admin') || data?.active === false)
+          if (losesAdmin) {
+            const others = await req.payload.find({
+              collection: 'users',
+              where: {
+                and: [
+                  { role: { equals: 'admin' } },
+                  { active: { not_equals: false } },
+                  { id: { not_equals: orig.id } },
+                ],
+              },
+              limit: 1,
+              overrideAccess: true,
+            })
+            if (others.docs.length === 0) {
+              throw new Error('At least one active admin must exist.')
+            }
+          }
+        }
+
         // C4/MFA-ENFORCED: Warn on admin creation without MFA
         if (operation === 'create' && data?.role === 'admin' && !data?.mfaEnabled) {
           console.info(
@@ -209,13 +240,14 @@ export const Users: CollectionConfig = {
           throw new Error('You cannot delete your own account.')
         }
 
-        // Prevent deleting the last admin
+        // Prevent deleting the last active admin
         try {
           const { docs } = await req.payload.find({
             collection: 'users',
             where: {
               and: [
                 { role: { equals: 'admin' } },
+                { active: { not_equals: false } },
                 { id: { not_equals: id } },
               ],
             },
@@ -239,6 +271,7 @@ export const Users: CollectionConfig = {
           const actor = req.user as { id?: string | number; email?: string } | null
           const d = doc as { id: string | number; email: string; role: string }
           const email = d.email || '(no email)'
+          const meta = requestMeta(req)
 
           if (operation === 'create') {
             auditLog(req.payload, {
@@ -247,44 +280,56 @@ export const Users: CollectionConfig = {
               collection: 'users',
               documentId: d.id,
               detail: `Created user "${email}" (role: ${d.role})`,
+              ...meta,
             })
 
-            // Send a forgot-password email so the new user can set their own
-            // password. Fire-and-forget: don't block user creation on email delivery.
-            void (async () => {
-              try {
-                await req.payload.forgotPassword({
-                  collection: 'users',
-                  data: { email: d.email },
-                })
-              } catch (err) {
-                console.error('[Users] Failed to send password-set email:', err)
-              }
-            })()
+            // Users created from the Payload admin form get a
+            // set-your-own-password email. The staff console sends its own
+            // welcome email with a temporary password instead, so it opts
+            // out via context. Fire-and-forget: don't block user creation.
+            if (!req.context.skipWelcomeEmail) {
+              void (async () => {
+                try {
+                  await req.payload.forgotPassword({
+                    collection: 'users',
+                    data: { email: d.email },
+                  })
+                } catch (err) {
+                  console.error('[Users] Failed to send password-set email:', err)
+                }
+              })()
+            }
           } else if (operation === 'update') {
             const prev = (previousDoc || {}) as Record<string, unknown>
             const curr = (doc || {}) as Record<string, unknown>
             const changes = diffChanges(prev, curr)
 
-            // Detect password changes for audit
-            if (curr.password && prev.password !== curr.password) {
-              const pwChange = { ...changes, password: 'changed' }
+            if (req.context.auditPasswordChanged) {
+              const self = actor?.id !== undefined && String(actor.id) === String(d.id)
               auditLog(req.payload, {
-                action: 'update',
-                actor: actor?.id,
+                action: 'password_change',
+                actor: actor?.id ?? d.id,
                 collection: 'users',
                 documentId: d.id,
-                detail: `Password changed for user "${email}"`,
-                changes: pwChange,
+                detail: self
+                  ? `User "${email}" changed their password`
+                  : `Password changed for user "${email}"`,
+                ...meta,
               })
-            } else {
+            }
+            if (changes) {
+              const details: string[] = []
+              if (changes.role) details.push(`role ${String(changes.role.from)} → ${String(changes.role.to)}`)
+              if (changes.active) details.push(changes.active.to === false ? 'deactivated' : 'activated')
+              if (changes.mfaEnabled) details.push(changes.mfaEnabled.to ? 'MFA enabled' : 'MFA disabled')
               auditLog(req.payload, {
                 action: 'update',
                 actor: actor?.id,
                 collection: 'users',
                 documentId: d.id,
-                detail: `Updated user "${email}"`,
+                detail: `Updated user "${email}"${details.length ? ` (${details.join(', ')})` : ''}`,
                 changes,
+                ...meta,
               })
             }
           }
@@ -305,6 +350,7 @@ export const Users: CollectionConfig = {
             collection: 'users',
             documentId: d.id,
             detail: `Deleted user "${d.email || '(no email)'}" (role: ${d.role})`,
+            ...requestMeta(req),
           })
         } catch {
           // audit failure must not block the primary operation
@@ -322,29 +368,99 @@ export const Users: CollectionConfig = {
           collection: 'users',
           documentId: String(u.id ?? ''),
           detail: `User ${u.email || '(unknown)'} logged in (role: ${u.role || 'unknown'})`,
+          ...requestMeta(req),
         })
 
         if (u.role === 'admin' && !u.mfaEnabled) {
           console.info(
-            `[MFA] Admin user ${u.id} logged in without MFA. Redirecting to /mfa-setup for enrollment.`,
+            `[MFA] Admin user ${u.id} logged in without MFA. Middleware will redirect to /mfa-setup.`,
           )
-          return { redirectTo: '/mfa-setup' }
         }
-        // After login, redirect to the custom dashboard
-        return { redirectTo: '/console' }
+        // NOTE: Payload assigns this hook's return value to the logged-in
+        // user (`user = await hook(...) || user`), so it must return the
+        // user -- returning e.g. `{ redirectTo }` corrupts the login
+        // response. Post-login routing to the dashboard is handled by
+        // middleware.ts (the /admin root redirects staff to their
+        // dashboard).
+        return user
       },
     ],
     afterLogout: [
       async ({ req }) => {
         const user = req.user as { id?: string | number; email?: string } | null
         if (!user?.id) return
+        // The staff console records the logout itself (before its session
+        // cookie is cleared) and flags the follow-up Payload logout call.
+        if (req.headers?.get?.('x-audit-logged') === '1') return
         auditLog(req.payload, {
           action: 'logout',
           actor: user.id,
           collection: 'users',
           documentId: String(user.id),
           detail: `User ${user.email || '(unknown)'} logged out`,
+          ...requestMeta(req),
         })
+      },
+    ],
+    afterOperation: [
+      async ({ operation, result, req }) => {
+        try {
+          // Password resets bypass the update hooks (Payload writes the
+          // new hash directly), so audit them here.
+          if (operation === 'resetPassword') {
+            const u = (result as { user?: { id?: string | number; email?: string } } | undefined)?.user
+            if (u?.id) {
+              auditLog(req.payload, {
+                action: 'password_change',
+                actor: u.id,
+                collection: 'users',
+                documentId: u.id,
+                detail: `User ${u.email || '(unknown)'} reset their password via emailed link`,
+                ...requestMeta(req),
+              })
+            }
+          }
+        } catch {
+          // audit failure must not block the primary operation
+        }
+        return result
+      },
+    ],
+    afterError: [
+      async ({ error, req }) => {
+        try {
+          // Failed login attempts are security-relevant. audit_logs.actor
+          // is required, so attempts against unknown emails are only
+          // logged to the console.
+          const url = req.url || ''
+          if (!/\/users\/login(\?|$)/.test(url)) return
+          const name = (error as { name?: string })?.name
+          if (name !== 'AuthenticationError' && name !== 'UnverifiedEmail' && name !== 'LockedAuth') return
+          const email = String((req.data as { email?: unknown } | undefined)?.email || '').trim().toLowerCase()
+          const meta = requestMeta(req)
+          if (!email) return
+          const { docs } = await req.payload.find({
+            collection: 'users',
+            where: { email: { equals: email } },
+            limit: 1,
+            overrideAccess: true,
+          })
+          const target = docs[0] as { id: string | number } | undefined
+          if (!target) {
+            console.warn(`[Auth] Failed login for unknown email ${email} from ${meta.ipAddress || 'unknown IP'}`)
+            return
+          }
+          auditLog(req.payload, {
+            action: 'login_failed',
+            actor: target.id,
+            collection: 'users',
+            documentId: target.id,
+            detail: `Failed login attempt for ${email}`,
+            ...meta,
+          })
+        } catch {
+          // never let audit logging affect the error response
+        }
       },
     ],
   },

@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Html5Qrcode } from 'html5-qrcode'
 
@@ -528,7 +529,7 @@ export default function ScanPage() {
           <dt className="text-text-light">Reference</dt>
           <dd className="font-semibold text-lunar-green">{result.reference}</dd>
 
-          <dt className="text-text-light">Event</dt>
+          <dt className="text-text-light">Experience</dt>
           <dd className="font-semibold text-lunar-green">
             {result.eventTitle || '\u2014'}
           </dd>
@@ -624,6 +625,11 @@ export default function ScanPage() {
   return (
     <div className="mx-auto max-w-md w-full px-4 py-8">
       {/* Header */}
+      <nav className="mb-4 flex justify-center gap-4 text-xs font-bold" aria-label="Staff navigation">
+        <Link href="/" className="text-accent-text hover:text-lunar-green">Homepage</Link>
+        <a href="/dashboard" className="text-accent-text hover:text-lunar-green">Bookings dashboard</a>
+        <a href="/account" className="text-accent-text hover:text-lunar-green">Change password</a>
+      </nav>
       <header className="mb-6 text-center">
         <h1 className="text-2xl font-black text-lunar-green tracking-tight">
           Door Check-In

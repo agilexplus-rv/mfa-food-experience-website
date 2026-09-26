@@ -4,6 +4,7 @@ import type { Payload } from 'payload'
 import config from '@payload-config'
 
 import { verifySession } from '@/lib/rbac/verify-session'
+import { actingAs } from '@/lib/audit/helper'
 
 let _payload: Payload | null = null
 async function payload(): Promise<Payload> {
@@ -98,6 +99,7 @@ export async function PATCH(req: NextRequest) {
       id: body.id,
       data: { approved: body.approved },
       overrideAccess: true,
+      ...actingAs(currentUser, req),
     })
 
     return NextResponse.json({ ok: true })

@@ -4,6 +4,15 @@ import type { Payload } from 'payload'
 import config from '@payload-config'
 
 import { verifySession } from '@/lib/rbac/verify-session'
+import { actingAs } from '@/lib/audit/helper'
+import { payloadErrorMessage } from '@/lib/api-errors'
+
+/** Empty / invalid / non-positive -> null (auto-close disabled). */
+function toAutoCloseHours(v: unknown): number | null {
+  if (v === null || v === undefined || v === '') return null
+  const n = Number(v)
+  return Number.isFinite(n) && n > 0 ? n : null
+}
 
 let _payload: Payload | null = null
 async function payload(): Promise<Payload> {
@@ -95,6 +104,7 @@ export async function GET(req: NextRequest) {
           locationRef: e.locationRef,
           status: e.status,
           fullyBookedOverride: e.fullyBookedOverride ?? false,
+          autoCloseHoursAfter: e.autoCloseHoursAfter ?? null,
           seriesId: e.seriesId ?? null,
           booked,
           checkedIn,
@@ -194,9 +204,11 @@ export async function POST(req: NextRequest) {
           locationRef: body.locationRef || '',
           status: body.status || 'scheduled',
           fullyBookedOverride: body.fullyBookedOverride ?? false,
+          autoCloseHoursAfter: toAutoCloseHours(body.autoCloseHoursAfter),
           ...(seriesId ? { seriesId } : {}),
         },
         overrideAccess: true,
+        ...actingAs(currentUser, req),
       })
       createdIds.push(String(event.id))
     }
@@ -208,6 +220,8 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     const msg = err instanceof Error ? `${err.name}: ${err.message}${err.stack ? '\n' + err.stack : ''}` : JSON.stringify(err)
     console.error('[console/api/events] Create failed:', msg)
-    return NextResponse.json({ error: 'create_failed', detail: err instanceof Error ? err.message : 'unknown' }, { status: 500 })
+    const validation = payloadErrorMessage(err)
+    if (validation) return NextResponse.json({ error: validation }, { status: 400 })
+    return NextResponse.json({ error: 'create_failed' }, { status: 500 })
   }
 }

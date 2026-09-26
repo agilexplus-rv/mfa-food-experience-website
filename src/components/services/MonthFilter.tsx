@@ -28,7 +28,7 @@ export function MonthFilter({ options, value, onChange }: MonthFilterProps) {
   return (
     <div
       role="tablist"
-      aria-label="Filter events by month"
+      aria-label="Filter experience dates by month"
       className="flex flex-wrap items-center gap-2"
     >
       {options.map((opt) => {

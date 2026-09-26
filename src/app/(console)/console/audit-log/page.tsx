@@ -14,6 +14,9 @@ interface AuditLogEntry {
   collection: string | null
   documentId: string | number | null
   detail: string | null
+  ipAddress: string | null
+  userAgent: string | null
+  changes: Record<string, { from: unknown; to: unknown }> | null
   createdAt: string
 }
 
@@ -30,10 +33,26 @@ const ACTION_OPTIONS = [
   { value: 'update', label: 'Update' },
   { value: 'delete', label: 'Delete' },
   { value: 'login', label: 'Login' },
+  { value: 'login_failed', label: 'Failed Login' },
   { value: 'logout', label: 'Logout' },
-  { value: 'mfa_enabled', label: 'MFA Enabled' },
-  { value: 'mfa_disabled', label: 'MFA Disabled' },
+  { value: 'password_change', label: 'Password Change' },
+  { value: 'mfa_reset', label: 'MFA Reset' },
+  { value: 'check_in', label: 'Check-in' },
+  { value: 'export', label: 'Export' },
 ]
+
+/** Compact "field: old → new" summary of an update's changes. */
+function formatChanges(changes: AuditLogEntry['changes']): string {
+  if (!changes) return ''
+  const show = (v: unknown): string => {
+    if (v === null || v === undefined || v === '') return '\u2205'
+    if (typeof v === 'object') return JSON.stringify(v).slice(0, 60)
+    return String(v).slice(0, 60)
+  }
+  return Object.entries(changes)
+    .map(([field, c]) => `${field}: ${show(c?.from)} \u2192 ${show(c?.to)}`)
+    .join('\n')
+}
 
 export default function AuditLogPage() {
   const [results, setResults] = useState<SearchResult | null>(null)
@@ -139,6 +158,7 @@ export default function AuditLogPage() {
                   <th className="px-4 py-3 font-semibold text-text-light">Collection</th>
                   <th className="px-4 py-3 font-semibold text-text-light">Document ID</th>
                   <th className="px-4 py-3 font-semibold text-text-light">Detail</th>
+                  <th className="px-4 py-3 font-semibold text-text-light">IP Address</th>
                 </tr>
               </thead>
               <tbody>
@@ -164,8 +184,21 @@ export default function AuditLogPage() {
                     <td className="px-4 py-3 text-xs text-text-light font-mono">
                       {entry.documentId != null ? String(entry.documentId) : '\u2014'}
                     </td>
-                    <td className="px-4 py-3 text-xs text-text-light max-w-[200px] truncate" title={entry.detail || undefined}>
-                      {entry.detail || '\u2014'}
+                    <td className="px-4 py-3 text-xs text-text-light max-w-[320px]">
+                      <div className="truncate" title={entry.detail || undefined}>{entry.detail || '\u2014'}</div>
+                      {entry.changes && (
+                        <details className="mt-1">
+                          <summary className="cursor-pointer text-[11px] font-semibold text-accent-text">
+                            {Object.keys(entry.changes).length} field(s) changed
+                          </summary>
+                          <pre className="mt-1 whitespace-pre-wrap break-words font-mono text-[11px] text-lunar-green">
+                            {formatChanges(entry.changes)}
+                          </pre>
+                        </details>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-xs text-text-light font-mono whitespace-nowrap" title={entry.userAgent || undefined}>
+                      {entry.ipAddress || '\u2014'}
                     </td>
                   </tr>
                 ))}

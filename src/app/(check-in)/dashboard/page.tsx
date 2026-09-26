@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useCallback, useEffect, useState } from 'react'
 
 interface BookingRow {
@@ -311,11 +312,17 @@ export default function DashboardPage() {
         </div>
         <div className="flex items-center gap-3">
           {/* Homepage link */}
-          <a
+          <Link
             href="/"
-            className="rounded-lg border-2 border-soft-beige/30 px-3 py-2 text-xs font-bold text-text-light hover:text-lunar-green hover:border-lunar-green transition-colors"
+            className="rounded-lg border-2 border-lunar-green px-3 py-2 text-xs font-bold text-lunar-green hover:bg-lunar-green hover:text-white transition-colors"
           >
-            Home
+            &larr; Homepage
+          </Link>
+          <a
+            href="/account"
+            className="rounded-lg border-2 border-lunar-green/40 px-3 py-2 text-xs font-bold text-lunar-green hover:border-lunar-green transition-colors"
+          >
+            Change password
           </a>
           {/* live capacity */}
           {liveCapacity && (
@@ -436,7 +443,7 @@ export default function DashboardPage() {
               <thead>
                 <tr className="border-b border-border bg-soft-beige/50 text-left">
                   <th className="px-4 py-3 font-semibold text-text-light">Reference</th>
-                  <th className="px-4 py-3 font-semibold text-text-light">Event</th>
+                  <th className="px-4 py-3 font-semibold text-text-light">Experience</th>
                   <th className="px-4 py-3 font-semibold text-text-light">Attendee</th>
                   <th className="px-4 py-3 font-semibold text-text-light text-center">Persons</th>
                   <th className="px-4 py-3 font-semibold text-text-light">Status</th>

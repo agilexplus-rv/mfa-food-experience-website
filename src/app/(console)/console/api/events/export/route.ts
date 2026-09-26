@@ -4,6 +4,8 @@ import type { Payload } from 'payload'
 import config from '@payload-config'
 
 import { verifySession } from '@/lib/rbac/verify-session'
+import { auditLog, clientMeta } from '@/lib/audit/helper'
+import { csvDate, csvDateTime, csvMoney, csvTime, toCsv } from '@/lib/csv'
 
 let _payload: Payload | null = null
 async function payload(): Promise<Payload> {
@@ -11,20 +13,11 @@ async function payload(): Promise<Payload> {
   return _payload
 }
 
-function escapeCsvField(val: unknown): string {
-  const str = val === null || val === undefined ? '' : String(val)
-  if (str.includes(',') || str.includes('"') || str.includes('\n')) {
-    return '"' + str.replace(/"/g, '""') + '"'
-  }
-  return str
-}
-
 /**
  * GET /console/api/events/export
  *
- * Admin-only. Returns CSV of ALL events with details.
- * Columns: Title, Service, Date, Start Time, End Time, Capacity,
- * Price/person (EUR), Status, Location
+ * Admin-only. CSV of ALL events (experience dates) with schedule, pricing,
+ * capacity and booking statistics. Money in EUR; dates/times in Malta time.
  */
 export async function GET(req: NextRequest) {
   const p = await payload()
@@ -37,19 +30,53 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'forbidden' }, { status: 403 })
   }
 
-  const result = await p.find({
-    collection: 'events',
-    limit: 5000,
-    sort: 'date',
-    depth: 1, // populate service ref
-    overrideAccess: true,
-  })
+  const [eventsRes, bookingsRes] = await Promise.all([
+    p.find({
+      collection: 'events',
+      limit: 5000,
+      sort: 'date',
+      depth: 1, // populate service ref
+      overrideAccess: true,
+    }),
+    p.find({
+      collection: 'bookings',
+      limit: 50000,
+      depth: 0,
+      pagination: false,
+      overrideAccess: true,
+      select: { event: true, status: true, persons: true, totalAmount: true, noShow: true },
+    }),
+  ])
 
-  const header =
-    'Title,Service,Date,Start Time,End Time,Capacity,Price/person (EUR),Status,Location'
+  // Per-event booking statistics.
+  type Stats = { bookings: number; seats: number; checkedIn: number; noShows: number; cancelled: number; revenue: number }
+  const stats = new Map<string, Stats>()
+  for (const b of bookingsRes.docs as unknown as { event?: unknown; status?: string; persons?: number; totalAmount?: number; noShow?: boolean }[]) {
+    const eid = String(typeof b.event === 'object' && b.event ? (b.event as { id: unknown }).id : b.event ?? '')
+    if (!eid) continue
+    const s = stats.get(eid) ?? { bookings: 0, seats: 0, checkedIn: 0, noShows: 0, cancelled: 0, revenue: 0 }
+    if (b.status === 'cancelled') {
+      s.cancelled++
+    } else if (b.status === 'confirmed' || b.status === 'checked_in') {
+      s.bookings++
+      s.seats += Number(b.persons) || 0
+      s.revenue += Number(b.totalAmount) || 0
+      if (b.status === 'checked_in') s.checkedIn += Number(b.persons) || 0
+      if (b.noShow) s.noShows++
+    }
+    stats.set(eid, s)
+  }
 
-  const rows = result.docs.map((e) => {
+  const header = [
+    'Event ID', 'Title', 'Experience (service)', 'Date', 'Start', 'End', 'Location', 'Status',
+    'Capacity', 'Seats booked', 'Seats remaining', 'Confirmed bookings', 'Checked-in guests',
+    'No-shows', 'Cancelled bookings', 'Price/person (EUR)', 'Revenue (EUR)',
+    'Fully booked override', 'Auto-close (hours after end)', 'Series ID', 'Created', 'Last updated',
+  ]
+
+  const rows = eventsRes.docs.map((e) => {
     const ev = e as unknown as {
+      id: string | number
       title: string
       date: string
       startTime: string
@@ -58,35 +85,56 @@ export async function GET(req: NextRequest) {
       pricePerPerson: number
       status: string
       locationRef: string
+      fullyBookedOverride?: boolean
+      autoCloseHoursAfter?: number | null
+      seriesId?: string | null
+      createdAt: string
+      updatedAt: string
       service?: { name?: string } | string | number
     }
-
-    const serviceName =
-      typeof ev.service === 'object' && ev.service?.name
-        ? ev.service.name
-        : typeof ev.service === 'string'
-          ? ev.service
-          : ''
-
+    const s = stats.get(String(ev.id)) ?? { bookings: 0, seats: 0, checkedIn: 0, noShows: 0, cancelled: 0, revenue: 0 }
+    const serviceName = typeof ev.service === 'object' && ev.service?.name ? ev.service.name : ''
     return [
-      escapeCsvField(ev.title),
-      escapeCsvField(serviceName),
-      escapeCsvField(ev.date),
-      escapeCsvField(ev.startTime),
-      escapeCsvField(ev.endTime),
-      escapeCsvField(ev.capacity),
-      escapeCsvField(ev.pricePerPerson),
-      escapeCsvField(ev.status),
-      escapeCsvField(ev.locationRef),
-    ].join(',')
+      ev.id,
+      ev.title,
+      serviceName,
+      csvDate(ev.date),
+      csvTime(ev.startTime),
+      csvTime(ev.endTime),
+      ev.locationRef,
+      ev.status,
+      ev.capacity,
+      s.seats,
+      Math.max(0, (Number(ev.capacity) || 0) - s.seats),
+      s.bookings,
+      s.checkedIn,
+      s.noShows,
+      s.cancelled,
+      csvMoney(ev.pricePerPerson),
+      csvMoney(s.revenue),
+      ev.fullyBookedOverride ? 'yes' : 'no',
+      ev.autoCloseHoursAfter ?? '',
+      ev.seriesId ?? '',
+      csvDateTime(ev.createdAt),
+      csvDateTime(ev.updatedAt),
+    ]
   })
 
-  const csv = [header, ...rows].join('\n')
+  auditLog(p, {
+    action: 'export',
+    actor: user.id,
+    collection: 'events',
+    documentId: 'all',
+    detail: `Exported ${rows.length} event(s) to CSV`,
+    ...clientMeta(req),
+  })
 
-  return new NextResponse(csv, {
+  const stamp = new Date().toISOString().slice(0, 10)
+  return new NextResponse(toCsv(header, rows), {
     headers: {
       'Content-Type': 'text/csv; charset=utf-8',
-      'Content-Disposition': 'attachment; filename="all_events.csv"',
+      'Content-Disposition': `attachment; filename="experiences_${stamp}.csv"`,
+      'Cache-Control': 'no-store',
     },
   })
 }

@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic'
 export const metadata: Metadata = {
   title: "News — Malta Food Experience",
   description:
-    "Latest news and updates from the Malta Food Agency — events, culinary experiences, and announcements.",
+    "Latest news and updates from the Malta Food Agency — culinary experiences, classes, and announcements.",
 }
 
 interface NewsItemDoc {

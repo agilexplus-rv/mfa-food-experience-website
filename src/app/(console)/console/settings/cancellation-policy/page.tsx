@@ -18,6 +18,8 @@ interface Policy {
   tiers?: Tier[]
   organiserCancellationText?: string
   withdrawalRightDisclosure?: string
+  coolingOffEnabled: boolean
+  coolingOffHours: number
 }
 
 export default function CancellationPolicyPage() {
@@ -35,6 +37,8 @@ export default function CancellationPolicyPage() {
     ],
     organiserCancellationText: '',
     withdrawalRightDisclosure: '',
+    coolingOffEnabled: false,
+    coolingOffHours: 24,
   })
 
   const fetchPolicy = useCallback(async () => {
@@ -58,6 +62,8 @@ export default function CancellationPolicyPage() {
         tiers,
         organiserCancellationText: (p.organiserCancellationText as string) || '',
         withdrawalRightDisclosure: (p.withdrawalRightDisclosure as string) || '',
+        coolingOffEnabled: Boolean(p.coolingOffEnabled),
+        coolingOffHours: Number(p.coolingOffHours) > 0 ? Number(p.coolingOffHours) : 24,
       }
       setPolicy(loaded)
       setForm(loaded)
@@ -98,6 +104,8 @@ export default function CancellationPolicyPage() {
         tiers,
         organiserCancellationText: (p.organiserCancellationText as string) || '',
         withdrawalRightDisclosure: (p.withdrawalRightDisclosure as string) || '',
+        coolingOffEnabled: Boolean(p.coolingOffEnabled),
+        coolingOffHours: Number(p.coolingOffHours) > 0 ? Number(p.coolingOffHours) : 24,
       }
       setPolicy(saved)
       setForm(saved)
@@ -170,6 +178,39 @@ export default function CancellationPolicyPage() {
           <p className="text-xs text-text-light">
             Master on/off. When off, all cancellation tiers are hidden and the public page will state that cancellations are not permitted.
           </p>
+        </Card>
+
+        {/* Voluntary cooling-off period */}
+        <Card padding>
+          <label className="flex items-center gap-3 text-sm font-semibold text-lunar-green mb-2">
+            <input
+              type="checkbox"
+              checked={form.coolingOffEnabled}
+              onChange={(e) => setForm(prev => ({ ...prev, coolingOffEnabled: e.target.checked }))}
+              className="rounded"
+            />
+            Offer a cooling-off period
+          </label>
+          <p className="text-xs text-text-light mb-3">
+            When on, customers who cancel within the period below (counted from when they booked) get a full refund,
+            regardless of the tiers. Not legally required for dated leisure bookings (Art. 16(l)); the booking page and
+            policy page show the period to customers while it is on.
+          </p>
+          <label htmlFor="cooling-off-hours" className="block text-xs font-semibold text-text-light mb-1">
+            Cooling-off period (hours)
+          </label>
+          <input
+            id="cooling-off-hours"
+            type="number"
+            min="1"
+            max="336"
+            disabled={!form.coolingOffEnabled}
+            value={form.coolingOffHours}
+            onChange={(e) => setForm(prev => ({ ...prev, coolingOffHours: Number(e.target.value) }))}
+            className="w-40 rounded-lg border border-border px-3 py-2 text-sm text-lunar-green focus:outline-none focus:ring-2 focus:ring-lunar-green/30 disabled:opacity-50"
+            style={{ boxSizing: 'border-box' }}
+          />
+          <p className="mt-1 text-xs text-text-light">Common values: 24, 48 or 72 hours (max 336 = 14 days).</p>
         </Card>
 
         {/* Intro text */}

@@ -12,7 +12,7 @@ export const dynamic = 'force-dynamic'
 export const metadata: Metadata = {
   title: 'Testimonials — Malta Food Experience',
   description:
-    'Read what past participants say about Malta Food Experience events and classes. Share your own testimonial.',
+    'Read what past participants say about Malta Food Experience experiences and classes. Share your own testimonial.',
 }
 
 interface TestimonialDoc {
@@ -87,7 +87,7 @@ export default async function TestimonialsPage() {
       <p className="mx-auto mt-6 max-w-2xl text-center text-sm italic text-accent-text">
         Testimonials are submitted by site visitors and moderated for
         appropriateness before publication. They are not verified as originating
-        from attendees of a specific event.
+        from attendees of a specific experience.
       </p>
 
       {/* Approved testimonials grid */}

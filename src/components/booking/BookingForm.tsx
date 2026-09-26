@@ -25,6 +25,12 @@ export interface BookingFormProps {
    * checkbox is shown and must be accepted before submitting.
    */
   termsAndConditionsUrl?: string
+  /** T&Cs title / full text (HTML, server-rendered) / checkbox label from the TermsAndConditions Global. */
+  termsTitle?: string
+  termsHtml?: string
+  termsCheckboxLabel?: string
+  /** Voluntary cooling-off window in hours (0 = not offered). */
+  coolingOffHours?: number
 }
 
 /** Cloudflare Turnstile site key. Exposed to the client as NEXT_PUBLIC_*. */
@@ -83,7 +89,18 @@ function formatCountdown(msRemaining: number): string {
  *   disclosure rendered directly on the booking page before payment)
  * @at-compliance ADR-008 C16 (Cloudflare Turnstile bot mitigation)
  */
-export function BookingForm({ eventId, pricePerPerson, maxSeats, withdrawalRightDisclosure, cancellationEnabled, termsAndConditionsUrl }: BookingFormProps) {
+export function BookingForm({
+  eventId,
+  pricePerPerson,
+  maxSeats,
+  withdrawalRightDisclosure,
+  cancellationEnabled,
+  termsAndConditionsUrl,
+  termsTitle = 'Terms & Conditions',
+  termsHtml,
+  termsCheckboxLabel,
+  coolingOffHours = 0,
+}: BookingFormProps) {
   const sessionIdRef = useRef<string>(newSessionId())
   const [seats, setSeats] = useState(1)
   const [hold, setHold] = useState<HoldState | null>(null)
@@ -246,9 +263,9 @@ export function BookingForm({ eventId, pricePerPerson, maxSeats, withdrawalRight
           expired: 'This code has expired.',
           exhausted: 'This code has reached its usage limit.',
           not_applicable_to_service: 'This code doesn\u2019t apply to this experience.',
-          event_not_found: 'This code is not valid for this event.',
+          event_not_found: 'This code is not valid for this experience.',
         }
-        setCouponStatus({ state: 'invalid', message: messages[data.error] ?? 'This code is not valid for this event.' })
+        setCouponStatus({ state: 'invalid', message: messages[data.error] ?? 'This code is not valid for this experience.' })
         return
       }
       setCouponStatus({ state: 'valid', totalAfterDiscount: data.totalAfterDiscount })
@@ -314,8 +331,8 @@ export function BookingForm({ eventId, pricePerPerson, maxSeats, withdrawalRight
             hold_mismatch: 'Your seat hold no longer matches this booking — please refresh and try again.',
             hold_expired: 'Your seat hold has expired — please reserve again before paying.',
             seats_mismatch: 'The number of seats changed — please refresh and try again.',
-            event_not_found: 'This event could not be found.',
-            event_not_bookable: 'This event is no longer bookable.',
+            event_not_found: 'This experience could not be found.',
+            event_not_bookable: 'This experience is no longer bookable.',
             insufficient_seats: 'There aren\u2019t enough seats left for this booking.',
             invalid_coupon: 'Your discount code is no longer valid — remove it and try again.',
             invalid_input: 'Please check the details you entered and try again.',
@@ -505,24 +522,52 @@ export function BookingForm({ eventId, pricePerPerson, maxSeats, withdrawalRight
         </div>
       )}
 
-      {/* Terms & Conditions acceptance — mandatory when T&Cs URL is provided */}
+      {/* Voluntary cooling-off period (admin toggle in the Cancellation Policy) */}
+      {cancellationEnabled !== false && coolingOffHours > 0 && (
+        <div className="rounded-xl border border-lunar-green/20 bg-lunar-green/5 px-5 py-4 text-sm text-lunar-green">
+          <strong className="font-semibold">Cooling-off period:</strong>{' '}
+          you may cancel within{' '}
+          {coolingOffHours % 24 === 0 && coolingOffHours >= 48
+            ? `${coolingOffHours / 24} days`
+            : `${coolingOffHours} hour${coolingOffHours === 1 ? '' : 's'}`}{' '}
+          of booking for a full refund.
+        </div>
+      )}
+
+      {/* Terms & Conditions — full text on the page + mandatory acceptance */}
       {termsAndConditionsUrl && (
-        <label className="flex items-start gap-2.5 text-sm text-lunar-green">
-          <input
-            type="checkbox"
-            checked={termsAccepted}
-            onChange={(e) => setTermsAccepted(e.target.checked)}
-            required
-            className="mt-0.5 h-4 w-4 rounded border-border text-terracotta focus:outline-2 focus:outline-offset-2 focus:outline-terracotta"
-          />
-          <span>
-            I have read and accept the{' '}
-            <a href={termsAndConditionsUrl} target="_blank" rel="noreferrer" className="font-semibold underline">
-              Terms &amp; Conditions
-            </a>
-            .
-          </span>
-        </label>
+        <div className="space-y-3">
+          {termsHtml && (
+            <section aria-labelledby="booking-terms-title" className="rounded-xl border border-border bg-surface">
+              <h2 id="booking-terms-title" className="border-b border-border px-5 py-3 text-sm font-bold text-lunar-green">
+                {termsTitle}
+              </h2>
+              <div
+                tabIndex={0}
+                aria-label={`${termsTitle} (scrollable)`}
+                className="prose prose-sm max-h-56 max-w-none overflow-y-auto px-5 py-4 text-text-light prose-headings:text-lunar-green prose-strong:text-lunar-green focus:outline-2 focus:outline-offset-2 focus:outline-lunar-green"
+                dangerouslySetInnerHTML={{ __html: termsHtml }}
+              />
+            </section>
+          )}
+          <label className="flex items-start gap-2.5 text-sm text-lunar-green">
+            <input
+              type="checkbox"
+              checked={termsAccepted}
+              onChange={(e) => setTermsAccepted(e.target.checked)}
+              required
+              aria-required="true"
+              className="mt-0.5 h-4 w-4 rounded border-border text-terracotta focus:outline-2 focus:outline-offset-2 focus:outline-terracotta"
+            />
+            <span>
+              {termsCheckboxLabel || 'I have read and accept the Terms & Conditions'}{' '}
+              (<a href={termsAndConditionsUrl} target="_blank" rel="noreferrer" className="font-semibold underline">
+                view full {termsTitle}
+              </a>)
+              <span className="text-terracotta-dark" aria-hidden="true"> *</span>
+            </span>
+          </label>
+        </div>
       )}
 
       {/* Cancellation policy acknowledgement */}

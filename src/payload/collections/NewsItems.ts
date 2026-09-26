@@ -1,5 +1,5 @@
 import type { CollectionConfig } from 'payload'
-import { auditLog, diffChanges } from '@/lib/audit/helper'
+import { auditLog, diffChanges, requestMeta } from '@/lib/audit/helper'
 
 export const NewsItems: CollectionConfig = {
   slug: 'news_items',
@@ -25,10 +25,10 @@ export const NewsItems: CollectionConfig = {
           if (!actor?.id) return
           const d = doc as { id: string | number; title: string }
           if (operation === 'create') {
-            auditLog(req.payload, { action: 'create', actor: actor.id, collection: 'news_items', documentId: d.id, detail: `Created article "${d.title}"` })
+            auditLog(req.payload, { action: 'create', actor: actor.id, collection: 'news_items', documentId: d.id, detail: `Created article "${d.title}"`, ...requestMeta(req) })
           } else if (operation === 'update') {
             const changes = diffChanges((previousDoc as Record<string, unknown>) || {}, (doc as Record<string, unknown>) || {})
-            auditLog(req.payload, { action: 'update', actor: actor.id, collection: 'news_items', documentId: d.id, detail: `Updated article "${d.title}"`, changes })
+            auditLog(req.payload, { action: 'update', actor: actor.id, collection: 'news_items', documentId: d.id, detail: `Updated article "${d.title}"`, changes, ...requestMeta(req) })
           }
         } catch {
           // audit failure must not block the primary operation
@@ -41,7 +41,7 @@ export const NewsItems: CollectionConfig = {
           const actor = req.user as { id?: string | number } | null
           if (!actor?.id || !doc) return
           const d = doc as { id: string | number; title: string }
-          auditLog(req.payload, { action: 'delete', actor: actor.id, collection: 'news_items', documentId: d.id, detail: `Deleted article "${d.title}"` })
+          auditLog(req.payload, { action: 'delete', actor: actor.id, collection: 'news_items', documentId: d.id, detail: `Deleted article "${d.title}"`, ...requestMeta(req) })
         } catch {
           // audit failure must not block the primary operation
         }

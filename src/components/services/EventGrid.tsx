@@ -27,7 +27,7 @@ export interface GridEvent {
   shortDescription?: string
   imageUrl?: string
   imageAlt?: string
-  serviceHref?: string
+  descriptionHtml?: string
 }
 
 export interface EventGridProps {
@@ -87,7 +87,7 @@ export function EventGrid({ events, availability, eventHref }: EventGridProps) {
       {filtered.length === 0 ? (
         <div className="rounded-xl border border-dashed border-border bg-surface/60 px-6 py-16 text-center">
           <p className="text-lg font-semibold text-lunar-green">
-            No upcoming events
+            No upcoming dates
           </p>
           <p className="mt-2 text-sm text-text-light">
             New dates are added regularly — please check back soon.
@@ -113,7 +113,7 @@ export function EventGrid({ events, availability, eventHref }: EventGridProps) {
                 href={eventHref?.(e.id)}
                 imageUrl={e.imageUrl}
                 imageAlt={e.imageAlt}
-                serviceHref={e.serviceHref}
+                descriptionHtml={e.descriptionHtml}
               />
             )
           })}

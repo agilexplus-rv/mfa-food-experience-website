@@ -10,6 +10,7 @@ import {
   MFA_VERIFIED_COOKIE,
   MFA_COOKIE_OPTIONS,
 } from '@/lib/mfa/session'
+import { auditLog, clientMeta } from '@/lib/audit/helper'
 
 let _payload: Payload | null = null
 async function payload(): Promise<Payload> {
@@ -88,6 +89,14 @@ export async function POST(req: NextRequest) {
 
   const isValid = await verifyTotpCode(code, secret)
   if (!isValid) {
+    auditLog(p, {
+      action: 'login_failed',
+      actor: userId,
+      collection: 'users',
+      documentId: userId,
+      detail: `Invalid MFA code entered for ${String(record.email || userId)}`,
+      ...clientMeta(req),
+    })
     return NextResponse.json(
       { error: 'Invalid verification code. Please try again.' },
       { status: 400 },
@@ -95,7 +104,9 @@ export async function POST(req: NextRequest) {
   }
 
   const verifiedToken = await createMfaVerifiedToken(userId)
-  const response = NextResponse.json({ success: true, redirect: '/console' })
+  // Door staff can't access the admin console -- send them to their dashboard.
+  const home = record.role === 'admin' ? '/console' : '/dashboard'
+  const response = NextResponse.json({ success: true, redirect: home })
   response.cookies.set(MFA_VERIFIED_COOKIE, verifiedToken, MFA_COOKIE_OPTIONS)
   return response
 }

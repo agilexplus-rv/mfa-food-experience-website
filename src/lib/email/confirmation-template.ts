@@ -23,6 +23,10 @@ export interface ConfirmationEmailData {
   qrDataUri: string
   cancellationPolicyUrl: string
   termsAndConditionsUrl?: string
+  /** T&Cs heading shown in the email. */
+  termsTitle?: string
+  /** T&Cs content as trusted HTML (server-rendered from the TermsAndConditions Global). */
+  termsHtml?: string
 }
 
 const COPY = {
@@ -139,6 +143,11 @@ export function renderConfirmationEmailHtml(data: ConfirmationEmailData): string
                 <p style="margin:0 0 20px;font-size:13px;line-height:1.6;color:#6B7F74;">${t.qrBody}</p>
                 <img src="${data.qrDataUri}" alt="Booking entry QR code" width="220" height="220" style="display:inline-block;border:8px solid #F9F4EF;border-radius:8px;" />
               </div>
+
+              ${data.termsHtml ? `<div style="margin-top:32px;border-top:1px solid #EFE7DD;padding-top:24px;">
+                <h2 style="margin:0 0 8px;font-size:16px;font-weight:800;color:#33483D;">${data.termsTitle || t.termsLink}</h2>
+                <div style="font-size:12px;line-height:1.6;color:#6B7F74;">${data.termsHtml}</div>
+              </div>` : ''}
 
               <p style="margin:32px 0 0;font-size:13px;line-height:1.6;color:#6B7F74;">
                 ${t.policyText} <a href="${data.cancellationPolicyUrl}" style="color:#C9643D;font-weight:700;">${t.policyLink}</a>.

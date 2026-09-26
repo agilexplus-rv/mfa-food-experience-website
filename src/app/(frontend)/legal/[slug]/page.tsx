@@ -5,16 +5,20 @@ import config from "@payload-config"
 import { convertLexicalToHTML } from "@payloadcms/richtext-lexical/html"
 import { montserrat } from "@/lib/fonts"
 import {
+  coolingOffHours,
+  formatCoolingOffPeriod,
   getCancellationPolicy,
   formatTierLabel,
   formatDaysBeforeLabel,
 } from "@/lib/policies/cancellation"
+import { getTermsAndConditions } from "@/lib/policies/terms"
 
 export const revalidate = 60
 export const dynamic = "force-dynamic"
 
 const KNOWN_SLUGS = [
   "cancellation-policy",
+  "terms-and-conditions",
   "customer-policy",
   "provider-info",
   "privacy-notice",
@@ -47,6 +51,9 @@ export async function generateMetadata({
       description:
         "Our cancellation and refund terms for scheduled food experiences.",
     }
+  }
+  if (slug === "terms-and-conditions") {
+    return { title: "Terms & Conditions — Malta Food Experience" }
   }
   const policy = await getPolicyBySlug(slug)
   if (!policy) return { title: "Not found — Malta Food Experience" }
@@ -117,11 +124,25 @@ export default async function LegalPolicyPage({ params }: PageProps) {
     return <CancellationPolicyPage policy={policy} />
   }
 
-  // ── Other known slugs: render from the Policies collection ──
-  const policy = await getPolicyBySlug(slug)
-  if (!policy) notFound()
+  // ── Terms & Conditions: render from the TermsAndConditions Global ──
+  // (the booking form and confirmation email link here). A Policies doc
+  // with this slug, if one exists, is only used as a fallback.
+  let policy: PolicyDoc | null = null
+  let bodyHtml = ""
+  if (slug === "terms-and-conditions") {
+    const terms = await getTermsAndConditions().catch(() => null)
+    if (terms?.html) {
+      policy = { id: "terms-and-conditions", slug, title: terms.title, body: null }
+      bodyHtml = terms.html
+    }
+  }
 
-  const bodyHtml = renderBody(policy.body)
+  // ── Other known slugs: render from the Policies collection ──
+  if (!policy) {
+    policy = await getPolicyBySlug(slug)
+    if (!policy) notFound()
+    bodyHtml = renderBody(policy.body)
+  }
 
   return (
     <main className={`${montserrat.variable} bg-soft-beige`}>
@@ -244,11 +265,22 @@ async function CancellationPolicyPage({
           </p>
         )}
 
+        {/* Voluntary cooling-off period */}
+        {policy.enabled && coolingOffHours(policy) > 0 && (
+          <div className="mt-10 rounded-xl border border-lunar-green/20 bg-lunar-green/5 px-6 py-6">
+            <h2 className="text-lg font-bold text-lunar-green">Cooling-off period</h2>
+            <p className="mt-2 text-lunar-green/80 leading-relaxed">
+              You may cancel any booking within {formatCoolingOffPeriod(coolingOffHours(policy))} of making it
+              for a full refund, regardless of how close the experience is.
+            </p>
+          </div>
+        )}
+
         {/* Organiser cancellation */}
         {policy.organiserCancellationText && (
           <div className="mt-12 rounded-xl border border-matte-gold/30 bg-accent-text/5 px-6 py-6">
             <h2 className="text-lg font-bold text-lunar-green">
-              If we cancel the event
+              If we cancel the experience
             </h2>
             <p className="mt-2 text-lunar-green/80 leading-relaxed whitespace-pre-line">
               {policy.organiserCancellationText}

@@ -5,52 +5,67 @@ import { MtText } from '@/components/i18n/MtText'
 import { formatPrice, getAvailabilityForEvents } from '@/lib/availability'
 import { formatDay, formatTimeRange } from '@/lib/format-date'
 import { getMediaUrl } from '@/lib/payload'
+import { richTextToHtml } from '@/lib/richtext'
+import { ReadMoreButton } from '@/components/services/ReadMoreButton'
 import type { EventDoc } from '@/lib/availability-types'
 
 /**
  * Upcoming Experiences section (FR-7.1).
- * Shows upcoming events across VISIBLE services, with availability, booking links,
- * service images, and read-more links.
+ * Shows upcoming experiences across VISIBLE services, with availability,
+ * a "Read more" dialog (experience picture + description) and Book Now.
  */
+
+/** The event's service relation is an id or (at depth >= 1) the populated doc. */
+function serviceIdOf(ev: EventDoc): string {
+  const svc = (ev as unknown as { service?: string | number | { id?: string | number } | null }).service
+  if (svc && typeof svc === 'object') return svc.id != null ? String(svc.id) : ''
+  return svc != null ? String(svc) : ''
+}
 export async function ComingEvents() {
   const payload = await getPayload({ config })
   const now = new Date().toISOString()
 
-  // Upcoming events for visible services, ordered by date, limit 6.
+  // Upcoming scheduled events, ordered by date. Fetch a few extra so
+  // events of hidden services can be dropped and still fill 6 cards.
   const { docs } = await payload.find({
     collection: 'events',
     where: {
       and: [
+        { status: { equals: 'scheduled' } },
         { date: { greater_than_equal: now.slice(0, 10) } },
       ],
     },
     sort: 'date',
-    limit: 6,
-    depth: 1,
+    limit: 18,
+    depth: 0,
   })
 
-  const events = docs as unknown as EventDoc[]
+  const candidates = docs as unknown as EventDoc[]
 
-  // Fetch service images for read-more cards
-  const serviceMedia = new Map<string, { url?: string; alt?: string; slug?: string }>()
+  // Resolve each event's service (image, description, visibility). This
+  // previously did String(event.service) on a populated object, producing
+  // "[object Object]", so every lookup failed and cards had no image or
+  // read-more at all.
+  const serviceInfo = new Map<string, { visible: boolean; url?: string; alt?: string; descriptionHtml?: string }>()
   await Promise.all(
-    events.map(async (ev) => {
-      const sid = String((ev as unknown as { service: string | number }).service || '')
-      if (sid && !serviceMedia.has(sid)) {
-        try {
-          const svc = await payload.findByID({ collection: 'services', id: sid, overrideAccess: true })
-          const s = svc as unknown as { slug?: string; imagery?: unknown }
-          serviceMedia.set(sid, {
-            url: getMediaUrl(s.imagery as Parameters<typeof getMediaUrl>[0]) ?? undefined,
-            alt: (typeof s.imagery === 'object' && (s.imagery as Record<string, unknown>)?.alt as string) || undefined,
-            slug: s.slug,
-          })
-        } catch {
-          serviceMedia.set(sid, {})
-        }
+    [...new Set(candidates.map(serviceIdOf).filter(Boolean))].map(async (sid) => {
+      try {
+        const svc = await payload.findByID({ collection: 'services', id: sid, depth: 1, overrideAccess: true })
+        const s = svc as unknown as { visible?: boolean; imagery?: unknown; description?: unknown }
+        serviceInfo.set(sid, {
+          visible: Boolean(s.visible),
+          url: getMediaUrl(s.imagery as Parameters<typeof getMediaUrl>[0]) ?? undefined,
+          alt: (typeof s.imagery === 'object' && (s.imagery as Record<string, unknown>)?.alt as string) || undefined,
+          descriptionHtml: richTextToHtml(s.description) || undefined,
+        })
+      } catch {
+        serviceInfo.set(sid, { visible: false })
       }
     }),
   )
+
+  // FR-1.2: events of hidden services are not shown publicly.
+  const events = candidates.filter((ev) => serviceInfo.get(serviceIdOf(ev))?.visible).slice(0, 6)
 
   const availability = await getAvailabilityForEvents(
     events.map((e) => ({
@@ -75,24 +90,13 @@ export async function ComingEvents() {
             const avail = availability.get(String(event.id))
             const remaining = avail?.remaining ?? event.capacity ?? 0
             const fullyBooked = avail?.status === 'fully_booked'
-            const sid = String((event as unknown as { service: string | number }).service || '')
-            const media = serviceMedia.get(sid)
+            const info = serviceInfo.get(serviceIdOf(event))
+            const bookHref = `/book/${event.id}`
             return (
               <article
                 key={String(event.id)}
                 className="flex h-full flex-col overflow-hidden rounded-lg border border-matte-gold/20 bg-white shadow-sm"
               >
-                {/* Service image */}
-                {media?.url && (
-                  <div className="aspect-[16/9] w-full overflow-hidden bg-lunar-green/10">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={media.url}
-                      alt={media.alt || event.title}
-                      className="h-full w-full object-cover"
-                    />
-                  </div>
-                )}
                 <div className="flex flex-1 flex-col p-6">
                   <h3 className="font-bold text-xl text-lunar-green">{event.title}</h3>
                   <p className="mt-1 text-sm text-text-light">
@@ -106,16 +110,19 @@ export async function ComingEvents() {
                   {/* Spacer pushes the action row to the bottom for equal-height alignment */}
                   <div className="flex-1" />
 
-                  {/* Read more link */}
-                  {media?.slug && (
-                    <Link
-                      href={`/services/${media.slug}`}
-                      className="mt-2 inline-flex items-center gap-1 text-sm font-semibold text-accent-text hover:text-lunar-green transition-colors focus:outline-2 focus:outline-offset-2 focus:outline-lunar-green"
-                    >
-                      <MtText en="Read more" mt="Aqra iktar" />
-                      <span aria-hidden="true">&rarr;</span>
-                    </Link>
-                  )}
+                  {/* Read more — dialog with the experience picture + description */}
+                  <div className="mt-2">
+                    <ReadMoreButton
+                      content={{
+                        title: event.title,
+                        subtitle: `${formatDay(event.date)} · ${formatTimeRange(event.startTime, event.endTime)} · ${formatPrice(event.pricePerPerson ?? 0)} per person`,
+                        descriptionHtml: info?.descriptionHtml,
+                        imageUrl: info?.url,
+                        imageAlt: info?.alt,
+                        bookHref: fullyBooked ? undefined : bookHref,
+                      }}
+                    />
+                  </div>
 
                   {/* Compact action row: seats pill + smaller Book button */}
                   <div className="mt-4 flex items-center justify-between gap-3 border-t border-matte-gold/20 pt-4">
@@ -129,7 +136,7 @@ export async function ComingEvents() {
                       </span>
                     )}
                     <Link
-                      href={fullyBooked ? '/services' : `/book/${event.id}`}
+                      href={fullyBooked ? '/services' : bookHref}
                       aria-label={fullyBooked ? `${event.title} — fully booked` : `Book ${event.title}`}
                       aria-disabled={fullyBooked}
                       tabIndex={fullyBooked ? -1 : 0}
@@ -141,7 +148,7 @@ export async function ComingEvents() {
                           : 'bg-terracotta-dark text-white hover:bg-terracotta/85',
                       ].join(' ')}
                     >
-                      {fullyBooked ? <MtText en="Full" mt="Mimli" /> : <MtText en="Book" mt="Ibbukkja" />}
+                      {fullyBooked ? <MtText en="Full" mt="Mimli" /> : <MtText en="Book Now" mt="Ibbukkja Issa" />}
                     </Link>
                   </div>
                 </div>

@@ -4,6 +4,8 @@ import type { Payload } from 'payload'
 import config from '@payload-config'
 
 import { verifySession } from '@/lib/rbac/verify-session'
+import { actingAs } from '@/lib/audit/helper'
+import { payloadErrorMessage } from '@/lib/api-errors'
 
 let _payload: Payload | null = null
 async function payload(): Promise<Payload> {
@@ -71,6 +73,7 @@ export async function GET(req: NextRequest) {
           eventCount,
           imageryId: imagery?.id || null,
           imageryUrl: imagery?.url || null,
+          description: s.description ?? null,
           createdAt: s.createdAt,
           updatedAt: s.updatedAt,
         }
@@ -105,6 +108,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'name and slug are required' }, { status: 400 })
   }
 
+  // The console form historically sent `imagery` (a string id) while this
+  // handler read `imageryId`, so images picked on create were silently
+  // dropped. Accept either key and coerce to the integer FK Postgres needs.
+  const imageryRaw = body.imageryId ?? body.imagery
+  const imagery = imageryRaw != null && imageryRaw !== '' ? Number(imageryRaw) : undefined
+  if (imagery !== undefined && !Number.isFinite(imagery)) {
+    return NextResponse.json({ error: 'invalid_imagery' }, { status: 400 })
+  }
+
   try {
     const svc = await p.create({
       collection: 'services',
@@ -112,10 +124,12 @@ export async function POST(req: NextRequest) {
         name: body.name.trim(),
         slug: body.slug.trim().toLowerCase(),
         visible: body.visible ?? false,
-        order: body.order ?? 0,
-        imagery: body.imageryId ? Number(body.imageryId) : undefined,
+        order: Number(body.order) || 0,
+        ...(imagery !== undefined ? { imagery } : {}),
+        ...(body.description && typeof body.description === 'object' ? { description: body.description } : {}),
       },
       overrideAccess: true,
+      ...actingAs(currentUser, req),
     })
 
     return NextResponse.json({ ok: true, id: String(svc.id) }, { status: 201 })
@@ -125,6 +139,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'slug_taken', message: 'A service with this slug already exists.' }, { status: 409 })
     }
     console.error('[console/api/services] Create failed:', err)
+    const validation = payloadErrorMessage(err)
+    if (validation) return NextResponse.json({ error: validation }, { status: 400 })
     return NextResponse.json({ error: 'create_failed' }, { status: 500 })
   }
 }

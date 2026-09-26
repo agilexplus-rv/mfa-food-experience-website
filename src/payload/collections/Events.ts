@@ -1,5 +1,5 @@
 import type { CollectionConfig } from 'payload'
-import { auditLog, diffChanges } from '@/lib/audit/helper'
+import { auditLog, diffChanges, requestMeta } from '@/lib/audit/helper'
 
 export const Events: CollectionConfig = {
   slug: 'events',
@@ -33,8 +33,7 @@ export const Events: CollectionConfig = {
               collection: 'events',
               documentId: d.id,
               detail: `Created experience "${d.title}"`,
-              ipAddress: req.headers?.get?.('x-forwarded-for') || undefined,
-              userAgent: req.headers?.get?.('user-agent') || undefined,
+              ...requestMeta(req),
             })
           } else if (operation === 'update') {
             const changes = diffChanges(
@@ -47,8 +46,7 @@ export const Events: CollectionConfig = {
               collection: 'events',
               documentId: d.id,
               detail: `Updated experience "${d.title}"`,
-              ipAddress: req.headers?.get?.('x-forwarded-for') || undefined,
-              userAgent: req.headers?.get?.('user-agent') || undefined,
+              ...requestMeta(req),
               changes,
             })
           }
@@ -70,8 +68,7 @@ export const Events: CollectionConfig = {
             collection: 'events',
             documentId: d.id,
             detail: `Deleted experience "${d.title}"`,
-            ipAddress: req.headers?.get?.('x-forwarded-for') || undefined,
-            userAgent: req.headers?.get?.('user-agent') || undefined,
+            ...requestMeta(req),
           })
         } catch {
           // audit failure must not block the primary operation
@@ -124,8 +121,13 @@ export const Events: CollectionConfig = {
     {
       name: 'pricePerPerson',
       type: 'number',
+      label: 'Price per person (EUR)',
       required: true,
       min: 0,
+      admin: {
+        description: 'Price in euros (e.g. 45.50), not cents.',
+        step: 0.01,
+      },
     },
     {
       name: 'locationRef',

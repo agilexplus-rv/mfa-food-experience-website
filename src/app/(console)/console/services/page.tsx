@@ -7,6 +7,7 @@ import Badge from '@/components/console/Badge'
 import Card from '@/components/console/Card'
 import Modal from '@/components/console/Modal'
 import { Pagination } from '@/components/console/DataTable'
+import RichTextEditor from '@/components/console/editor/RichTextEditor'
 
 interface ServiceRow {
   id: string | number
@@ -17,6 +18,7 @@ interface ServiceRow {
   eventCount: number
   imageryId: string | number | null
   imageryUrl: string | null
+  description: unknown
   createdAt: string
 }
 
@@ -47,8 +49,10 @@ export default function ConsoleServicesPage() {
   const [editingId, setEditingId] = useState<string | number | null>(null)
   const [formError, setFormError] = useState<string | null>(null)
   const [saveLoading, setSaveLoading] = useState(false)
-  const [form, setForm] = useState({
-    name: '', slug: '', visible: false, order: '0', imageryId: '',
+  const [form, setForm] = useState<{
+    name: string; slug: string; visible: boolean; order: string; imageryId: string; description: unknown
+  }>({
+    name: '', slug: '', visible: false, order: '0', imageryId: '', description: null,
   })
 
   // Delete modal
@@ -86,7 +90,7 @@ export default function ConsoleServicesPage() {
   useEffect(() => { void fetchMedia() }, [fetchMedia])
 
   const resetForm = () => {
-    setForm({ name: '', slug: '', visible: false, order: '0', imageryId: '' })
+    setForm({ name: '', slug: '', visible: false, order: '0', imageryId: '', description: null })
     setEditingId(null)
     setFormError(null)
   }
@@ -101,6 +105,7 @@ export default function ConsoleServicesPage() {
       visible: sv.visible,
       order: String(sv.order),
       imageryId: String(sv.imageryId || ''),
+      description: sv.description ?? null,
     })
     setFormError(null)
     setModalOpen(true)
@@ -119,8 +124,10 @@ export default function ConsoleServicesPage() {
         slug: form.slug.trim().toLowerCase(),
         visible: form.visible,
         order: parseInt(form.order, 10) || 0,
+        // null clears the image; the API coerces the id to a number.
+        imageryId: form.imageryId || null,
+        description: form.description,
       }
-      if (form.imageryId) body.imagery = form.imageryId
       const url = editingId ? `/console/api/services/${editingId}` : '/console/api/services'
       const method = editingId ? 'PATCH' : 'POST'
       const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
@@ -266,6 +273,22 @@ export default function ConsoleServicesPage() {
                 <option key={String(m.id)} value={String(m.id)}>{m.filename}</option>
               ))}
             </select>
+            {form.imageryId && (() => {
+              const selected = media.find(m => String(m.id) === form.imageryId)
+              return selected?.url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={selected.url} alt="" className="mt-2 h-24 w-auto rounded-md border border-border object-cover" />
+              ) : null
+            })()}
+            <p className="mt-1 text-xs text-text-light">Shown in the experience&apos;s &ldquo;Read more&rdquo; view and on its page.</p>
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-lunar-green mb-1">Description</label>
+            <RichTextEditor
+              value={form.description}
+              onChange={(v) => setForm(p => ({ ...p, description: v }))}
+              placeholder="Describe this experience..."
+            />
           </div>
           <label className="flex items-center gap-2 text-sm font-semibold text-lunar-green">
             <input type="checkbox" checked={form.visible}

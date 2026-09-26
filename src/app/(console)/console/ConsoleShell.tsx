@@ -81,7 +81,7 @@ export default function ConsoleShell({ children }: { children: React.ReactNode }
       await fetch('/console/api/audit-log/logout', { method: 'POST' })
     } catch { /* best-effort: don't block logout */ }
     try {
-      await fetch('/api/users/logout', { method: 'POST' })
+      await fetch('/api/users/logout', { method: 'POST', headers: { 'X-Audit-Logged': '1' } })
     } catch { /* best-effort */ }
     router.push('/admin/login')
   }
@@ -224,6 +224,12 @@ export default function ConsoleShell({ children }: { children: React.ReactNode }
                 {user.role === 'admin' ? 'Admin' : 'Door Staff'}
               </span>
             </div>
+            <Link
+              href="/console/account"
+              className="rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-text-light hover:border-lunar-green hover:text-lunar-green transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lunar-green"
+            >
+              Change password
+            </Link>
             <button
               onClick={handleLogout}
               className="rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-text-light hover:border-terracotta hover:text-[#9C4E2F] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lunar-green"

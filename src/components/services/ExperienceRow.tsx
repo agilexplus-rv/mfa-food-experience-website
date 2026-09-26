@@ -1,9 +1,13 @@
 import Link from 'next/link'
+import { MtText } from '@/components/i18n/MtText'
+import { ReadMoreButton } from './ReadMoreButton'
 
 export interface ExperienceRowProps {
   name: string
   slug: string
   description?: string
+  /** Full description as HTML, shown in the "Read more" dialog. */
+  descriptionHtml?: string
   imageryUrl?: string
   imageryAlt?: string
   /** 0-based index used to alternate the image side. */
@@ -23,6 +27,7 @@ export function ExperienceRow({
   name,
   slug,
   description,
+  descriptionHtml,
   imageryUrl,
   imageryAlt,
   index,
@@ -72,16 +77,31 @@ export function ExperienceRow({
             {description}
           </p>
         )}
-        <div className="mt-5">
+        <div className="mt-5 flex flex-wrap items-center gap-4">
           <Link
-            href={`/services/${slug}`}
+            href={`/services/${slug}#dates`}
             className="inline-flex items-center gap-1.5 rounded-lg bg-terracotta-dark px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-terracotta/85 focus:outline-2 focus:outline-offset-2 focus:outline-terracotta"
           >
-            View upcoming dates
+            <MtText en="Book Now" mt="Ibbukkja Issa" />
             <span aria-hidden="true">&rarr;</span>
           </Link>
+          {(descriptionHtml || description) && (
+            <ReadMoreButton
+              content={{
+                title: name,
+                descriptionHtml: descriptionHtml || (description ? `<p>${escapeHtml(description)}</p>` : undefined),
+                imageUrl: imageryUrl,
+                imageAlt: imageryAlt,
+                bookHref: `/services/${slug}#dates`,
+              }}
+            />
+          )}
         </div>
       </div>
     </article>
   )
+}
+
+function escapeHtml(text: string): string {
+  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 }

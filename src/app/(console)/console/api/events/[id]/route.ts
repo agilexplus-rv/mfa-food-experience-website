@@ -4,6 +4,8 @@ import type { Payload } from 'payload'
 import config from '@payload-config'
 
 import { verifySession } from '@/lib/rbac/verify-session'
+import { actingAs } from '@/lib/audit/helper'
+import { payloadErrorMessage } from '@/lib/api-errors'
 
 let _payload: Payload | null = null
 async function payload(): Promise<Payload> {
@@ -86,6 +88,15 @@ export async function PATCH(
   // serviceId, PATCH uses the real field name 'service'. Strip the
   // helper key so Payload never sees an unknown field.
   delete body.serviceId
+  // Drizzle's integer FK column rejects the form's string id.
+  if (body.service !== undefined && body.service !== null && body.service !== '') {
+    body.service = Number(typeof body.service === 'object' ? body.service.id : body.service)
+  }
+  if ('autoCloseHoursAfter' in body) {
+    const n = Number(body.autoCloseHoursAfter)
+    body.autoCloseHoursAfter =
+      body.autoCloseHoursAfter === '' || body.autoCloseHoursAfter === null || !Number.isFinite(n) || n <= 0 ? null : n
+  }
 
   try {
     const current = await p.findByID({
@@ -100,6 +111,7 @@ export async function PATCH(
       id: numericId,
       data: body,
       overrideAccess: true,
+      ...actingAs(currentUser, req),
     })
 
     let futureUpdated = 0
@@ -109,7 +121,7 @@ export async function PATCH(
       const timeOf = (dt: unknown): string | null =>
         typeof dt === 'string' && dt.includes('T') ? dt.slice(dt.indexOf('T')) : null
       const propagate: Record<string, unknown> = {}
-      for (const k of ['title', 'service', 'capacity', 'pricePerPerson', 'locationRef', 'status', 'fullyBookedOverride']) {
+      for (const k of ['title', 'service', 'capacity', 'pricePerPerson', 'locationRef', 'status', 'fullyBookedOverride', 'autoCloseHoursAfter']) {
         if (k in body) propagate[k] = body[k]
       }
       const startT = timeOf(body.startTime)
@@ -139,6 +151,7 @@ export async function PATCH(
             ...(endT && sibDate ? { endTime: `${sibDate}${endT}` } : {}),
           },
           overrideAccess: true,
+          ...actingAs(currentUser, req),
         })
         futureUpdated++
       }
@@ -147,6 +160,8 @@ export async function PATCH(
     return NextResponse.json({ ok: true, futureUpdated })
   } catch (err) {
     console.error('[console/api/events] Update failed:', err)
+    const validation = payloadErrorMessage(err)
+    if (validation) return NextResponse.json({ error: validation }, { status: 400 })
     return NextResponse.json({ error: 'update_failed' }, { status: 500 })
   }
 }
@@ -192,6 +207,7 @@ export async function DELETE(
       collection: 'events',
       id: numericId,
       overrideAccess: true,
+      ...actingAs(currentUser, req),
     })
     return NextResponse.json({ ok: true })
   } catch (err) {

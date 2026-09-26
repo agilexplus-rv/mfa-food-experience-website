@@ -19,6 +19,10 @@ export default function StaffPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [inviteEmail, setInviteEmail] = useState('')
+  const [inviteRole, setInviteRole] = useState<'door_staff' | 'admin'>('door_staff')
+  const [meId, setMeId] = useState<string | number | null>(null)
+  const [roleChangingId, setRoleChangingId] = useState<string | number | null>(null)
+  const [deletingId, setDeletingId] = useState<string | number | null>(null)
   const [inviteSending, setInviteSending] = useState(false)
   const [inviteStatus, setInviteStatus] = useState<string | null>(null)
   const [togglingId, setTogglingId] = useState<string | number | null>(null)
@@ -55,6 +59,15 @@ export default function StaffPage() {
     return () => { mounted.current = false }
   }, [fetchUsers])
 
+  useEffect(() => {
+    fetch('/api/users/me')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (d?.user?.id != null) setMeId(d.user.id) })
+      .catch(() => { /* ignore */ })
+  }, [])
+
+  const isMe = (u: StaffUser) => meId != null && String(u.id) === String(meId)
+
   const handleInvite = async () => {
     if (!inviteEmail.trim()) return
     setInviteSending(true)
@@ -63,12 +76,17 @@ export default function StaffPage() {
       const res = await fetch('/console/api/users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: inviteEmail.trim() }),
+        body: JSON.stringify({ email: inviteEmail.trim(), role: inviteRole }),
       })
       const data = await res.json()
-      if (!res.ok) throw new Error(data?.error || 'Invite failed')
-      setInviteStatus('Invited ' + data.email + ' (temp password: ' + data.tempPassword + ') - ask user to change password on first login.')
+      if (!res.ok) throw new Error(data?.error === 'user_already_exists' ? 'A user with this email already exists.' : (data?.detail || data?.error || 'Invite failed'))
+      setInviteStatus(
+        data.tempPassword
+          ? data.message + ' Temporary password: ' + data.tempPassword
+          : data.message || 'Invited ' + data.email,
+      )
       setInviteEmail('')
+      setInviteRole('door_staff')
       fetchUsers()
     } catch (err) {
       setInviteStatus(err instanceof Error ? err.message : 'Invite failed')
@@ -94,6 +112,45 @@ export default function StaffPage() {
       alert(err instanceof Error ? err.message : 'Toggle failed')
     } finally {
       setTogglingId(null)
+    }
+  }
+
+  const handleRoleChange = async (u: StaffUser, role: string) => {
+    if (role === u.role) return
+    if (!confirm(`Change ${u.email} to ${role === 'admin' ? 'Admin' : 'Door Staff'}?`)) return
+    setRoleChangingId(u.id)
+    try {
+      const res = await fetch('/console/api/users', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: u.id, role }),
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => null)
+        throw new Error(data?.error || 'Role change failed')
+      }
+      fetchUsers()
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Role change failed')
+    } finally {
+      setRoleChangingId(null)
+    }
+  }
+
+  const handleDelete = async (u: StaffUser) => {
+    if (!confirm(`Permanently delete ${u.email}? This cannot be undone. (Consider deactivating instead.)`)) return
+    setDeletingId(u.id)
+    try {
+      const res = await fetch('/console/api/users?action=delete&userId=' + encodeURIComponent(String(u.id)), {
+        method: 'DELETE',
+      })
+      const data = await res.json().catch(() => null)
+      if (!res.ok) throw new Error(data?.error || 'Delete failed')
+      fetchUsers()
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Delete failed')
+    } finally {
+      setDeletingId(null)
     }
   }
 
@@ -150,7 +207,17 @@ export default function StaffPage() {
             className="flex-1 rounded-lg border border-border px-4 py-2.5 text-sm text-lunar-green placeholder:text-text-light/50 focus:outline-none focus:ring-2 focus:ring-lunar-green/30"
             style={{ boxSizing: 'border-box' }}
             onKeyDown={(e) => { if (e.key === 'Enter') handleInvite() }}
+            aria-label="Email address"
           />
+          <select
+            value={inviteRole}
+            onChange={(e) => setInviteRole(e.target.value as 'door_staff' | 'admin')}
+            aria-label="Role"
+            className="rounded-lg border border-border bg-surface px-3 py-2.5 text-sm text-lunar-green focus:outline-none focus:ring-2 focus:ring-lunar-green/30"
+          >
+            <option value="door_staff">Door Staff</option>
+            <option value="admin">Admin</option>
+          </select>
           <Button
             onClick={handleInvite}
             disabled={inviteSending || !inviteEmail.trim()}
@@ -195,9 +262,22 @@ export default function StaffPage() {
                 <tr key={String(u.id)} className="border-b border-border/50 last:border-0 hover:bg-soft-beige/30 transition-colors">
                   <td className="px-4 py-3 font-mono text-xs text-lunar-green">{u.email}</td>
                   <td className="px-4 py-3">
-                    <Badge variant={u.role === 'admin' ? 'admin' : 'door_staff'}>
-                      {u.role === 'admin' ? 'Admin' : 'Door Staff'}
-                    </Badge>
+                    {isMe(u) ? (
+                      <Badge variant={u.role === 'admin' ? 'admin' : 'door_staff'}>
+                        {u.role === 'admin' ? 'Admin' : 'Door Staff'} (you)
+                      </Badge>
+                    ) : (
+                      <select
+                        value={u.role}
+                        disabled={roleChangingId === u.id}
+                        onChange={(e) => handleRoleChange(u, e.target.value)}
+                        aria-label={`Role for ${u.email}`}
+                        className="rounded-md border border-border bg-surface px-2 py-1 text-xs font-semibold text-lunar-green disabled:opacity-40"
+                      >
+                        <option value="door_staff">Door Staff</option>
+                        <option value="admin">Admin</option>
+                      </select>
+                    )}
                   </td>
                   <td className="px-4 py-3 text-center">
                     {u.mfaEnabled ? (
@@ -218,7 +298,8 @@ export default function StaffPage() {
                     <div className="flex items-center justify-center gap-1.5 flex-wrap">
                       <button
                         onClick={() => handleToggleActive(u)}
-                        disabled={togglingId === u.id}
+                        disabled={togglingId === u.id || isMe(u)}
+                        title={isMe(u) ? 'You cannot deactivate your own account' : undefined}
                         className={'rounded-md border px-2.5 py-1 text-xs font-semibold disabled:opacity-40 transition-colors ' + (
                           u.active
                             ? 'border-terracotta text-[#9C4E2F] hover:bg-terracotta hover:text-white'
@@ -234,6 +315,15 @@ export default function StaffPage() {
                       >
                         {resettingPwId === u.id ? '...' : 'Reset PW'}
                       </button>
+                      {!isMe(u) && (
+                        <button
+                          onClick={() => handleDelete(u)}
+                          disabled={deletingId === u.id}
+                          className="rounded-md border border-terracotta px-2.5 py-1 text-xs font-semibold text-[#9C4E2F] hover:bg-terracotta hover:text-white disabled:opacity-40 transition-colors"
+                        >
+                          {deletingId === u.id ? '...' : 'Delete'}
+                        </button>
+                      )}
                       {u.mfaEnabled && (
                         mfaConfirmIds.has(u.id) ? (
                           <span className="inline-flex items-center gap-1">

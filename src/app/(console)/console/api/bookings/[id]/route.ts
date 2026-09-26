@@ -5,6 +5,7 @@ import config from '@payload-config'
 
 import { verifySession } from '@/lib/rbac/verify-session'
 import { processCancellationRefund } from '@/lib/bookings/refund'
+import { actingAs, clientMeta } from '@/lib/audit/helper'
 
 let _payload: Payload | null = null
 async function payload(): Promise<Payload> {
@@ -97,6 +98,7 @@ export async function POST(
         vivaTransactionId: b.vivaTransactionId,
         vivaRefundId: b.vivaRefundId,
         eventDate,
+        bookedAt: b.createdAt ?? null,
         overrideTier,
       })
 
@@ -178,7 +180,7 @@ export async function POST(
           id: eventId,
           overrideAccess: true,
         }).catch(() => null)
-        const eventTitle = (eventDoc as { title?: string } | null)?.title ?? 'the event'
+        const eventTitle = (eventDoc as { title?: string } | null)?.title ?? 'the experience'
 
         try {
           await p.sendEmail({
@@ -226,6 +228,7 @@ export async function POST(
         ]
           .filter(Boolean)
           .join(' '),
+        ...clientMeta(req),
       } as any,
       overrideAccess: true,
     })
@@ -272,6 +275,7 @@ export async function POST(
         id: numericId,
         data: { noShow: true },
         overrideAccess: true,
+        ...actingAs(currentUser, req),
       })
       return NextResponse.json({ ok: true, action: 'no_show' })
     } catch (err) {

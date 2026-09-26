@@ -6,7 +6,9 @@ import { useRouter, useSearchParams } from 'next/navigation'
 function MfaVerifyForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const redirectTo = searchParams.get('redirect') || '/console'
+  // Only honour same-site relative paths (no protocol-relative "//evil").
+  const requested = searchParams.get('redirect')
+  const redirectTo = requested && requested.startsWith('/') && !requested.startsWith('//') ? requested : null
   const [digits, setDigits] = useState<string[]>(['', '', '', '', '', ''])
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
@@ -70,7 +72,9 @@ function MfaVerifyForm() {
       if (!res.ok) {
         throw new Error(data.error || 'Verification failed')
       }
-      router.push(data.redirect || redirectTo)
+      // Prefer the page the user was originally heading to; otherwise the
+      // server picks the role-appropriate dashboard.
+      router.push(redirectTo || data.redirect || '/console')
     } catch (err) {
       setDigits(['', '', '', '', '', ''])
       document.getElementById('mfa-vdigit-0')?.focus()

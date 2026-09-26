@@ -1,4 +1,5 @@
 import type { GlobalConfig } from 'payload'
+import { globalAuditHook } from '@/lib/audit/helper'
 
 /**
  * TermsAndConditions — Payload Global (single-document, admin-editable).
@@ -14,6 +15,9 @@ export const TermsAndConditions: GlobalConfig = {
     read: () => true,
     update: ({ req: { user } }) =>
       (user as { role?: string } | null)?.role === 'admin',
+  },
+  hooks: {
+    afterChange: [globalAuditHook('terms-and-conditions', 'terms & conditions')],
   },
   admin: {
     group: 'Content',

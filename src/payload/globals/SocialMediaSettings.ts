@@ -1,4 +1,5 @@
 import type { GlobalConfig } from 'payload'
+import { globalAuditHook } from '@/lib/audit/helper'
 
 /**
  * SocialMediaSettings — Payload Global for admin-configurable social
@@ -24,6 +25,9 @@ export const SocialMediaSettings: GlobalConfig = {
     // Admin only: only admins can change social media settings.
     update: ({ req: { user } }) =>
       (user as { role?: string } | null)?.role === 'admin',
+  },
+  hooks: {
+    afterChange: [globalAuditHook('social-media-settings', 'social media settings')],
   },
   admin: {
     group: 'Content',

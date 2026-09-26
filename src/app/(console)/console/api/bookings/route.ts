@@ -4,6 +4,7 @@ import type { Payload } from 'payload'
 import config from '@payload-config'
 
 import { verifySession } from '@/lib/rbac/verify-session'
+import { actingAs } from '@/lib/audit/helper'
 
 let _payload: Payload | null = null
 async function payload(): Promise<Payload> {
@@ -274,6 +275,7 @@ export async function POST(req: NextRequest) {
         dietaryNotes: body.dietaryNotes || undefined,
       },
       overrideAccess: true,
+      ...actingAs(currentUser, req),
     })
 
     return NextResponse.json({ ok: true, id: String(booking.id), reference }, { status: 201 })

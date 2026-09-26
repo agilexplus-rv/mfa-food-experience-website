@@ -8,6 +8,7 @@ import Card from '@/components/console/Card'
 import Modal from '@/components/console/Modal'
 import { Pagination } from '@/components/console/DataTable'
 import RichTextEditor from '@/components/console/editor/RichTextEditor'
+import { getExcerpt } from '@/lib/payload'
 
 interface NewsRow {
   id: string | number
@@ -145,6 +146,10 @@ export default function NewsManagementPage() {
   const handleSave = async () => {
     if (!form.title.trim() || !form.slug.trim()) {
       setFormError('Title and slug are required.')
+      return
+    }
+    if (!getExcerpt(form.body, 1)) {
+      setFormError('Please write the article body.')
       return
     }
     setSaving(true)
@@ -290,9 +295,9 @@ export default function NewsManagementPage() {
                         <button
                           onClick={() => handleDelete(n)}
                           disabled={actionId === n.id}
-                          className="rounded-md border border-terracotta px-2 py-0.5 text-[10px] font-semibold text-[#9C4E2F] hover:bg-terracotta hover:text-white disabled:opacity-40 transition-colors"
+                          className="whitespace-nowrap rounded-md border border-terracotta px-2 py-0.5 text-[10px] font-semibold text-[#9C4E2F] hover:bg-terracotta hover:text-white disabled:opacity-40 transition-colors"
                         >
-                          {actionId === n.id ? '...' : 'Del'}
+                          {actionId === n.id ? '...' : 'Delete'}
                         </button>
                       </div>
                     </td>

@@ -4,6 +4,8 @@ import config from '@payload-config'
 import { refundTransaction, VivaNotConfiguredError } from '@/lib/viva/client'
 import { isVivaConfigured } from '@/lib/env'
 import {
+  coolingOffHours,
+  formatCoolingOffPeriod,
   resolveTierForDaysBefore,
   type CancellationPolicyData,
   type CancellationTier,
@@ -17,6 +19,8 @@ export interface RefundInput {
   vivaTransactionId?: string | null
   vivaRefundId?: string | null
   eventDate: string | null
+  /** When the booking was made (ISO) -- used for the voluntary cooling-off window. */
+  bookedAt?: string | null
   /** When true, ignore the cancellation-policy tier and issue a full refund. */
   overrideTier?: boolean
 }
@@ -28,6 +32,8 @@ export interface RefundResult {
   tier: CancellationTier | null
   tierLabel: string
   overridden: boolean
+  /** True when the full refund was granted by the cooling-off period. */
+  coolingOff: boolean
 }
 
 /**
@@ -45,19 +51,32 @@ export async function processCancellationRefund(
   let tier: CancellationTier | null = null
   let tierLabel = 'No policy'
   let overridden = false
+  // The policy is active but the cancellation is past every tier's
+  // deadline: no refund (previously this fell through to a full refund).
+  let noTierMatched = false
+  let coolingOff = false
 
   if (input.overrideTier) {
     overridden = true
     tierLabel = 'Full refund (staff override)'
     tier = null
-  } else if (input.eventDate) {
+  } else {
     try {
       const payload = await getPayload({ config })
       const policy = (await payload.findGlobal({
         slug: 'cancellation-policy',
       })) as unknown as CancellationPolicyData
 
-      if (policy.enabled && policy.tiers && policy.tiers.length > 0) {
+      // Voluntary cooling-off period (admin toggle): a cancellation within
+      // N hours of booking gets a full refund regardless of the tiers.
+      const coolHours = coolingOffHours(policy)
+      const bookedMs = input.bookedAt ? new Date(input.bookedAt).getTime() : NaN
+      if (coolHours > 0 && Number.isFinite(bookedMs) && Date.now() - bookedMs <= coolHours * 3_600_000) {
+        coolingOff = true
+        tierLabel = `Full refund (within ${formatCoolingOffPeriod(coolHours)} cooling-off period)`
+      } else if (!input.eventDate) {
+        tierLabel = 'Full refund (no event date)'
+      } else if (policy.enabled && policy.tiers && policy.tiers.length > 0) {
         const eventTime = new Date(input.eventDate).getTime()
         const now = Date.now()
         const daysBefore = Math.floor(
@@ -75,7 +94,8 @@ export async function processCancellationRefund(
                   ? 'No refund'
                   : `${tier.refundPercentage}% refund`
         } else {
-          tierLabel = 'No tier matched (cancellation too late)'
+          tierLabel = 'No refund (cancellation too late for any tier)'
+          noTierMatched = true
         }
       } else {
         tierLabel = 'Full refund (policy disabled)'
@@ -85,10 +105,9 @@ export async function processCancellationRefund(
     }
   }
 
-  const refundPct = overridden || !tier ? 100 : tier.refundPercentage
-  const refundAmountEuros = Math.round(
-    (input.totalAmount * refundPct) / 100,
-  )
+  const refundPct = overridden || coolingOff ? 100 : tier ? tier.refundPercentage : noTierMatched ? 0 : 100
+  // Round to whole cents (not whole euros): 50% of €45.50 is €22.75.
+  const refundAmountEuros = Math.round(input.totalAmount * refundPct) / 100
 
   // --- VIVA refund ---
   let refundId: string | undefined
@@ -104,6 +123,7 @@ export async function processCancellationRefund(
       tier: overridden ? null : tier,
       tierLabel,
       overridden,
+      coolingOff,
     }
   }
 
@@ -116,6 +136,7 @@ export async function processCancellationRefund(
       tier,
       tierLabel,
       overridden,
+      coolingOff,
     }
   }
 
@@ -123,7 +144,7 @@ export async function processCancellationRefund(
     try {
       const result = await refundTransaction({
         transactionId: input.vivaTransactionId,
-        amount: refundAmountEuros * 100, // VIVA expects cents
+        amount: Math.round(refundAmountEuros * 100), // VIVA expects integer cents
         merchantTrns: input.reference,
       })
       refundId = result.transactionId
@@ -160,5 +181,6 @@ export async function processCancellationRefund(
     tier,
     tierLabel,
     overridden,
+    coolingOff,
   }
 }

@@ -4,6 +4,7 @@ import type { Payload } from 'payload'
 import config from '@payload-config'
 
 import { verifySession } from '@/lib/rbac/verify-session'
+import { actingAs } from '@/lib/audit/helper'
 
 let _payload: Payload | null = null
 async function payload(): Promise<Payload> {
@@ -58,11 +59,32 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'invalid JSON body' }, { status: 400 })
   }
 
+  // Normalise the console payload: new tier rows arrive with id "" (let
+  // Payload assign one) and numeric inputs may arrive as strings.
+  const data: Record<string, unknown> = { ...body }
+  if (Array.isArray(body.tiers)) {
+    data.tiers = (body.tiers as Record<string, unknown>[]).map((t) => ({
+      ...(t.id ? { id: String(t.id) } : {}),
+      minDaysBeforeEvent: Number(t.minDaysBeforeEvent) || 0,
+      refundPercentage: Math.min(100, Math.max(0, Number(t.refundPercentage) || 0)),
+      label: typeof t.label === 'string' ? t.label : '',
+    }))
+  }
+  if ('coolingOffEnabled' in body) data.coolingOffEnabled = Boolean(body.coolingOffEnabled)
+  if ('coolingOffHours' in body) {
+    const h = Number(body.coolingOffHours)
+    if (data.coolingOffEnabled && (!Number.isFinite(h) || h < 1 || h > 336)) {
+      return NextResponse.json({ error: 'Cooling-off period must be between 1 and 336 hours.' }, { status: 400 })
+    }
+    data.coolingOffHours = Number.isFinite(h) && h >= 1 ? Math.min(336, h) : 24
+  }
+
   try {
     const updated = await p.updateGlobal({
       slug: 'cancellation-policy',
-      data: body,
+      data,
       overrideAccess: true,
+      ...actingAs(currentUser, req),
     })
     return NextResponse.json({ ok: true, policy: updated })
   } catch (err) {

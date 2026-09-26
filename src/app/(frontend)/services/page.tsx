@@ -47,6 +47,7 @@ export default async function ServicesIndexPage() {
               name={s.name}
               slug={s.slug}
               description={s.description}
+              descriptionHtml={s.descriptionHtml}
               imageryUrl={s.imageryUrl}
               imageryAlt={s.imageryAlt}
               index={i}

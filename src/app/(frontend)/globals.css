@@ -38,6 +38,20 @@
   --font-sans: var(--font-montserrat), ui-sans-serif, system-ui, sans-serif;
 }
 
+:root {
+  /* Rendered height of the sticky site header (logo 120/150/210px wide at
+     a ~0.71 aspect ratio + 24px vertical padding). HeaderHeightSync
+     overwrites this with the measured value at runtime; these are the
+     first-paint fallbacks. Used to keep header + hero within 100svh. */
+  --site-header-h: 109px;
+}
+@media (min-width: 40rem) {
+  :root { --site-header-h: 130px; }
+}
+@media (min-width: 48rem) {
+  :root { --site-header-h: 172px; }
+}
+
 html {
   /* Prevent the mobile nav drawer (translated off-screen via
      translate-x-full when closed) from creating horizontal

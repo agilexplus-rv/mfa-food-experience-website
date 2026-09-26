@@ -11,6 +11,7 @@ import {
   MFA_VERIFIED_COOKIE,
   MFA_COOKIE_OPTIONS,
 } from '@/lib/mfa/session'
+import { actingAs } from '@/lib/audit/helper'
 
 let _payload: Payload | null = null
 async function payload(): Promise<Payload> {
@@ -99,6 +100,7 @@ export async function POST(req: NextRequest) {
       id: currentUser.id,
       data: { mfaEnabled: true },
       overrideAccess: true,
+      ...actingAs(currentUser, req),
     })
   } catch (err) {
     return NextResponse.json(

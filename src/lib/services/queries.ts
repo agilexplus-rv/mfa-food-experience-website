@@ -5,6 +5,7 @@ import config from '@payload-config'
 
 import { getAvailabilityForEvents, type EventDoc, type EventAvailability } from '@/lib/availability'
 import { getMediaUrl, getExcerpt } from '@/lib/payload'
+import { richTextToHtml } from '@/lib/richtext'
 import type { MediaRelation } from '@/payload-types'
 
 /**
@@ -36,6 +37,8 @@ export interface ServiceSummary {
   imageryAlt?: string
   /** Plain-text excerpt from the richText description. */
   description?: string
+  /** Full description rendered to HTML (for "Read more"). */
+  descriptionHtml?: string
 }
 
 export type ServiceDetail = ServiceSummary
@@ -46,6 +49,8 @@ export interface ServiceEvents {
   availability: Map<string, EventAvailability>
   /** Service description (first 280 chars). */
   description?: string
+  /** Full service description rendered to HTML. */
+  descriptionHtml?: string
   /** Service image URL from the imagery field. */
   imageryUrl?: string
   /** Alt text for the service image. */
@@ -82,6 +87,7 @@ export async function listVisibleServices(): Promise<ServiceSummary[]> {
       imageryUrl: getMediaUrl(s.imagery) ?? undefined,
       imageryAlt: (typeof s.imagery === 'object' && s.imagery?.alt) || undefined,
       description: getExcerpt(s.description, 280),
+      descriptionHtml: richTextToHtml(s.description) || undefined,
     }
   })
 }
@@ -120,6 +126,7 @@ export const getServiceBySlug = cache(async function getServiceBySlug(
     imageryUrl: getMediaUrl(s.imagery) ?? undefined,
     imageryAlt: (typeof s.imagery === 'object' && s.imagery?.alt) || undefined,
     description: getExcerpt(s.description, 280),
+    descriptionHtml: richTextToHtml(s.description) || undefined,
   }
 })
 
@@ -168,6 +175,7 @@ export const getServiceEvents = cache(async function getServiceEvents(serviceId:
     events,
     availability,
     description: getExcerpt(s.description, 280),
+    descriptionHtml: richTextToHtml(s.description) || undefined,
     imageryUrl: getMediaUrl(s.imagery) ?? undefined,
     imageryAlt: (typeof s.imagery === 'object' && s.imagery?.alt) || undefined,
   }

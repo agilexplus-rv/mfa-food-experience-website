@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 
 import { EventGrid, type GridEvent } from '@/components/services/EventGrid'
 import { ServiceNotAvailable } from '@/components/services/ServiceNotAvailable'
+import { MtText } from '@/components/i18n/MtText'
 import { getServiceBySlug, getServiceEvents } from '@/lib/services/queries'
 
 export const revalidate = 60
@@ -45,7 +46,7 @@ export default async function ServicePage({ params }: PageProps) {
     return <ServiceNotAvailable serviceName={service.name} />
   }
 
-  const { events, availability, description, imageryUrl, imageryAlt } = await getServiceEvents(service.id)
+  const { events, availability, description, descriptionHtml, imageryUrl, imageryAlt } = await getServiceEvents(service.id)
   const gridEvents: GridEvent[] = events.map((e) => ({
     id: e.id,
     title: e.title,
@@ -56,7 +57,7 @@ export default async function ServicePage({ params }: PageProps) {
     locationRef: e.locationRef,
     imageUrl: imageryUrl,
     imageAlt: imageryAlt,
-    serviceHref: `/services/${slug}`,
+    descriptionHtml,
   }))
 
   return (
@@ -68,11 +69,16 @@ export default async function ServicePage({ params }: PageProps) {
         <h1 className="mt-3 text-4xl font-black tracking-[-0.02em] text-lunar-green sm:text-5xl">
           {service.name}
         </h1>
-        {description && (
+        {descriptionHtml ? (
+          <div
+            className="prose mx-auto mt-4 max-w-2xl text-lg leading-relaxed text-text-light prose-headings:text-lunar-green prose-strong:text-lunar-green prose-a:text-terracotta-dark"
+            dangerouslySetInnerHTML={{ __html: descriptionHtml }}
+          />
+        ) : description ? (
           <p className="mt-4 text-lg leading-relaxed text-text-light max-w-2xl mx-auto">
             {description}
           </p>
-        )}
+        ) : null}
         <p className={[
           'text-lg leading-relaxed text-text-light',
           description ? 'mt-2' : 'mt-4',
@@ -80,6 +86,13 @@ export default async function ServicePage({ params }: PageProps) {
           Browse upcoming dates and reserve your seat. New sessions are added
           throughout the season.
         </p>
+        <a
+          href="#dates"
+          className="mt-6 inline-flex items-center gap-2 rounded-lg bg-terracotta-dark px-6 py-3 text-base font-bold text-white transition-colors hover:bg-terracotta/85 focus:outline-2 focus:outline-offset-2 focus:outline-terracotta"
+        >
+          <MtText en="Book Now" mt="Ibbukkja Issa" />
+          <span aria-hidden="true">&darr;</span>
+        </a>
         {/* Service image */}
         {imageryUrl && (
           <div className="mt-8 mx-auto max-w-2xl overflow-hidden rounded-xl shadow-md">
@@ -93,7 +106,7 @@ export default async function ServicePage({ params }: PageProps) {
         )}
       </header>
 
-      <div className="mt-12">
+      <div id="dates" className="mt-12 scroll-mt-24">
         <EventGrid events={gridEvents} availability={availability} />
       </div>
     </section>

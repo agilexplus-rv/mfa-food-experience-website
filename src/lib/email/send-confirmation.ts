@@ -5,6 +5,7 @@ import config from '@payload-config'
 import { renderConfirmationEmailHtml, renderConfirmationSubject } from './confirmation-template'
 import { qrTokenToDataUri } from '@/lib/qr/render'
 import { serverUrl } from '@/lib/env'
+import { getTermsAndConditions } from '@/lib/policies/terms'
 
 let _payload: Payload | null = null
 async function payload(): Promise<Payload> {
@@ -35,6 +36,12 @@ export interface SendConfirmationEmailInput {
  */
 export async function sendConfirmationEmail(input: SendConfirmationEmailInput): Promise<void> {
   const qrDataUri = await qrTokenToDataUri(input.rawQrToken)
+  // Include the T&Cs in the email: the admin's short email summary when
+  // set, otherwise the full text. Best-effort -- never block the email.
+  const terms = await getTermsAndConditions().catch(() => null)
+  const termsHtml = terms?.emailSummary
+    ? `<p style="margin:0;white-space:pre-line;">${escapeHtml(terms.emailSummary)}</p>`
+    : terms?.html || undefined
   const html = renderConfirmationEmailHtml({
     reference: input.reference,
     eventTitle: input.eventTitle,
@@ -47,6 +54,8 @@ export async function sendConfirmationEmail(input: SendConfirmationEmailInput): 
     qrDataUri,
     cancellationPolicyUrl: `${serverUrl()}/legal/cancellation-policy`,
     termsAndConditionsUrl: `${serverUrl()}/legal/terms-and-conditions`,
+    termsTitle: terms?.title,
+    termsHtml,
   })
   const subject = renderConfirmationSubject(input.reference, input.language)
 
@@ -65,4 +74,8 @@ export async function sendConfirmationEmail(input: SendConfirmationEmailInput): 
     // it's visible in Vercel logs / local console.
     console.error('[booking/email] Failed to send confirmation email:', err)
   }
+}
+
+function escapeHtml(text: string): string {
+  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 }

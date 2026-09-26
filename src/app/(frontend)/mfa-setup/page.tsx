@@ -124,8 +124,10 @@ export default function MfaSetupPage() {
         // Non-fatal: worst case middleware bounces back here and the
         // user retries; do not block the redirect attempt on this.
       }
+      // /admin is routed to the role's dashboard by middleware
+      // (admins -> /console, door staff -> /dashboard).
       setTimeout(() => {
-        window.location.href = '/console'
+        window.location.href = '/admin'
       }, 1500)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Verification failed')

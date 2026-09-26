@@ -4,6 +4,8 @@ import type { Payload } from 'payload'
 import config from '@payload-config'
 
 import { verifySession } from '@/lib/rbac/verify-session'
+import { actingAs } from '@/lib/audit/helper'
+import { payloadErrorMessage } from '@/lib/api-errors'
 
 let _payload: Payload | null = null
 async function payload(): Promise<Payload> {
@@ -112,6 +114,7 @@ export async function POST(req: NextRequest) {
         image: body.imageId ? Number(body.imageId) : undefined,
       },
       overrideAccess: true,
+      ...actingAs(currentUser, req),
     })
 
     return NextResponse.json({ ok: true, id: String(doc.id) }, { status: 201 })
@@ -121,6 +124,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'slug_taken', message: 'A news item with this slug already exists.' }, { status: 409 })
     }
     console.error('[console/api/news] Create failed:', err)
+    const validation = payloadErrorMessage(err)
+    if (validation) return NextResponse.json({ error: validation }, { status: 400 })
     return NextResponse.json({ error: 'create_failed' }, { status: 500 })
   }
 }

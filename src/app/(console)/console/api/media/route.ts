@@ -4,6 +4,7 @@ import type { Payload } from 'payload'
 import config from '@payload-config'
 
 import { verifySession } from '@/lib/rbac/verify-session'
+import { actingAs } from '@/lib/audit/helper'
 
 let _payload: Payload | null = null
 async function payload(): Promise<Payload> {
@@ -103,6 +104,7 @@ export async function POST(req: NextRequest) {
         size: file.size,
       },
       overrideAccess: true,
+      ...actingAs(currentUser, req),
     })
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

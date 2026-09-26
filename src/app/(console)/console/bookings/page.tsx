@@ -159,7 +159,7 @@ export default function ConsoleBookingsPage() {
 
   const handleExportCSV = useCallback(() => {
     if (!exportEventId) return
-    window.open(`/api/bookings/export?eventId=${exportEventId}`, '_blank')
+    window.open(`/console/api/bookings/export?eventId=${encodeURIComponent(exportEventId)}`, '_blank')
   }, [exportEventId])
 
   const handleCreateBooking = async () => {
@@ -473,6 +473,7 @@ export default function ConsoleBookingsPage() {
             <input
               type="number"
               min="0"
+              step="0.01"
               value={createForm.totalAmount}
               onChange={(e) => setCreateForm(prev => ({ ...prev, totalAmount: e.target.value }))}
               placeholder={createForm.paymentMethod === 'comped' ? '0' : 'Auto from event price'}

@@ -4,6 +4,7 @@ import type { Payload } from 'payload'
 import config from '@payload-config'
 
 import { verifySession } from '@/lib/rbac/verify-session'
+import { clientMeta } from '@/lib/audit/helper'
 
 let _payload: Payload | null = null
 async function payload(): Promise<Payload> {
@@ -16,12 +17,12 @@ async function payload(): Promise<Payload> {
  *
  * Writes a 'logout' entry to the audit_logs collection.
  *
- * This endpoint exists because Payload's collection auth does not
- * provide a built-in afterLogout hook (unlike afterLogin). The
- * ConsoleShell client calls this endpoint right before hitting
+ * The ConsoleShell client calls this endpoint right before hitting
  * Payload's own /api/users/logout, so the audit entry is captured
  * while the user's session cookie is still valid (needed to resolve
- * the actor user id for the audit_logs relationship field).
+ * the actor user id for the audit_logs relationship field). The
+ * follow-up Payload logout is sent with `X-Audit-Logged: 1` so the
+ * Users afterLogout hook doesn't record the same logout twice.
  *
  * The write is best-effort: if it fails, logout still proceeds.
  */
@@ -31,6 +32,8 @@ export async function POST(req: NextRequest) {
   if (!user) {
     return NextResponse.json({ error: 'unauthenticated' }, { status: 401 })
   }
+
+  const { ipAddress, userAgent } = clientMeta(req)
 
   try {
     await p.create({
@@ -42,6 +45,8 @@ export async function POST(req: NextRequest) {
         collection: 'users',
         documentId: String(user.id),
         detail: `User ${user.email} logged out (role: ${user.role})`,
+        ...(ipAddress ? { ipAddress } : {}),
+        ...(userAgent ? { userAgent } : {}),
       },
     })
     return NextResponse.json({ ok: true })

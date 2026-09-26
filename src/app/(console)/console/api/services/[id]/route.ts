@@ -4,6 +4,8 @@ import type { Payload } from 'payload'
 import config from '@payload-config'
 
 import { verifySession } from '@/lib/rbac/verify-session'
+import { actingAs } from '@/lib/audit/helper'
+import { payloadErrorMessage } from '@/lib/api-errors'
 
 let _payload: Payload | null = null
 async function payload(): Promise<Payload> {
@@ -37,12 +39,35 @@ export async function PATCH(
   const body = await req.json().catch(() => null)
   if (!body) return NextResponse.json({ error: 'invalid_body' }, { status: 400 })
 
+  // Allowlist fields and coerce the media relationship: forwarding the raw
+  // body passed `imagery: "12"` (a string) straight to Drizzle, whose
+  // integer column rejects it -- so linking an existing image failed.
+  const data: Record<string, unknown> = {}
+  if (typeof body.name === 'string') data.name = body.name.trim()
+  if (typeof body.slug === 'string') data.slug = body.slug.trim().toLowerCase()
+  if (typeof body.visible === 'boolean') data.visible = body.visible
+  if (body.order !== undefined) data.order = Number(body.order) || 0
+  if (body.description !== undefined) data.description = body.description && typeof body.description === 'object' ? body.description : null
+  if ('imageryId' in body || 'imagery' in body) {
+    const raw = 'imageryId' in body ? body.imageryId : body.imagery
+    if (raw === null || raw === undefined || raw === '') {
+      data.imagery = null
+    } else {
+      const imageryId = Number(typeof raw === 'object' ? raw.id : raw)
+      if (!Number.isFinite(imageryId)) {
+        return NextResponse.json({ error: 'invalid_imagery' }, { status: 400 })
+      }
+      data.imagery = imageryId
+    }
+  }
+
   try {
     await p.update({
       collection: 'services',
       id: numericId,
-      data: body,
+      data,
       overrideAccess: true,
+      ...actingAs(currentUser, req),
     })
     return NextResponse.json({ ok: true })
   } catch (err) {
@@ -51,6 +76,8 @@ export async function PATCH(
       return NextResponse.json({ error: 'slug_taken', message: 'A service with this slug already exists.' }, { status: 409 })
     }
     console.error('[console/api/services] Update failed:', err)
+    const validation = payloadErrorMessage(err)
+    if (validation) return NextResponse.json({ error: validation }, { status: 400 })
     return NextResponse.json({ error: 'update_failed' }, { status: 500 })
   }
 }
@@ -76,7 +103,7 @@ export async function DELETE(
   try {
     const eventCount = await p.find({
       collection: 'events',
-      where: { service: { equals: id } },
+      where: { service: { equals: numericId } },
       limit: 0,
       overrideAccess: true,
     })
@@ -96,6 +123,7 @@ export async function DELETE(
       collection: 'services',
       id: numericId,
       overrideAccess: true,
+      ...actingAs(currentUser, req),
     })
     return NextResponse.json({ ok: true })
   } catch (err) {

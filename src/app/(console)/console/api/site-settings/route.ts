@@ -4,6 +4,7 @@ import type { Payload } from 'payload'
 import config from '@payload-config'
 
 import { verifySession } from '@/lib/rbac/verify-session'
+import { actingAs } from '@/lib/audit/helper'
 
 let _payload: Payload | null = null
 async function payload(): Promise<Payload> {
@@ -58,11 +59,32 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'invalid JSON body' }, { status: 400 })
   }
 
+  // Allowlist + coerce: the console posts the media id as a string, which
+  // the integer relationship column rejects ("The following field is
+  // invalid: Hero background image").
+  const data: Record<string, unknown> = {}
+  if ('heroBackgroundImage' in body) {
+    const raw = body.heroBackgroundImage
+    if (raw === null || raw === '' || raw === undefined) {
+      data.heroBackgroundImage = null
+    } else {
+      const id = Number(typeof raw === 'object' ? (raw as { id?: unknown }).id : raw)
+      if (!Number.isFinite(id)) {
+        return NextResponse.json({ error: 'Invalid hero background image.' }, { status: 400 })
+      }
+      data.heroBackgroundImage = id
+    }
+  }
+  if ('contactFormRecipients' in body) {
+    data.contactFormRecipients = typeof body.contactFormRecipients === 'string' ? body.contactFormRecipients.trim() : null
+  }
+
   try {
     const updated = await p.updateGlobal({
       slug: 'site-settings',
-      data: body,
+      data,
       overrideAccess: true,
+      ...actingAs(currentUser, req),
     })
     return NextResponse.json({ ok: true, settings: updated })
   } catch (err) {

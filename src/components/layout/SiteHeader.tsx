@@ -3,6 +3,7 @@ import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher"
 import { MobileNav } from "@/components/layout/MobileNav"
 import { SiteSearch } from "@/components/search/SiteSearch"
 import Link from "next/link"
+import { HeaderHeightSync } from "@/components/layout/HeaderHeightSync"
 
 const NAV_LINKS = [
   { label: "Home", href: "/" },
@@ -14,7 +15,8 @@ const NAV_LINKS = [
 
 export function SiteHeader() {
   return (
-    <header className="sticky top-0 z-50 bg-lunar-green text-soft-beige">
+    <header data-site-header className="sticky top-0 z-50 bg-lunar-green text-soft-beige">
+      <HeaderHeightSync />
       {/* True-centre layout (Rudie 2026-07-12): previously a
           justify-between flex row, which centres the nav between two
           UNEQUAL neighbours (210px logo vs the wider search+language

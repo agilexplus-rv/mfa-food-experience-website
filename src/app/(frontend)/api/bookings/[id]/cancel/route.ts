@@ -146,7 +146,7 @@ export async function POST(
         id: eventId,
         overrideAccess: true,
       }).catch(() => null)
-      const eventTitle = (eventDoc as { title?: string } | null)?.title ?? 'the event'
+      const eventTitle = (eventDoc as { title?: string } | null)?.title ?? 'the experience'
 
       // Send notification email
       try {

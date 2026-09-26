@@ -1,4 +1,5 @@
 import type { GlobalConfig } from 'payload'
+import { globalAuditHook } from '@/lib/audit/helper'
 
 /**
  * SiteSettings — Payload Global for site-wide presentation options.
@@ -18,6 +19,9 @@ export const SiteSettings: GlobalConfig = {
     // Admin only: only admins can change site settings.
     update: ({ req: { user } }) =>
       (user as { role?: string } | null)?.role === 'admin',
+  },
+  hooks: {
+    afterChange: [globalAuditHook('site-settings', 'site settings')],
   },
   admin: {
     group: 'Content',

@@ -4,12 +4,14 @@ import { MtText } from '@/components/i18n/MtText'
 import type { EventAvailability } from '@/lib/availability-types'
 import { formatPrice } from '@/lib/availability-types'
 import { formatDay, formatTimeRange } from '@/lib/format-date'
+import { ReadMoreButton } from './ReadMoreButton'
 
 /**
  * EventCard — single upcoming event in a service grid.
  *
  * Per FR-1.5: title, short description, next date, price per person,
- * availability status, and a "Learn more / Book" action.
+ * availability status, a "Read more" dialog (experience picture + full
+ * description) and a "Book Now" action.
  *
  * The Events collection has no dedicated `shortDescription` field, so
  * the short description line is derived from location + time range
@@ -39,12 +41,12 @@ export interface EventCardProps {
   shortDescription?: string
   /** Optional href for the card/CTA link. Defaults to the event booking route. */
   href?: string
-  /** Service image URL for the card media area. */
+  /** Experience (service) image — shown in the "Read more" dialog only. */
   imageUrl?: string
   /** Alt text for the service image. */
   imageAlt?: string
-  /** Link to the service detail page for "Read more". */
-  serviceHref?: string
+  /** Experience (service) description, pre-rendered HTML, for "Read more". */
+  descriptionHtml?: string
 }
 
 function AvailabilityBadge({ availability }: { availability: EventAvailability }) {
@@ -78,7 +80,7 @@ export function EventCard({
   href,
   imageUrl,
   imageAlt,
-  serviceHref,
+  descriptionHtml,
 }: EventCardProps) {
   const timeRange = formatTimeRange(startTime, endTime)
   const fallbackDesc = [locationRef, timeRange].filter(Boolean).join(' · ')
@@ -88,18 +90,6 @@ export function EventCard({
 
   return (
     <article className="group relative flex h-full flex-col overflow-hidden rounded-xl border border-border bg-surface shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md focus-within:shadow-md">
-      {/* Service image — shown when available (read-more preview) */}
-      {imageUrl && (
-        <div className="aspect-[16/9] w-full overflow-hidden bg-lunar-green/10">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={imageUrl}
-            alt={imageAlt || title}
-            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-          />
-        </div>
-      )}
-
       <div className="flex flex-1 flex-col p-6">
         <div className="flex items-start justify-between gap-3">
           <h3 className="text-lg font-bold tracking-tight text-lunar-green">
@@ -132,18 +122,19 @@ export function EventCard({
         {/* Spacer */}
         <div className="flex-1" />
 
-        {/* Read more link — goes to service detail page */}
-        {serviceHref && (
-          <div className="mt-3">
-            <Link
-              href={serviceHref}
-              className="inline-flex items-center gap-1 text-sm font-semibold text-accent-text hover:text-lunar-green transition-colors focus:outline-2 focus:outline-offset-2 focus:outline-lunar-green"
-            >
-              <MtText en="Read more" mt="Aqra iktar" />
-              <span aria-hidden="true">&rarr;</span>
-            </Link>
-          </div>
-        )}
+        {/* Read more — dialog with the experience picture + description */}
+        <div className="mt-3">
+          <ReadMoreButton
+            content={{
+              title,
+              subtitle: [formatDay(date), timeRange, `${formatPrice(pricePerPerson)} per person`].filter(Boolean).join(' · '),
+              descriptionHtml,
+              imageUrl,
+              imageAlt,
+              bookHref: fullyBooked ? undefined : linkHref,
+            }}
+          />
+        </div>
 
         <div className="mt-4 pt-4 border-t border-border">
           <Link
@@ -159,7 +150,7 @@ export function EventCard({
                 : 'bg-terracotta-dark text-white hover:bg-terracotta/85',
             ].join(' ')}
           >
-            {fullyBooked ? <MtText en="Fully booked" mt="Kollox mibbukkjat" /> : <MtText en="Book" mt="Ibbukkja" />}
+            {fullyBooked ? <MtText en="Fully booked" mt="Kollox mibbukkjat" /> : <MtText en="Book Now" mt="Ibbukkja Issa" />}
             {!fullyBooked && <span aria-hidden="true">&rarr;</span>}
           </Link>
         </div>

@@ -205,7 +205,8 @@ export async function POST(req: NextRequest) {
   try {
     const sourceCode = vivaSourceCode()
     const result = await createOrder({
-      amount: totalAmountEuros * 100, // VIVA expects amount in cents
+      // VIVA expects integer cents; round to avoid float artefacts (19.99 * 3 * 100 = 5996.999...).
+      amount: Math.round(totalAmountEuros * 100),
       customerTrns: `${evt.title} — ${persons} seat${persons === 1 ? '' : 's'}`,
       customer: {
         email,

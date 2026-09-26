@@ -78,6 +78,9 @@ export async function GET(req: NextRequest) {
         collection: d.collection || null,
         documentId: d.documentId || null,
         detail: d.detail || null,
+        ipAddress: d.ipAddress || null,
+        userAgent: d.userAgent || null,
+        changes: d.changes || null,
         createdAt: d.createdAt,
       }
     })

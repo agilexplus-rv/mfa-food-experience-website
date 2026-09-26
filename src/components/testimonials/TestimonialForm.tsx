@@ -90,7 +90,7 @@ export function TestimonialForm({ events }: TestimonialFormProps) {
       {/* Optional event */}
       <div>
         <label htmlFor="testimonial-event" className={labelClass}>
-          Event (optional)
+          Experience (optional)
         </label>
         {events.length > 0 ? (
           <select
@@ -98,7 +98,7 @@ export function TestimonialForm({ events }: TestimonialFormProps) {
             name="event"
             className={inputClass}
           >
-            <option value="">Select an event&hellip;</option>
+            <option value="">Select an experience&hellip;</option>
             {events.map((ev) => (
               <option key={ev.id} value={ev.id}>
                 {ev.title}

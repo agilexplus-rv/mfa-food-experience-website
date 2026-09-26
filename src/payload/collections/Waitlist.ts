@@ -1,5 +1,5 @@
 import type { CollectionConfig } from 'payload'
-import { auditLog, diffChanges } from '@/lib/audit/helper'
+import { auditLog, diffChanges, requestMeta } from '@/lib/audit/helper'
 
 export const Waitlist: CollectionConfig = {
   slug: 'waitlist',
@@ -21,10 +21,10 @@ export const Waitlist: CollectionConfig = {
           const actor = req.user as { id?: string | number } | null
           const d = doc as { id: string | number; email: string }
           if (operation === 'create') {
-            auditLog(req.payload, { action: 'create', actor: actor?.id, collection: 'waitlist', documentId: d.id, detail: `Waitlist entry from ${d.email}` })
+            auditLog(req.payload, { action: 'create', actor: actor?.id, collection: 'waitlist', documentId: d.id, detail: `Waitlist entry from ${d.email}`, ...requestMeta(req) })
           } else if (operation === 'update' && actor?.id) {
             const changes = diffChanges((previousDoc as Record<string, unknown>) || {}, (doc as Record<string, unknown>) || {})
-            auditLog(req.payload, { action: 'update', actor: actor.id, collection: 'waitlist', documentId: d.id, detail: `Updated waitlist entry ${d.email}`, changes })
+            auditLog(req.payload, { action: 'update', actor: actor.id, collection: 'waitlist', documentId: d.id, detail: `Updated waitlist entry ${d.email}`, changes, ...requestMeta(req) })
           }
         } catch {
           // audit failure must not block the primary operation
@@ -37,7 +37,7 @@ export const Waitlist: CollectionConfig = {
           const actor = req.user as { id?: string | number } | null
           if (!actor?.id || !doc) return
           const d = doc as { id: string | number; email: string }
-          auditLog(req.payload, { action: 'delete', actor: actor.id, collection: 'waitlist', documentId: d.id, detail: `Deleted waitlist entry ${d.email}` })
+          auditLog(req.payload, { action: 'delete', actor: actor.id, collection: 'waitlist', documentId: d.id, detail: `Deleted waitlist entry ${d.email}`, ...requestMeta(req) })
         } catch {
           // audit failure must not block the primary operation
         }

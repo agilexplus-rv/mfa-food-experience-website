@@ -1,4 +1,5 @@
 import type { GlobalConfig } from 'payload'
+import { globalAuditHook } from '@/lib/audit/helper'
 
 /**
  * CancellationPolicy — Payload Global (single-document, admin-editable).
@@ -23,6 +24,9 @@ export const CancellationPolicy: GlobalConfig = {
     // Admin only: only admins can update the policy.
     update: ({ req: { user } }) =>
       (user as { role?: string } | null)?.role === 'admin',
+  },
+  hooks: {
+    afterChange: [globalAuditHook('cancellation-policy', 'cancellation policy')],
   },
   admin: {
     group: 'Content',
@@ -73,7 +77,7 @@ export const CancellationPolicy: GlobalConfig = {
           type: 'number',
           required: true,
           min: 0,
-          label: 'If cancelled at least this many days before the event',
+          label: 'If cancelled at least this many days before the experience',
           admin: {
             width: '33%',
           },
@@ -104,7 +108,7 @@ export const CancellationPolicy: GlobalConfig = {
     {
       name: 'organiserCancellationText',
       type: 'textarea',
-      label: 'What happens if THE ORGANISER cancels the event',
+      label: 'What happens if THE ORGANISER cancels the experience',
       admin: {
         description:
           'Optional. Separate from customer-initiated cancellation. Explains what the customer is entitled to if MFA cancels (e.g. full refund or reschedule).',
@@ -139,7 +143,7 @@ export const CancellationPolicy: GlobalConfig = {
       type: 'textarea',
       label: 'Withdrawal right disclosure (Art. 16(l) / Art. 6(1)(k))',
       defaultValue:
-        'Pursuant to Article 16(l) of the EU Consumer Rights Directive (Directive 2011/83/EU, transposed in Malta as the Consumer Rights Regulations, S.L. 378.17), bookings for leisure services with a specific scheduled date are exempt from the standard 14-day right of withdrawal. By booking this event, you acknowledge that the 14-day cooling-off period does not apply, and that the cancellation terms set out above govern any refund or rescheduling request.',
+        'Pursuant to Article 16(l) of the EU Consumer Rights Directive (Directive 2011/83/EU, transposed in Malta as the Consumer Rights Regulations, S.L. 378.17), bookings for leisure services with a specific scheduled date are exempt from the standard 14-day right of withdrawal. By booking this experience, you acknowledge that the 14-day cooling-off period does not apply, and that the cancellation terms set out above govern any refund or rescheduling request.',
       admin: {
         description:
           'Legally required disclosure that the 14-day cooling-off period does not apply to scheduled leisure-service bookings. Pre-filled with the correct legal wording; edit only if legal advice confirms a change is needed.',

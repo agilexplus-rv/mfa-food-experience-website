@@ -52,6 +52,7 @@ function isProtectedPath(pathname: string): boolean {
     pathname.startsWith('/admin') ||
     pathname.startsWith('/scan') ||
     pathname.startsWith('/dashboard') ||
+    pathname.startsWith('/account') ||
     pathname.startsWith('/console')
   )
 }
@@ -171,9 +172,18 @@ export function middleware(req: NextRequest) {
     return NextResponse.redirect(setupUrl)
   }
 
+  // Post-login landing: Payload's login form sends users to the admin root
+  // (/admin) unless a ?redirect= is given. Staff work in the operator
+  // console / door dashboard, so route them there by role. Deep links into
+  // /admin/collections/... etc. are left alone.
+  if (pathname === '/admin' || pathname === '/admin/') {
+    const home = session.role === 'admin' ? '/console' : '/dashboard'
+    return NextResponse.redirect(new URL(home, req.url))
+  }
+
   return NextResponse.next()
 }
 
 export const config = {
-  matcher: ['/admin/:path*', '/scan/:path*', '/dashboard/:path*', '/console/:path*'],
+  matcher: ['/admin/:path*', '/scan/:path*', '/dashboard/:path*', '/account/:path*', '/console/:path*'],
 }

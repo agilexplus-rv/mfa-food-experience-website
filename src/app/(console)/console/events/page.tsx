@@ -19,6 +19,7 @@ interface EventRow {
   endTime: string
   capacity: number
   pricePerPerson: number
+  autoCloseHoursAfter: number | null
   locationRef: string
   status: string
   fullyBookedOverride: boolean
@@ -73,7 +74,7 @@ export default function ConsoleEventsPage() {
   const [form, setForm] = useState({
     title: '', serviceId: '', date: '', startTime: '', endTime: '',
     capacity: '', pricePerPerson: '', locationRef: '', status: 'scheduled' as string,
-    fullyBookedOverride: false,
+    fullyBookedOverride: false, autoCloseHoursAfter: '',
   })
   // Recurrence (create only): 'none' | 'weekly' | 'biweekly' | 'monthly' + until date
   const [repeatFreq, setRepeatFreq] = useState('none')
@@ -114,7 +115,7 @@ export default function ConsoleEventsPage() {
 
   const resetForm = () => {
     setForm({ title: '', serviceId: '', date: '', startTime: '', endTime: '',
-      capacity: '', pricePerPerson: '', locationRef: '', status: 'scheduled', fullyBookedOverride: false })
+      capacity: '', pricePerPerson: '', locationRef: '', status: 'scheduled', fullyBookedOverride: false, autoCloseHoursAfter: '' })
     setEditingId(null)
     setFormError(null)
     setRepeatFreq('none')
@@ -143,6 +144,7 @@ export default function ConsoleEventsPage() {
       locationRef: ev.locationRef,
       status: ev.status,
       fullyBookedOverride: ev.fullyBookedOverride,
+      autoCloseHoursAfter: ev.autoCloseHoursAfter != null ? String(ev.autoCloseHoursAfter) : '',
     })
     setFormError(null)
     setModalOpen(true)
@@ -186,6 +188,7 @@ export default function ConsoleEventsPage() {
         locationRef: form.locationRef,
         status: form.status,
         fullyBookedOverride: form.fullyBookedOverride,
+        autoCloseHoursAfter: form.autoCloseHoursAfter === '' ? null : Number(form.autoCloseHoursAfter),
       }
       if (!editingId && repeatFreq !== 'none') {
         if (!repeatUntil) {
@@ -461,7 +464,7 @@ export default function ConsoleEventsPage() {
             </div>
             <div>
               <label className="block text-sm font-semibold text-lunar-green mb-1">Price/person (EUR) *</label>
-              <input type="number" min="0" value={form.pricePerPerson} onChange={(e) => setForm(p => ({ ...p, pricePerPerson: e.target.value }))}
+              <input type="number" min="0" step="0.01" value={form.pricePerPerson} onChange={(e) => setForm(p => ({ ...p, pricePerPerson: e.target.value }))}
                 className="w-full rounded-lg border border-border px-4 py-2.5 text-sm text-lunar-green focus:outline-none focus:ring-2 focus:ring-lunar-green/30"
                 style={{ boxSizing: 'border-box' }} />
             </div>
@@ -489,6 +492,20 @@ export default function ConsoleEventsPage() {
                 className="h-4 w-4 accent-lunar-green" />
               Fully Booked Override
             </label>
+          </div>
+          <div>
+            <label htmlFor="auto-close-hours" className="block text-sm font-semibold text-lunar-green mb-1">
+              Auto-close after (hours)
+            </label>
+            <input id="auto-close-hours" type="number" min="0" step="0.5" value={form.autoCloseHoursAfter}
+              onChange={(e) => setForm(p => ({ ...p, autoCloseHoursAfter: e.target.value }))}
+              placeholder="e.g. 2"
+              aria-describedby="auto-close-help"
+              className="w-40 rounded-lg border border-border px-4 py-2.5 text-sm text-lunar-green focus:outline-none focus:ring-2 focus:ring-lunar-green/30"
+              style={{ boxSizing: 'border-box' }} />
+            <p id="auto-close-help" className="mt-1 text-xs text-text-light">
+              Optional. The experience is automatically marked Completed this many hours after its end time. Leave empty to close it the day after.
+            </p>
           </div>
           {formError && (
             <div className="rounded-lg border border-terracotta bg-terracotta/5 p-3 text-sm text-[#9C4E2F]">{formError}</div>
