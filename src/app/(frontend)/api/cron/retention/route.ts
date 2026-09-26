@@ -81,7 +81,7 @@ export async function GET(req: NextRequest) {
   // because Payload's query DSL does not support "event.date < X"
   // as a where clause (relationship date traversal).
 
-  let errors: string[] = []
+  const errors: string[] = []
   let processed = 0
 
   let bookings: BookingDoc[] = []
