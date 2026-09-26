@@ -21,6 +21,9 @@ RUN npm ci --ignore-scripts
 
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
+# Patch Payload's multipart body parser to use native formData() instead of
+# the Busboy-based reader that hangs on Next.js App Router standalone.
+RUN node scripts/patch-multipart.mjs
 RUN npm run build
 
 # ── Stage 3: Runtime ───────────────────────────────────────────
