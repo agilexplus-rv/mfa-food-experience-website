@@ -75,10 +75,13 @@ export async function verifySession(
   }
   if (!user) return null
 
-  // Session check (Users collection uses Payload's default useSessions: true).
-  const sessions = user.sessions || []
-  const hasMatchingSession = sessions.some((s) => s.id === decoded.sid)
-  if (!decoded.sid || !hasMatchingSession) return null
+  // Session check (only when the collection uses Payload's useSessions: true).
+  // When useSessions is false, the JWT has no `sid` claim — skip the check.
+  if (decoded.sid) {
+    const sessions = user.sessions || []
+    const hasMatchingSession = sessions.some((s) => s.id === decoded.sid)
+    if (!hasMatchingSession) return null
+  }
 
   return {
     id: user.id,
