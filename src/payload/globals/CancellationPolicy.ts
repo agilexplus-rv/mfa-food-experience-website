@@ -111,6 +111,30 @@ export const CancellationPolicy: GlobalConfig = {
       },
     },
     {
+      name: 'coolingOffEnabled',
+      type: 'checkbox',
+      label: 'Offer voluntary cooling-off period',
+      defaultValue: false,
+      admin: {
+        description:
+          'When enabled, customers are granted a voluntary cooling-off window after booking (not legally required — Art. 16(l) exempts scheduled leisure services). The standard disclosure text will update accordingly.',
+        position: 'sidebar',
+      },
+    },
+    {
+      name: 'coolingOffHours',
+      type: 'number',
+      min: 1,
+      max: 336, // 14 days
+      label: 'Cooling-off period (hours)',
+      defaultValue: 24,
+      admin: {
+        description:
+          'Number of hours after booking during which the customer can cancel for a full refund, no questions asked. Common values: 24, 48, 72.',
+        condition: (data) => Boolean(data?.coolingOffEnabled),
+      },
+    },
+    {
       name: 'withdrawalRightDisclosure',
       type: 'textarea',
       label: 'Withdrawal right disclosure (Art. 16(l) / Art. 6(1)(k))',

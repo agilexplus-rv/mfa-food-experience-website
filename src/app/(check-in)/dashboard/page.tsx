@@ -62,8 +62,8 @@ const STATUS_COLORS: Record<string, string> = {
   checked_in: 'bg-lunar-green/20 text-lunar-green',
 }
 
-function formatCurrency(cents: number): string {
-  return `\u20AC${(cents / 100).toFixed(2)}`
+function formatCurrency(euros: number): string {
+  return `\u20AC${euros.toFixed(2)}`
 }
 
 function formatDate(iso: string | null): string {

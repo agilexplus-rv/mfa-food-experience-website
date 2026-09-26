@@ -45,7 +45,7 @@ export default async function ServicePage({ params }: PageProps) {
     return <ServiceNotAvailable serviceName={service.name} />
   }
 
-  const { events, availability } = await getServiceEvents(service.id)
+  const { events, availability, description, imageryUrl, imageryAlt } = await getServiceEvents(service.id)
   const gridEvents: GridEvent[] = events.map((e) => ({
     id: e.id,
     title: e.title,
@@ -54,6 +54,9 @@ export default async function ServicePage({ params }: PageProps) {
     endTime: e.endTime,
     pricePerPerson: e.pricePerPerson,
     locationRef: e.locationRef,
+    imageUrl: imageryUrl,
+    imageAlt: imageryAlt,
+    serviceHref: `/services/${slug}`,
   }))
 
   return (
@@ -65,10 +68,29 @@ export default async function ServicePage({ params }: PageProps) {
         <h1 className="mt-3 text-4xl font-black tracking-[-0.02em] text-lunar-green sm:text-5xl">
           {service.name}
         </h1>
-        <p className="mt-4 text-lg leading-relaxed text-text-light">
+        {description && (
+          <p className="mt-4 text-lg leading-relaxed text-text-light max-w-2xl mx-auto">
+            {description}
+          </p>
+        )}
+        <p className={[
+          'text-lg leading-relaxed text-text-light',
+          description ? 'mt-2' : 'mt-4',
+        ].join(' ')}>
           Browse upcoming dates and reserve your seat. New sessions are added
           throughout the season.
         </p>
+        {/* Service image */}
+        {imageryUrl && (
+          <div className="mt-8 mx-auto max-w-2xl overflow-hidden rounded-xl shadow-md">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={imageryUrl}
+              alt={imageryAlt || service.name}
+              className="w-full h-auto object-cover"
+            />
+          </div>
+        )}
       </header>
 
       <div className="mt-12">

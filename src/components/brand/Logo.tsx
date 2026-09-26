@@ -13,7 +13,7 @@ const sizeMap: Record<LogoSize, number> = {
   md: 180,
   lg: 260,
   xl: 360,
-  xxl: 480,
+  xxl: 600,
 }
 
 export interface LogoProps {
@@ -29,7 +29,7 @@ export interface LogoProps {
  * SVGs are served from public/brand/logos/ as plain <img> elements
  * (SVGs are vector, resolution-independent; no next/image needed).
  *
- * Applies the clear-space rule: inline padding equal to 30% of the
+ * Applies the clear-space rule: inline padding equal to 18% of the
  * configured width so the logo is never crowded by adjacent elements.
  */
 export function Logo({
@@ -46,7 +46,7 @@ export function Logo({
       alt="Malta Food Experience"
       width={width}
       className={className}
-      style={{ padding: `${Math.round(width * 0.3)}px` }}
+      style={{ padding: `${Math.round(width * 0.18)}px` }}
     />
   )
 }

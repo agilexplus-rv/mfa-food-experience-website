@@ -35,8 +35,8 @@ interface BookingDetail {
   waitlistEntries: Array<{ id: string; email: string; name: string; persons: number; status: string; createdAt: string }>
 }
 
-function formatCurrency(cents: number): string {
-  return `\u20AC${(cents / 100).toFixed(2)}`
+function formatCurrency(euros: number): string {
+  return `\u20AC${euros.toFixed(2)}`
 }
 
 function formatDate(iso: string | null): string {

@@ -89,7 +89,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'validation_error', details: parsed.error.flatten() }, { status: 422 })
   }
 
-  const { eventId, seats: persons, holdId, leadAttendeeName, email, phone, dietaryNotes, dietaryConsent, couponCode, turnstileToken, language } = parsed.data
+  const { eventId, seats: persons, holdId, leadAttendeeName, email, phone, dietaryNotes, dietaryConsent, couponCode, turnstileToken, language, termsAccepted } = parsed.data
 
   // ── Turnstile ──
   if (isTurnstileConfigured()) {
@@ -149,8 +149,8 @@ export async function POST(req: NextRequest) {
 
   // ── Coupon validation (preview pricing only; not consumed yet) ──
   let couponId: string | number | null = null
-  let discountAmountCents = 0
-  let totalAmountCents = evt.pricePerPerson * persons
+  let discountAmountEuros = 0
+  let totalAmountEuros = evt.pricePerPerson * persons
 
   if (couponCode) {
     const pricing = await (await import('@/lib/coupons/validate')).getEventPricingContext(eventId)
@@ -166,8 +166,8 @@ export async function POST(req: NextRequest) {
 
       if (couponResult.ok && couponResult.coupon) {
         couponId = couponResult.coupon.id
-        discountAmountCents = couponResult.discountAmount ?? 0
-        totalAmountCents = Math.max(0, couponResult.totalAfterDiscount ?? totalAmountCents)
+        discountAmountEuros = couponResult.discountAmount ?? 0
+        totalAmountEuros = Math.max(0, couponResult.totalAfterDiscount ?? totalAmountEuros)
       } else {
         return NextResponse.json({ error: 'invalid_coupon', reason: couponResult.error }, { status: 400 })
       }
@@ -189,10 +189,11 @@ export async function POST(req: NextRequest) {
       persons,
       status: 'pending',
       language: language ?? 'en',
-      totalAmount: totalAmountCents,
+      totalAmount: totalAmountEuros,
       paymentMethod: 'viva',
       dietaryNotes: dietaryNotes ?? '',
       dietaryConsent: dietaryConsent ?? false,
+      termsAccepted: termsAccepted ?? false,
       ...(couponId ? { coupon: couponId } : {}),
     },
     overrideAccess: true,
@@ -204,7 +205,7 @@ export async function POST(req: NextRequest) {
   try {
     const sourceCode = vivaSourceCode()
     const result = await createOrder({
-      amount: totalAmountCents,
+      amount: totalAmountEuros * 100, // VIVA expects amount in cents
       customerTrns: `${evt.title} — ${persons} seat${persons === 1 ? '' : 's'}`,
       customer: {
         email,

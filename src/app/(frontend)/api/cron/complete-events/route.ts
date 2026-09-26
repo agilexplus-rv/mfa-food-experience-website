@@ -6,8 +6,7 @@ import { cronSecret } from '@/lib/env'
 
 /**
  * GET /api/cron/complete-events -- Vercel Cron (see vercel.json) runs
- * this daily to transition past events from scheduled -> completed
- * (Rudie 2026-07-12).
+ * this daily to transition past events from scheduled -> completed.
  *
  * Rules:
  *   - Only 'scheduled' events are touched. 'cancelled' is a terminal,
@@ -18,6 +17,10 @@ import { cronSecret } from '@/lib/env'
  *     passed. Same-day events are left alone until the next run, so an
  *     evening event is never marked completed mid-afternoon by a
  *     timezone edge.
+ *   - Additionally, if an event has `autoCloseHoursAfter` set, it is
+ *     auto-completed when `endTime + autoCloseHoursAfter` has passed.
+ *     This handles same-day events that should close shortly after
+ *     they end (e.g. a tasting that ends at 2pm should close at 6pm).
  *   - Works identically for one-off events and recurring-series
  *     occurrences, since every occurrence is an independent row --
  *     each flips on its own date, exactly the per-occurrence behaviour
@@ -39,8 +42,6 @@ export async function GET(req: NextRequest) {
 
   const p = await getPayload({ config })
 
-  // Today's date in Malta (the events' operational timezone). en-CA
-  // locale formats as YYYY-MM-DD, matching the events.date column.
   const todayMalta = new Intl.DateTimeFormat('en-CA', {
     timeZone: 'Europe/Malta',
   }).format(new Date())
@@ -67,6 +68,38 @@ export async function GET(req: NextRequest) {
         overrideAccess: true,
       })
       completed++
+    }
+
+    // Also auto-close same-day events whose endTime + autoCloseHoursAfter has passed
+    const nowMs = Date.now()
+    const sameDay = await p.find({
+      collection: 'events',
+      where: {
+        and: [
+          { status: { equals: 'scheduled' } },
+          { date: { equals: todayMalta } },
+        ],
+      },
+      limit: 500,
+      overrideAccess: true,
+    })
+
+    for (const ev of sameDay.docs) {
+      const doc = ev as { id: string | number; endTime: string; autoCloseHoursAfter?: number }
+      if (doc.autoCloseHoursAfter && doc.autoCloseHoursAfter > 0 && doc.endTime) {
+        const endMs = new Date(doc.endTime).getTime()
+        if (isNaN(endMs)) continue
+        const closeAfterMs = doc.autoCloseHoursAfter * 60 * 60 * 1000
+        if (nowMs > endMs + closeAfterMs) {
+          await p.update({
+            collection: 'events',
+            id: doc.id,
+            data: { status: 'completed' },
+            overrideAccess: true,
+          })
+          completed++
+        }
+      }
     }
 
     return NextResponse.json({ ok: true, completed, cutoffDate: todayMalta })

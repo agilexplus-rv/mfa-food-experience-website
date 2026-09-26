@@ -25,6 +25,9 @@ export interface GridEvent {
   pricePerPerson: number
   locationRef: string
   shortDescription?: string
+  imageUrl?: string
+  imageAlt?: string
+  serviceHref?: string
 }
 
 export interface EventGridProps {
@@ -108,6 +111,9 @@ export function EventGrid({ events, availability, eventHref }: EventGridProps) {
                 availability={av}
                 shortDescription={e.shortDescription}
                 href={eventHref?.(e.id)}
+                imageUrl={e.imageUrl}
+                imageAlt={e.imageAlt}
+                serviceHref={e.serviceHref}
               />
             )
           })}

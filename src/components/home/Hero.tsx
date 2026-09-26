@@ -64,7 +64,7 @@ export async function Hero() {
             href="/services"
             className="mt-10 inline-flex items-center gap-2 rounded-lg bg-terracotta-dark px-8 py-4 text-base font-bold text-white transition-colors hover:bg-terracotta/85 focus:outline-2 focus:outline-offset-2 focus:outline-terracotta"
           >
-            <MtText en="Book an Event" mt="Ibbukkja Avveniment" />
+            <MtText en="Book an Experience" mt="Ibbukkja Esperjenza" />
             <span aria-hidden="true">&rarr;</span>
           </Link>
 
@@ -93,7 +93,7 @@ export async function Hero() {
         href="/services"
         className="mt-10 inline-flex items-center gap-2 rounded-lg bg-terracotta-dark px-8 py-4 text-base font-bold text-white transition-colors hover:bg-terracotta/85 focus:outline-2 focus:outline-offset-2 focus:outline-terracotta"
       >
-        <MtText en="Book an Event" mt="Ibbukkja Avveniment" />
+        <MtText en="Book an Experience" mt="Ibbukkja Esperjenza" />
         <span aria-hidden="true">&rarr;</span>
       </Link>
 

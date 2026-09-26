@@ -4,6 +4,7 @@ export const AuditLog: CollectionConfig = {
   slug: 'audit_logs',
   admin: {
     useAsTitle: 'id',
+    defaultColumns: ['action', 'actor', 'collection', 'documentId', 'createdAt'],
   },
   access: {
     create: () => true,
@@ -22,6 +23,8 @@ export const AuditLog: CollectionConfig = {
         { label: 'Logout', value: 'logout' },
         { label: 'Check-in', value: 'check_in' },
         { label: 'MFA Reset', value: 'mfa_reset' },
+        { label: 'Cancel', value: 'cancel' },
+        { label: 'Duplicate', value: 'duplicate' },
       ],
       required: true,
     },
@@ -29,5 +32,29 @@ export const AuditLog: CollectionConfig = {
     { name: 'collection', type: 'text' },
     { name: 'documentId', type: 'text' },
     { name: 'detail', type: 'textarea' },
+    {
+      name: 'ipAddress',
+      type: 'text',
+      admin: {
+        description: 'Client IP address captured at the time of the action.',
+        readOnly: true,
+      },
+    },
+    {
+      name: 'userAgent',
+      type: 'text',
+      admin: {
+        description: 'Client User-Agent header at the time of the action.',
+        readOnly: true,
+      },
+    },
+    {
+      name: 'changes',
+      type: 'json',
+      admin: {
+        description: 'Before/after diff of changed fields (for update actions).',
+        readOnly: true,
+      },
+    },
   ],
 }

@@ -50,8 +50,8 @@ const STATUS_OPTIONS = [
   { value: 'checked_in', label: 'Checked In' },
 ]
 
-function formatCurrency(cents: number): string {
-  return `\u20AC${(cents / 100).toFixed(2)}`
+function formatCurrency(euros: number): string {
+  return `\u20AC${euros.toFixed(2)}`
 }
 
 function formatDate(iso: string | null): string {
@@ -462,7 +462,7 @@ export default function ConsoleBookingsPage() {
           </div>
           <div>
             <label className="block text-sm font-semibold text-lunar-green mb-1">
-              Total Amount (cents) — leave empty to auto-calculate
+              Total Amount (EUR) — leave empty to auto-calculate
             </label>
             <input
               type="number"

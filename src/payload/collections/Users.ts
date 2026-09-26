@@ -161,28 +161,6 @@ export const Users: CollectionConfig = {
           }
         }
         // Prevent non-admin users from changing their own role.
-        //
-        // ROOT CAUSE of the 2026-07-12 "Failed to store TOTP secret"
-        // bug: Payload's beforeChange hook receives the FULL MERGED
-        // document for update operations -- data.role is the user's
-        // EXISTING role on every single update, whether or not role
-        // was part of the fields actually being changed. The previous
-        // `data?.role !== undefined` check therefore fired on every
-        // update to any user record (any update always has a role
-        // present in the merged data), not just genuine role-change
-        // attempts. This tripped /api/mfa/enroll's payload.update()
-        // call (which only sends { totpSecret }, never role) because
-        // that Local API call also has no req.user (it uses
-        // overrideAccess: true rather than an authenticated request
-        // context), so `user?.role !== 'admin'` was also always true
-        // -- confirmed via a temporary diagnostic route reproducing
-        // the exact call and surfacing the underlying error message
-        // ("Only admins can change user roles.") instead of the
-        // generic 500 the enroll route's catch-all wraps it in.
-        //
-        // Fix: compare against originalDoc.role to detect an ACTUAL
-        // change, not mere presence -- this is what should have been
-        // checked from the start.
         const roleChange = data?.role as string | undefined
         if (
           operation === 'update' &&
@@ -195,14 +173,62 @@ export const Users: CollectionConfig = {
             throw new Error('Only admins can change user roles.')
           }
         }
-        // C4/MFA-ENFORCED: Warn on admin creation without MFA (info only —
-        // the real gate is the middleware mfa-verified cookie check).
+
+        // Prevent an admin from removing their own admin role or deactivating themselves.
+        if (operation === 'update' && originalDoc && req.user) {
+          const userId = (req.user as { id?: string | number }).id
+          const origId = (originalDoc as { id?: string | number }).id
+          if (String(userId) === String(origId)) {
+            // Admin cannot deactivate or demote themselves
+            if (data?.role !== undefined && data.role !== 'admin') {
+              throw new Error('You cannot remove your own admin role.')
+            }
+            if (data?.active === false) {
+              throw new Error('You cannot deactivate your own account.')
+            }
+          }
+        }
+
+        // C4/MFA-ENFORCED: Warn on admin creation without MFA
         if (operation === 'create' && data?.role === 'admin' && !data?.mfaEnabled) {
           console.info(
             '[MFA] Admin account created without MFA enabled. User will see a setup prompt in the admin panel.',
           )
         }
         return data
+      },
+    ],
+    beforeDelete: [
+      async ({ id, req }) => {
+        const user = req.user as { id?: string | number; role?: string } | null
+
+        // Prevent admin from deleting themselves
+        if (user && String(user.id) === String(id)) {
+          throw new Error('You cannot delete your own account.')
+        }
+
+        // Prevent deleting the last admin
+        try {
+          const { docs } = await req.payload.find({
+            collection: 'users',
+            where: {
+              and: [
+                { role: { equals: 'admin' } },
+                { id: { not_equals: id } },
+              ],
+            },
+            limit: 1,
+            overrideAccess: true,
+          })
+
+          if (docs.length === 0) {
+            throw new Error('Cannot delete the last admin. At least one admin user must exist.')
+          }
+        } catch (err) {
+          if (err instanceof Error && err.message.startsWith('Cannot delete')) throw err
+          // If the query itself fails (DB issue), deny to be safe
+          throw new Error('Unable to verify admin count — deletion blocked.')
+        }
       },
     ],
     afterLogin: [

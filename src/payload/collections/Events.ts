@@ -16,6 +16,62 @@ export const Events: CollectionConfig = {
     update: ({ req: { user } }) => (user as { role?: string } | null)?.role === 'admin',
     delete: ({ req: { user } }) => (user as { role?: string } | null)?.role === 'admin',
   },
+  hooks: {
+    afterChange: [
+      async ({ operation, doc, previousDoc, req }) => {
+        const actor = req.user as { id?: string | number } | null
+        if (!actor?.id) return
+
+        const { auditLog, diffChanges } = await import('@/lib/audit/helper')
+        const d = doc as { id: string | number; title: string }
+
+        if (operation === 'create') {
+          auditLog(req.payload, {
+            action: 'create',
+            actor: actor.id,
+            collection: 'events',
+            documentId: d.id,
+            detail: `Created experience "${d.title}"`,
+            ipAddress: req.headers?.get?.('x-forwarded-for') || undefined,
+            userAgent: req.headers?.get?.('user-agent') || undefined,
+          })
+        } else if (operation === 'update') {
+          const changes = diffChanges(
+            (previousDoc as Record<string, unknown>) || {},
+            (doc as Record<string, unknown>) || {},
+          )
+          auditLog(req.payload, {
+            action: 'update',
+            actor: actor.id,
+            collection: 'events',
+            documentId: d.id,
+            detail: `Updated experience "${d.title}"`,
+            ipAddress: req.headers?.get?.('x-forwarded-for') || undefined,
+            userAgent: req.headers?.get?.('user-agent') || undefined,
+            changes,
+          })
+        }
+      },
+    ],
+    afterDelete: [
+      async ({ doc, req }) => {
+        const actor = req.user as { id?: string | number } | null
+        if (!actor?.id || !doc) return
+
+        const { auditLog } = await import('@/lib/audit/helper')
+        const d = doc as { id: string | number; title: string }
+        auditLog(req.payload, {
+          action: 'delete',
+          actor: actor.id,
+          collection: 'events',
+          documentId: d.id,
+          detail: `Deleted experience "${d.title}"`,
+          ipAddress: req.headers?.get?.('x-forwarded-for') || undefined,
+          userAgent: req.headers?.get?.('user-agent') || undefined,
+        })
+      },
+    ],
+  },
   fields: [
     {
       name: 'service',
@@ -98,6 +154,15 @@ export const Events: CollectionConfig = {
         readOnly: true,
         position: 'sidebar',
         description: 'Present when this event was created as part of a recurring series.',
+      },
+    },
+    {
+      name: 'autoCloseHoursAfter',
+      type: 'number',
+      min: 0,
+      admin: {
+        position: 'sidebar',
+        description: 'Optional. Automatically set event status to "Completed" this many hours after endTime. Leave empty to disable auto-close.',
       },
     },
     {

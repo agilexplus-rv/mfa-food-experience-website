@@ -24,7 +24,7 @@ export interface RefundInput {
 export interface RefundResult {
   refundId?: string
   refundStatus: string
-  refundAmountCents: number
+  refundAmountEuros: number
   tier: CancellationTier | null
   tierLabel: string
   overridden: boolean
@@ -86,7 +86,7 @@ export async function processCancellationRefund(
   }
 
   const refundPct = overridden || !tier ? 100 : tier.refundPercentage
-  const refundAmountCents = Math.round(
+  const refundAmountEuros = Math.round(
     (input.totalAmount * refundPct) / 100,
   )
 
@@ -100,19 +100,19 @@ export async function processCancellationRefund(
     return {
       refundId,
       refundStatus,
-      refundAmountCents: 0,
+      refundAmountEuros: 0,
       tier: overridden ? null : tier,
       tierLabel,
       overridden,
     }
   }
 
-  if (refundAmountCents === 0) {
+  if (refundAmountEuros === 0) {
     refundStatus = 'none'
     return {
       refundId: undefined,
       refundStatus,
-      refundAmountCents: 0,
+      refundAmountEuros: 0,
       tier,
       tierLabel,
       overridden,
@@ -123,7 +123,7 @@ export async function processCancellationRefund(
     try {
       const result = await refundTransaction({
         transactionId: input.vivaTransactionId,
-        amount: refundAmountCents,
+        amount: refundAmountEuros * 100, // VIVA expects cents
         merchantTrns: input.reference,
       })
       refundId = result.transactionId
@@ -156,7 +156,7 @@ export async function processCancellationRefund(
   return {
     refundId,
     refundStatus,
-    refundAmountCents,
+    refundAmountEuros,
     tier,
     tierLabel,
     overridden,

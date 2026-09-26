@@ -20,6 +20,11 @@ export interface BookingFormProps {
    * Controls the wording of the cancellation acknowledgement checkbox.
    */
   cancellationEnabled?: boolean
+  /**
+   * URL for the Terms & Conditions page. When set, a mandatory T&Cs
+   * checkbox is shown and must be accepted before submitting.
+   */
+  termsAndConditionsUrl?: string
 }
 
 /** Cloudflare Turnstile site key. Exposed to the client as NEXT_PUBLIC_*. */
@@ -78,7 +83,7 @@ function formatCountdown(msRemaining: number): string {
  *   disclosure rendered directly on the booking page before payment)
  * @at-compliance ADR-008 C16 (Cloudflare Turnstile bot mitigation)
  */
-export function BookingForm({ eventId, pricePerPerson, maxSeats, withdrawalRightDisclosure, cancellationEnabled }: BookingFormProps) {
+export function BookingForm({ eventId, pricePerPerson, maxSeats, withdrawalRightDisclosure, cancellationEnabled, termsAndConditionsUrl }: BookingFormProps) {
   const sessionIdRef = useRef<string>(newSessionId())
   const [seats, setSeats] = useState(1)
   const [hold, setHold] = useState<HoldState | null>(null)
@@ -95,6 +100,7 @@ export function BookingForm({ eventId, pricePerPerson, maxSeats, withdrawalRight
     { state: 'idle' } | { state: 'checking' } | { state: 'valid'; totalAfterDiscount: number } | { state: 'invalid'; message: string }
   >({ state: 'idle' })
   const [policyAccepted, setPolicyAccepted] = useState(false)
+  const [termsAccepted, setTermsAccepted] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
 
@@ -267,6 +273,10 @@ export function BookingForm({ eventId, pricePerPerson, maxSeats, withdrawalRight
         setSubmitError('Please confirm you have read the cancellation policy.')
         return
       }
+      if (termsAndConditionsUrl && !termsAccepted) {
+        setSubmitError('Please accept the Terms & Conditions to continue.')
+        return
+      }
 
       setSubmitting(true)
       try {
@@ -286,6 +296,7 @@ export function BookingForm({ eventId, pricePerPerson, maxSeats, withdrawalRight
             dietaryConsent,
             couponCode: couponStatus.state === 'valid' ? couponCode.trim() : undefined,
             cancellationPolicyAccepted: true,
+            termsAccepted: true,
             turnstileToken: window.turnstileToken,
           }),
         })
@@ -492,6 +503,26 @@ export function BookingForm({ eventId, pricePerPerson, maxSeats, withdrawalRight
             {withdrawalRightDisclosure}
           </p>
         </div>
+      )}
+
+      {/* Terms & Conditions acceptance — mandatory when T&Cs URL is provided */}
+      {termsAndConditionsUrl && (
+        <label className="flex items-start gap-2.5 text-sm text-lunar-green">
+          <input
+            type="checkbox"
+            checked={termsAccepted}
+            onChange={(e) => setTermsAccepted(e.target.checked)}
+            required
+            className="mt-0.5 h-4 w-4 rounded border-border text-terracotta focus:outline-2 focus:outline-offset-2 focus:outline-terracotta"
+          />
+          <span>
+            I have read and accept the{' '}
+            <a href={termsAndConditionsUrl} target="_blank" rel="noreferrer" className="font-semibold underline">
+              Terms &amp; Conditions
+            </a>
+            .
+          </span>
+        </label>
       )}
 
       {/* Cancellation policy acknowledgement */}

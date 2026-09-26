@@ -44,6 +44,12 @@ export interface ServiceEvents {
   events: EventDoc[]
   /** Availability map keyed by String(eventId). */
   availability: Map<string, EventAvailability>
+  /** Service description (first 280 chars). */
+  description?: string
+  /** Service image URL from the imagery field. */
+  imageryUrl?: string
+  /** Alt text for the service image. */
+  imageryAlt?: string
 }
 
 /** List all visible services for the /services index. */
@@ -127,23 +133,22 @@ export const getServiceEvents = cache(async function getServiceEvents(serviceId:
   startOfToday.setHours(0, 0, 0, 0)
   const todayIso = startOfToday.toISOString().slice(0, 10)
 
-  const res = await p.find({
-    collection: 'events',
-    where: {
-      and: [
-        { service: { equals: serviceId } },
-        { status: { equals: 'scheduled' } },
-        { date: { greater_than_equal: todayIso } },
-      ],
-    },
-    sort: 'date',
-    limit: 100,
-    // Public read access enforces status=scheduled; events for hidden
-    // services would still be individually scheduled. We override here
-    // so the page can decide based on the service's visible flag — but
-    // only ever renders the grid when visible=true.
-    overrideAccess: true,
-  })
+  const [res, service] = await Promise.all([
+    p.find({
+      collection: 'events',
+      where: {
+        and: [
+          { service: { equals: serviceId } },
+          { status: { equals: 'scheduled' } },
+          { date: { greater_than_equal: todayIso } },
+        ],
+      },
+      sort: 'date',
+      limit: 100,
+      overrideAccess: true,
+    }),
+    p.findByID({ collection: 'services', id: serviceId, overrideAccess: true }),
+  ])
 
   const events = res.docs as unknown as EventDoc[]
   const availability = await getAvailabilityForEvents(
@@ -153,5 +158,17 @@ export const getServiceEvents = cache(async function getServiceEvents(serviceId:
       fullyBookedOverride: e.fullyBookedOverride,
     })),
   )
-  return { events, availability }
+
+  const s = service as unknown as {
+    description?: unknown
+    imagery?: MediaRelation
+  }
+
+  return {
+    events,
+    availability,
+    description: getExcerpt(s.description, 280),
+    imageryUrl: getMediaUrl(s.imagery) ?? undefined,
+    imageryAlt: (typeof s.imagery === 'object' && s.imagery?.alt) || undefined,
+  }
 })

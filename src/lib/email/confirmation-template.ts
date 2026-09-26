@@ -22,6 +22,7 @@ export interface ConfirmationEmailData {
   language: 'en' | 'mt'
   qrDataUri: string
   cancellationPolicyUrl: string
+  termsAndConditionsUrl?: string
 }
 
 const COPY = {
@@ -40,6 +41,8 @@ const COPY = {
     qrBody: 'Show this QR code at the door on the day of your experience. It is unique to your booking and can only be used once.',
     policyText: 'Please review our',
     policyLink: 'cancellation policy',
+    termsText: 'By attending you agree to our',
+    termsLink: 'Terms & Conditions',
     footer: 'Malta Food Agency - Pitkali Road, Ta Qali, Attard, Malta',
   },
   mt: {
@@ -57,6 +60,8 @@ const COPY = {
     qrBody: 'Uri dan il-kodici QR fil-bieb fil-jum tal-esperjenza tieghek. Huwa uniku ghall-prenotazzjoni tieghek u jista jintuza darba biss.',
     policyText: 'Jekk joghgbok ara l-',
     policyLink: 'politika ta kancellazzjoni',
+    termsText: 'Billi tattendi, taqbel mal-',
+    termsLink: 'Termini u Kundizzjonijiet',
     footer: 'Malta Food Agency - Pitkali Road, Ta Qali, Attard, Malta',
   },
 } as const
@@ -137,6 +142,7 @@ export function renderConfirmationEmailHtml(data: ConfirmationEmailData): string
 
               <p style="margin:32px 0 0;font-size:13px;line-height:1.6;color:#6B7F74;">
                 ${t.policyText} <a href="${data.cancellationPolicyUrl}" style="color:#C9643D;font-weight:700;">${t.policyLink}</a>.
+                ${data.termsAndConditionsUrl ? `${t.termsText} <a href="${data.termsAndConditionsUrl}" style="color:#C9643D;font-weight:700;">${t.termsLink}</a>.` : ''}
               </p>
             </td>
           </tr>

@@ -22,6 +22,7 @@ import { Waitlist } from './src/payload/collections/Waitlist.ts'
 import { CancellationPolicy } from './src/payload/globals/CancellationPolicy.ts'
 import { SiteSettings } from './src/payload/globals/SiteSettings.ts'
 import { SocialMediaSettings } from './src/payload/globals/SocialMediaSettings.ts'
+import { TermsAndConditions } from './src/payload/globals/TermsAndConditions.ts'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -129,6 +130,7 @@ export default buildConfig({
     CancellationPolicy,
     SiteSettings,
     SocialMediaSettings,
+    TermsAndConditions,
   ],
   db: dbAdapter,
   email: nodemailerAdapter({

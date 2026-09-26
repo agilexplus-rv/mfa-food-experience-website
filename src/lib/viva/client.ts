@@ -120,7 +120,7 @@ async function vivaGet<T = unknown>(path: string): Promise<T> {
 // ── Order / Transaction types ──────────────────────────────────────
 
 export interface CreateOrderInput {
-  amount: number // cents
+  amount: number // amount in cents (EUR × 100) — VIVA API expects cents
   customerTrns: string // description shown to customer
   customer: {
     email: string
@@ -147,7 +147,7 @@ export interface CreateOrderResult {
 export interface VivaTransaction {
   transactionId: string // UUID
   orderCode: number
-  amount: number // cents
+  amount: number // amount in cents (EUR × 100) — VIVA API expects cents
   currencyCode: number
   statusId: string // 'F' = completed
   email: string
@@ -165,7 +165,7 @@ export interface VivaTransaction {
 
 export interface RefundInput {
   transactionId: string
-  amount: number // cents
+  amount: number // amount in cents (EUR × 100) — VIVA API expects cents
   sourceCode?: string
   merchantTrns?: string
   idempotencyKey?: string

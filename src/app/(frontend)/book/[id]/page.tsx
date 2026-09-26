@@ -129,6 +129,7 @@ export default async function BookEventPage({ params }: PageProps) {
             maxSeats={Math.min(20, availability.remaining)}
             withdrawalRightDisclosure={cancellationPolicy?.withdrawalRightDisclosure ?? null}
             cancellationEnabled={cancellationPolicy?.enabled ?? true}
+            termsAndConditionsUrl="/legal/terms-and-conditions"
           />
         )}
       </div>

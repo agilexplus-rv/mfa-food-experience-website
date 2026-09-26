@@ -46,6 +46,7 @@ export async function sendConfirmationEmail(input: SendConfirmationEmailInput): 
     language: input.language,
     qrDataUri,
     cancellationPolicyUrl: `${serverUrl()}/legal/cancellation-policy`,
+    termsAndConditionsUrl: `${serverUrl()}/legal/terms-and-conditions`,
   })
   const subject = renderConfirmationSubject(input.reference, input.language)
 

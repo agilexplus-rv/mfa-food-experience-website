@@ -159,6 +159,14 @@ export const Bookings: CollectionConfig = {
         description: 'Explicit consent to store dietary information, per ADR-008 DPIA measure 5.',
       },
     },
+    {
+      name: 'termsAccepted',
+      type: 'checkbox',
+      defaultValue: false,
+      admin: {
+        description: 'Whether the customer accepted the Terms & Conditions during checkout.',
+      },
+    },
     // ── VIVA Wallet fields ──
     {
       name: 'vivaOrderCode',

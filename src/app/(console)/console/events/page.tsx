@@ -452,7 +452,7 @@ export default function ConsoleEventsPage() {
                 style={{ boxSizing: 'border-box' }} />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-lunar-green mb-1">Price/person (cents) *</label>
+              <label className="block text-sm font-semibold text-lunar-green mb-1">Price/person (EUR) *</label>
               <input type="number" min="0" value={form.pricePerPerson} onChange={(e) => setForm(p => ({ ...p, pricePerPerson: e.target.value }))}
                 className="w-full rounded-lg border border-border px-4 py-2.5 text-sm text-lunar-green focus:outline-none focus:ring-2 focus:ring-lunar-green/30"
                 style={{ boxSizing: 'border-box' }} />
