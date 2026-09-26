@@ -37,6 +37,11 @@ const dbAdapter = process.env.DATABASE_URL?.startsWith('postgres')
       pool: {
         connectionString: process.env.DATABASE_URL,
       },
+      // Auto-push schema changes (create missing tables) on startup.
+      // Safe because we only add new collections/globals; existing tables
+      // are never altered destructively. Once TermsAndConditions is landed,
+      // this can be removed or set to false.
+      push: true,
     })
   : sqliteAdapter({
       client: {
