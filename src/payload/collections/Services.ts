@@ -1,4 +1,5 @@
 import type { CollectionConfig } from 'payload'
+import { auditLog, diffChanges } from '@/lib/audit/helper'
 
 export const Services: CollectionConfig = {
   slug: 'services',
@@ -15,6 +16,29 @@ export const Services: CollectionConfig = {
     },
     update: ({ req: { user } }) => (user as { role?: string } | null)?.role === 'admin',
     delete: ({ req: { user } }) => (user as { role?: string } | null)?.role === 'admin',
+  },
+  hooks: {
+    afterChange: [
+      async ({ operation, doc, previousDoc, req }) => {
+        const actor = req.user as { id?: string | number } | null
+        if (!actor?.id) return
+        const d = doc as { id: string | number; name: string }
+        if (operation === 'create') {
+          auditLog(req.payload, { action: 'create', actor: actor.id, collection: 'services', documentId: d.id, detail: `Created service "${d.name}"` })
+        } else if (operation === 'update') {
+          const changes = diffChanges((previousDoc as Record<string, unknown>) || {}, (doc as Record<string, unknown>) || {})
+          auditLog(req.payload, { action: 'update', actor: actor.id, collection: 'services', documentId: d.id, detail: `Updated service "${d.name}"`, changes })
+        }
+      },
+    ],
+    afterDelete: [
+      async ({ doc, req }) => {
+        const actor = req.user as { id?: string | number } | null
+        if (!actor?.id || !doc) return
+        const d = doc as { id: string | number; name: string }
+        auditLog(req.payload, { action: 'delete', actor: actor.id, collection: 'services', documentId: d.id, detail: `Deleted service "${d.name}"` })
+      },
+    ],
   },
   fields: [
     {

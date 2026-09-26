@@ -310,6 +310,13 @@ export default function DashboardPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
+          {/* Homepage link */}
+          <a
+            href="/"
+            className="rounded-lg border-2 border-soft-beige/30 px-3 py-2 text-xs font-bold text-text-light hover:text-lunar-green hover:border-lunar-green transition-colors"
+          >
+            Home
+          </a>
           {/* live capacity */}
           {liveCapacity && (
             <span className="text-sm font-semibold text-lunar-green">

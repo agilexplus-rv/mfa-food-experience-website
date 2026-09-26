@@ -34,7 +34,7 @@ export async function Hero() {
   if (bgImage && bgImage.url) {
     return (
       <section
-        className="relative flex min-h-[calc(100vh-4.5rem)] flex-col items-center justify-center px-6 py-10 text-center"
+        className="relative flex max-h-[calc(100vh-4.5rem)] flex-col items-center justify-center px-6 py-10 text-center"
         style={{
           backgroundImage: `url(${bgImage.url})`,
           backgroundSize: 'cover',
@@ -74,31 +74,41 @@ export async function Hero() {
     )
   }
 
-  // Default: text-only on Soft Beige
+  // Default: text-only on Soft Beige — logo right, text+CTA left
   return (
-    <section className="relative flex min-h-[calc(100vh-4.5rem)] flex-col items-center justify-center bg-soft-beige px-6 py-10 text-center">
-      {/* Larger brand mark — hero scale */}
-      <Logo variant="primary" size="xxl" />
+    <section className="relative flex max-h-[calc(100vh-4.5rem)] flex-col items-center justify-center bg-soft-beige px-6 py-10 md:flex-row md:gap-12 md:text-left">
+      {/* Text + CTA — left side on desktop */}
+      <div className="flex flex-col items-center md:items-start md:max-w-lg">
+        <h1 className="mt-4 max-w-2xl text-4xl font-black tracking-[-0.02em] text-lunar-green sm:text-5xl lg:text-6xl">
+          Authentic Maltese Culinary Experiences
+        </h1>
 
-      <h1 className="mt-4 max-w-2xl text-4xl font-black tracking-[-0.02em] text-lunar-green sm:text-5xl lg:text-6xl">
-        Authentic Maltese Culinary Experiences
-      </h1>
+        <p className="mt-6 max-w-lg text-lg leading-relaxed text-text-light">
+          Discover the flavours of Malta with hands-on classes, guided
+          tastings, and cultural experiences hosted by the Malta Food Agency.
+        </p>
 
-      <p className="mt-6 max-w-lg text-lg leading-relaxed text-text-light">
-        Discover the flavours of Malta with hands-on classes, guided
-        tastings, and cultural experiences hosted by the Malta Food Agency.
-      </p>
+        <Link
+          href="/services"
+          className="mt-10 inline-flex items-center gap-2 rounded-lg bg-terracotta-dark px-8 py-4 text-base font-bold text-white transition-colors hover:bg-terracotta/85 focus:outline-2 focus:outline-offset-2 focus:outline-terracotta"
+        >
+          <MtText en="Book an Experience" mt="Ibbukkja Esperjenza" />
+          <span aria-hidden="true">&rarr;</span>
+        </Link>
 
-      <Link
-        href="/services"
-        className="mt-10 inline-flex items-center gap-2 rounded-lg bg-terracotta-dark px-8 py-4 text-base font-bold text-white transition-colors hover:bg-terracotta/85 focus:outline-2 focus:outline-offset-2 focus:outline-terracotta"
-      >
-        <MtText en="Book an Experience" mt="Ibbukkja Esperjenza" />
-        <span aria-hidden="true">&rarr;</span>
-      </Link>
+        {/* Subtle decorative divider */}
+        <div className="mt-20 h-px w-32 bg-matte-gold/40" />
+      </div>
 
-      {/* Subtle decorative divider */}
-      <div className="mt-20 h-px w-32 bg-matte-gold/40" />
+      {/* Logo — right side on desktop */}
+      <div className="hidden md:flex md:items-center md:justify-center md:flex-shrink-0">
+        <Logo variant="primary" size="xxl" />
+      </div>
+
+      {/* Logo — centered on mobile (below text) */}
+      <div className="mt-12 md:hidden">
+        <Logo variant="primary" size="xxl" />
+      </div>
     </section>
   )
 }

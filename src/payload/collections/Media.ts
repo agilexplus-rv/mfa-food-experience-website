@@ -6,6 +6,9 @@ export const Media: CollectionConfig = {
     staticDir: 'public/storage',
     mimeTypes: ['image/*'],
   },
+  admin: {
+    useAsTitle: 'alt',
+  },
   access: {
     create: ({ req: { user } }) => (user as { role?: string } | null)?.role === 'admin',
     read: () => true,
@@ -13,6 +16,10 @@ export const Media: CollectionConfig = {
     delete: ({ req: { user } }) => (user as { role?: string } | null)?.role === 'admin',
   },
   fields: [
-    { name: 'alt', type: 'text', required: true },
+    // alt is optional to avoid blocking uploads through relationship fields
+    // (e.g. SiteSettings heroBackgroundImage) whose inline upload widget may
+    // not expose the alt field. Admins should set alt text directly on the
+    // media record for accessibility.
+    { name: 'alt', type: 'text', required: false },
   ],
 }

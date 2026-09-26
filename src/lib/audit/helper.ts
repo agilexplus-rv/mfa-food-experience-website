@@ -11,7 +11,7 @@ import type { Payload } from 'payload'
 
 interface AuditInput {
   action: string
-  actor: string | number
+  actor?: string | number
   collection: string
   documentId: string | number
   detail: string

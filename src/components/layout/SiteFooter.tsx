@@ -200,11 +200,17 @@ export async function SiteFooter() {
         </div>
 
         {/* Bottom bar */}
-        <div className="mt-10 border-t border-soft-beige/20 pt-6">
+        <div className="mt-10 border-t border-soft-beige/20 pt-6 flex items-center justify-between">
           <p className="text-xs text-soft-beige/80">
             &copy; {new Date().getFullYear()} Malta Food Agency. All rights
             reserved.
           </p>
+          <a
+            href="/admin/login"
+            className="text-xs text-soft-beige/60 transition-colors hover:text-matte-gold"
+          >
+            Staff login
+          </a>
         </div>
       </div>
     </footer>

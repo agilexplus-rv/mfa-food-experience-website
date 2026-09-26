@@ -1,4 +1,5 @@
 import type { CollectionConfig } from 'payload'
+import { auditLog, diffChanges } from '@/lib/audit/helper'
 
 export const Events: CollectionConfig = {
   slug: 'events',
@@ -22,7 +23,6 @@ export const Events: CollectionConfig = {
         const actor = req.user as { id?: string | number } | null
         if (!actor?.id) return
 
-        const { auditLog, diffChanges } = await import('@/lib/audit/helper')
         const d = doc as { id: string | number; title: string }
 
         if (operation === 'create') {
@@ -58,7 +58,6 @@ export const Events: CollectionConfig = {
         const actor = req.user as { id?: string | number } | null
         if (!actor?.id || !doc) return
 
-        const { auditLog } = await import('@/lib/audit/helper')
         const d = doc as { id: string | number; title: string }
         auditLog(req.payload, {
           action: 'delete',

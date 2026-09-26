@@ -1,5 +1,6 @@
 import crypto from 'node:crypto'
 import type { CollectionConfig } from 'payload'
+import { auditLog, diffChanges } from '@/lib/audit/helper'
 
 /** Generate a high-entropy coupon code: 10 mixed-case alphanumeric chars, avoiding ambiguous 0/O/1/I/l. */
 function generateCouponCode(): string {
@@ -91,5 +92,26 @@ export const Coupons: CollectionConfig = {
   ],
   hooks: {
     beforeValidate: [enforceCouponCodeEntropy],
+    afterChange: [
+      async ({ operation, doc, previousDoc, req }) => {
+        const actor = req.user as { id?: string | number } | null
+        if (!actor?.id) return
+        const d = doc as { id: string | number; code: string }
+        if (operation === 'create') {
+          auditLog(req.payload, { action: 'create', actor: actor.id, collection: 'coupons', documentId: d.id, detail: `Created coupon "${d.code}"` })
+        } else if (operation === 'update') {
+          const changes = diffChanges((previousDoc as Record<string, unknown>) || {}, (doc as Record<string, unknown>) || {})
+          auditLog(req.payload, { action: 'update', actor: actor.id, collection: 'coupons', documentId: d.id, detail: `Updated coupon "${d.code}"`, changes })
+        }
+      },
+    ],
+    afterDelete: [
+      async ({ doc, req }) => {
+        const actor = req.user as { id?: string | number } | null
+        if (!actor?.id || !doc) return
+        const d = doc as { id: string | number; code: string }
+        auditLog(req.payload, { action: 'delete', actor: actor.id, collection: 'coupons', documentId: d.id, detail: `Deleted coupon "${d.code}"` })
+      },
+    ],
   },
 }

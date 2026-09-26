@@ -1,5 +1,6 @@
 import type { CollectionConfig } from 'payload'
 import { validatePasswordStrength } from '@/lib/rbac/password'
+import { auditLog, diffChanges } from '@/lib/audit/helper'
 
 export const Users: CollectionConfig = {
   slug: 'users',
@@ -178,9 +179,10 @@ export const Users: CollectionConfig = {
         if (operation === 'update' && originalDoc && req.user) {
           const userId = (req.user as { id?: string | number }).id
           const origId = (originalDoc as { id?: string | number }).id
+          const origRole = (originalDoc as { role?: string }).role
           if (String(userId) === String(origId)) {
             // Admin cannot deactivate or demote themselves
-            if (data?.role !== undefined && data.role !== 'admin') {
+            if (origRole === 'admin' && data?.role !== undefined && data.role !== 'admin') {
               throw new Error('You cannot remove your own admin role.')
             }
             if (data?.active === false) {
@@ -231,32 +233,88 @@ export const Users: CollectionConfig = {
         }
       },
     ],
+    afterChange: [
+      async ({ operation, doc, previousDoc, req }) => {
+        const actor = req.user as { id?: string | number; email?: string } | null
+        const d = doc as { id: string | number; email: string; role: string }
+        const email = d.email || '(no email)'
+
+        if (operation === 'create') {
+          auditLog(req.payload, {
+            action: 'create',
+            actor: actor?.id,
+            collection: 'users',
+            documentId: d.id,
+            detail: `Created user "${email}" (role: ${d.role})`,
+          })
+
+          // Send a forgot-password email so the new user can set their own
+          // password. Fire-and-forget: don't block user creation on email delivery.
+          void (async () => {
+            try {
+              await req.payload.forgotPassword({
+                collection: 'users',
+                data: { email: d.email },
+              })
+            } catch (err) {
+              console.error('[Users] Failed to send password-set email:', err)
+            }
+          })()
+        } else if (operation === 'update') {
+          const prev = (previousDoc || {}) as Record<string, unknown>
+          const curr = (doc || {}) as Record<string, unknown>
+          const changes = diffChanges(prev, curr)
+
+          // Detect password changes for audit
+          if (curr.password && prev.password !== curr.password) {
+            const pwChange = { ...changes, password: 'changed' }
+            auditLog(req.payload, {
+              action: 'update',
+              actor: actor?.id,
+              collection: 'users',
+              documentId: d.id,
+              detail: `Password changed for user "${email}"`,
+              changes: pwChange,
+            })
+          } else {
+            auditLog(req.payload, {
+              action: 'update',
+              actor: actor?.id,
+              collection: 'users',
+              documentId: d.id,
+              detail: `Updated user "${email}"`,
+              changes,
+            })
+          }
+        }
+      },
+    ],
+    afterDelete: [
+      async ({ doc, req }) => {
+        const actor = req.user as { id?: string | number } | null
+        if (!actor?.id || !doc) return
+        const d = doc as { id: string | number; email: string; role: string }
+        auditLog(req.payload, {
+          action: 'delete',
+          actor: actor.id,
+          collection: 'users',
+          documentId: d.id,
+          detail: `Deleted user "${d.email || '(no email)'}" (role: ${d.role})`,
+        })
+      },
+    ],
     afterLogin: [
       async ({ user, req }) => {
         const u = user as { role?: string; mfaEnabled?: boolean; id?: string | number; email?: string }
 
-        // Write a 'login' entry to the audit log. Fire-and-forget so the
-        // DB write is not inside the login's Drizzle transaction (which
-        // hangs on Azure Postgres — see auth config comment). Runs
-        // outside the transaction because we don't await it.
-        // Best-effort: if this fails, the login still succeeds.
-        void (async () => {
-          try {
-            await req.payload.create({
-              collection: 'audit_logs',
-              overrideAccess: true,
-              data: {
-                action: 'login',
-                actor: u.id,
-                collection: 'users',
-                documentId: String(u.id ?? ''),
-                detail: `User ${u.email || '(unknown)'} logged in (role: ${u.role || 'unknown'})`,
-              },
-            })
-          } catch (err) {
-            console.error('[AuditLog] Failed to write login entry:', err)
-          }
-        })()
+        // Write a 'login' entry to the audit log (fire-and-forget).
+        auditLog(req.payload, {
+          action: 'login',
+          actor: u.id,
+          collection: 'users',
+          documentId: String(u.id ?? ''),
+          detail: `User ${u.email || '(unknown)'} logged in (role: ${u.role || 'unknown'})`,
+        })
 
         if (u.role === 'admin' && !u.mfaEnabled) {
           console.info(
@@ -264,6 +322,21 @@ export const Users: CollectionConfig = {
           )
           return { redirectTo: '/mfa-setup' }
         }
+        // After login, redirect to the custom dashboard
+        return { redirectTo: '/console' }
+      },
+    ],
+    afterLogout: [
+      async ({ req }) => {
+        const user = req.user as { id?: string | number; email?: string } | null
+        if (!user?.id) return
+        auditLog(req.payload, {
+          action: 'logout',
+          actor: user.id,
+          collection: 'users',
+          documentId: String(user.id),
+          detail: `User ${user.email || '(unknown)'} logged out`,
+        })
       },
     ],
   },
