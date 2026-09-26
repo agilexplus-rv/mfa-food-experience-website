@@ -20,54 +20,62 @@ export const Events: CollectionConfig = {
   hooks: {
     afterChange: [
       async ({ operation, doc, previousDoc, req }) => {
-        const actor = req.user as { id?: string | number } | null
-        if (!actor?.id) return
+        try {
+          const actor = req.user as { id?: string | number } | null
+          if (!actor?.id) return
 
-        const d = doc as { id: string | number; title: string }
+          const d = doc as { id: string | number; title: string }
 
-        if (operation === 'create') {
-          auditLog(req.payload, {
-            action: 'create',
-            actor: actor.id,
-            collection: 'events',
-            documentId: d.id,
-            detail: `Created experience "${d.title}"`,
-            ipAddress: req.headers?.get?.('x-forwarded-for') || undefined,
-            userAgent: req.headers?.get?.('user-agent') || undefined,
-          })
-        } else if (operation === 'update') {
-          const changes = diffChanges(
-            (previousDoc as Record<string, unknown>) || {},
-            (doc as Record<string, unknown>) || {},
-          )
-          auditLog(req.payload, {
-            action: 'update',
-            actor: actor.id,
-            collection: 'events',
-            documentId: d.id,
-            detail: `Updated experience "${d.title}"`,
-            ipAddress: req.headers?.get?.('x-forwarded-for') || undefined,
-            userAgent: req.headers?.get?.('user-agent') || undefined,
-            changes,
-          })
+          if (operation === 'create') {
+            auditLog(req.payload, {
+              action: 'create',
+              actor: actor.id,
+              collection: 'events',
+              documentId: d.id,
+              detail: `Created experience "${d.title}"`,
+              ipAddress: req.headers?.get?.('x-forwarded-for') || undefined,
+              userAgent: req.headers?.get?.('user-agent') || undefined,
+            })
+          } else if (operation === 'update') {
+            const changes = diffChanges(
+              (previousDoc as Record<string, unknown>) || {},
+              (doc as Record<string, unknown>) || {},
+            )
+            auditLog(req.payload, {
+              action: 'update',
+              actor: actor.id,
+              collection: 'events',
+              documentId: d.id,
+              detail: `Updated experience "${d.title}"`,
+              ipAddress: req.headers?.get?.('x-forwarded-for') || undefined,
+              userAgent: req.headers?.get?.('user-agent') || undefined,
+              changes,
+            })
+          }
+        } catch {
+          // audit failure must not block the primary operation
         }
       },
     ],
     afterDelete: [
       async ({ doc, req }) => {
-        const actor = req.user as { id?: string | number } | null
-        if (!actor?.id || !doc) return
+        try {
+          const actor = req.user as { id?: string | number } | null
+          if (!actor?.id || !doc) return
 
-        const d = doc as { id: string | number; title: string }
-        auditLog(req.payload, {
-          action: 'delete',
-          actor: actor.id,
-          collection: 'events',
-          documentId: d.id,
-          detail: `Deleted experience "${d.title}"`,
-          ipAddress: req.headers?.get?.('x-forwarded-for') || undefined,
-          userAgent: req.headers?.get?.('user-agent') || undefined,
-        })
+          const d = doc as { id: string | number; title: string }
+          auditLog(req.payload, {
+            action: 'delete',
+            actor: actor.id,
+            collection: 'events',
+            documentId: d.id,
+            detail: `Deleted experience "${d.title}"`,
+            ipAddress: req.headers?.get?.('x-forwarded-for') || undefined,
+            userAgent: req.headers?.get?.('user-agent') || undefined,
+          })
+        } catch {
+          // audit failure must not block the primary operation
+        }
       },
     ],
   },

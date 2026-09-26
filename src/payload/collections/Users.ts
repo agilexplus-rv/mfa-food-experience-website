@@ -235,72 +235,80 @@ export const Users: CollectionConfig = {
     ],
     afterChange: [
       async ({ operation, doc, previousDoc, req }) => {
-        const actor = req.user as { id?: string | number; email?: string } | null
-        const d = doc as { id: string | number; email: string; role: string }
-        const email = d.email || '(no email)'
+        try {
+          const actor = req.user as { id?: string | number; email?: string } | null
+          const d = doc as { id: string | number; email: string; role: string }
+          const email = d.email || '(no email)'
 
-        if (operation === 'create') {
-          auditLog(req.payload, {
-            action: 'create',
-            actor: actor?.id,
-            collection: 'users',
-            documentId: d.id,
-            detail: `Created user "${email}" (role: ${d.role})`,
-          })
+          if (operation === 'create') {
+            auditLog(req.payload, {
+              action: 'create',
+              actor: actor?.id,
+              collection: 'users',
+              documentId: d.id,
+              detail: `Created user "${email}" (role: ${d.role})`,
+            })
 
-          // Send a forgot-password email so the new user can set their own
-          // password. Fire-and-forget: don't block user creation on email delivery.
-          void (async () => {
-            try {
-              await req.payload.forgotPassword({
+            // Send a forgot-password email so the new user can set their own
+            // password. Fire-and-forget: don't block user creation on email delivery.
+            void (async () => {
+              try {
+                await req.payload.forgotPassword({
+                  collection: 'users',
+                  data: { email: d.email },
+                })
+              } catch (err) {
+                console.error('[Users] Failed to send password-set email:', err)
+              }
+            })()
+          } else if (operation === 'update') {
+            const prev = (previousDoc || {}) as Record<string, unknown>
+            const curr = (doc || {}) as Record<string, unknown>
+            const changes = diffChanges(prev, curr)
+
+            // Detect password changes for audit
+            if (curr.password && prev.password !== curr.password) {
+              const pwChange = { ...changes, password: 'changed' }
+              auditLog(req.payload, {
+                action: 'update',
+                actor: actor?.id,
                 collection: 'users',
-                data: { email: d.email },
+                documentId: d.id,
+                detail: `Password changed for user "${email}"`,
+                changes: pwChange,
               })
-            } catch (err) {
-              console.error('[Users] Failed to send password-set email:', err)
+            } else {
+              auditLog(req.payload, {
+                action: 'update',
+                actor: actor?.id,
+                collection: 'users',
+                documentId: d.id,
+                detail: `Updated user "${email}"`,
+                changes,
+              })
             }
-          })()
-        } else if (operation === 'update') {
-          const prev = (previousDoc || {}) as Record<string, unknown>
-          const curr = (doc || {}) as Record<string, unknown>
-          const changes = diffChanges(prev, curr)
-
-          // Detect password changes for audit
-          if (curr.password && prev.password !== curr.password) {
-            const pwChange = { ...changes, password: 'changed' }
-            auditLog(req.payload, {
-              action: 'update',
-              actor: actor?.id,
-              collection: 'users',
-              documentId: d.id,
-              detail: `Password changed for user "${email}"`,
-              changes: pwChange,
-            })
-          } else {
-            auditLog(req.payload, {
-              action: 'update',
-              actor: actor?.id,
-              collection: 'users',
-              documentId: d.id,
-              detail: `Updated user "${email}"`,
-              changes,
-            })
           }
+        } catch {
+          // audit failure must not block the primary operation
         }
       },
     ],
     afterDelete: [
       async ({ doc, req }) => {
-        const actor = req.user as { id?: string | number } | null
-        if (!actor?.id || !doc) return
-        const d = doc as { id: string | number; email: string; role: string }
-        auditLog(req.payload, {
-          action: 'delete',
-          actor: actor.id,
-          collection: 'users',
-          documentId: d.id,
-          detail: `Deleted user "${d.email || '(no email)'}" (role: ${d.role})`,
-        })
+        try {
+          const actor = req.user as { id?: string | number } | null
+          if (!actor?.id || !doc) return
+          const d = doc as { id: string | number; email: string; role: string }
+          auditLog(req.payload, {
+            action: 'delete',
+            actor: actor.id,
+            collection: 'users',
+            documentId: d.id,
+            detail: `Deleted user "${d.email || '(no email)'}" (role: ${d.role})`,
+          })
+        } catch {
+          // audit failure must not block the primary operation
+        }
       },
     ],
     afterLogin: [

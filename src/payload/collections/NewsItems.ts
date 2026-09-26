@@ -20,23 +20,31 @@ export const NewsItems: CollectionConfig = {
   hooks: {
     afterChange: [
       async ({ operation, doc, previousDoc, req }) => {
-        const actor = req.user as { id?: string | number } | null
-        if (!actor?.id) return
-        const d = doc as { id: string | number; title: string }
-        if (operation === 'create') {
-          auditLog(req.payload, { action: 'create', actor: actor.id, collection: 'news_items', documentId: d.id, detail: `Created article "${d.title}"` })
-        } else if (operation === 'update') {
-          const changes = diffChanges((previousDoc as Record<string, unknown>) || {}, (doc as Record<string, unknown>) || {})
-          auditLog(req.payload, { action: 'update', actor: actor.id, collection: 'news_items', documentId: d.id, detail: `Updated article "${d.title}"`, changes })
+        try {
+          const actor = req.user as { id?: string | number } | null
+          if (!actor?.id) return
+          const d = doc as { id: string | number; title: string }
+          if (operation === 'create') {
+            auditLog(req.payload, { action: 'create', actor: actor.id, collection: 'news_items', documentId: d.id, detail: `Created article "${d.title}"` })
+          } else if (operation === 'update') {
+            const changes = diffChanges((previousDoc as Record<string, unknown>) || {}, (doc as Record<string, unknown>) || {})
+            auditLog(req.payload, { action: 'update', actor: actor.id, collection: 'news_items', documentId: d.id, detail: `Updated article "${d.title}"`, changes })
+          }
+        } catch {
+          // audit failure must not block the primary operation
         }
       },
     ],
     afterDelete: [
       async ({ doc, req }) => {
-        const actor = req.user as { id?: string | number } | null
-        if (!actor?.id || !doc) return
-        const d = doc as { id: string | number; title: string }
-        auditLog(req.payload, { action: 'delete', actor: actor.id, collection: 'news_items', documentId: d.id, detail: `Deleted article "${d.title}"` })
+        try {
+          const actor = req.user as { id?: string | number } | null
+          if (!actor?.id || !doc) return
+          const d = doc as { id: string | number; title: string }
+          auditLog(req.payload, { action: 'delete', actor: actor.id, collection: 'news_items', documentId: d.id, detail: `Deleted article "${d.title}"` })
+        } catch {
+          // audit failure must not block the primary operation
+        }
       },
     ],
   },
