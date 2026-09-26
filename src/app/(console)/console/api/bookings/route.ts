@@ -236,7 +236,7 @@ export async function POST(req: NextRequest) {
     // Verify event exists
     const event = await p.findByID({
       collection: 'events',
-      id: body.eventId,
+      id: Number(body.eventId),
       overrideAccess: true,
     })
     if (!event) return NextResponse.json({ error: 'event_not_found' }, { status: 404 })
@@ -262,7 +262,7 @@ export async function POST(req: NextRequest) {
       collection: 'bookings',
       data: {
         reference,
-        event: body.eventId,
+        event: Number(body.eventId),
         leadAttendeeName: body.leadAttendeeName,
         email: body.email.toLowerCase().trim(),
         phone: body.phone || undefined,

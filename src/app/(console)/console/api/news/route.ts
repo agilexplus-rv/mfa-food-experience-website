@@ -109,7 +109,7 @@ export async function POST(req: NextRequest) {
         date: body.date || new Date().toISOString(),
         body: body.body || defaultBody,
         published: body.published ?? false,
-        image: body.imageId || undefined,
+        image: body.imageId ? Number(body.imageId) : undefined,
       },
       overrideAccess: true,
     })

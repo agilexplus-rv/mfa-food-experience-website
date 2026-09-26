@@ -126,7 +126,7 @@ export async function POST(req: NextRequest) {
         validUntil: body.validUntil,
         maxTotalUses: body.maxTotalUses || undefined,
         maxUsesPerBooking: body.maxUsesPerBooking ?? 1,
-        applicableServices: body.applicableServices || undefined,
+        applicableServices: body.applicableServices?.map(Number) || undefined,
         active: body.active ?? true,
       },
       overrideAccess: true,
