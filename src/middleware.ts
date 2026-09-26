@@ -1,3 +1,4 @@
+import { jwtVerify } from 'jose'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
@@ -86,29 +87,19 @@ function getPayloadFromToken(req: NextRequest): {
 }
 
 /**
- * Check whether the mfa-verified cookie is present and looks valid.
- * Full signature verification requires async jose call (compatible with
- * Edge Runtime middleware), but for a pragmatic route-gate we check:
- * 1. Cookie exists
- * 2. It decodes as a 3-part JWT
- * 3. It contains a plausible sub claim matching the user ID
- *
- * The actual verification (which sets this cookie) is done server-side
- * with full TOTP code validation. This gate just prevents bypass via
- * crafted cookies -- the server-side API always re-checks internally.
+ * Verify the mfa-verified JWT cookie using jose (Edge-compatible).
+ * Returns true only if the cookie has a valid signature and payload.
  */
-function hasMfaVerifiedCookie(
+async function hasMfaVerifiedCookie(
   req: NextRequest,
   userId?: string,
-): boolean {
+): Promise<boolean> {
   const verifiedToken = req.cookies.get('mfa-verified')?.value
   if (!verifiedToken) return false
 
   try {
-    const parts = verifiedToken.split('.')
-    if (parts.length !== 3) return false
-    const payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString())
-    // If we know the user's ID from the main token, ensure it matches
+    const secret = new TextEncoder().encode(process.env.PAYLOAD_SECRET || '')
+    const { payload } = await jwtVerify(verifiedToken, secret)
     if (userId && payload.sub !== String(userId)) return false
     return payload.mfa === true
   } catch {
@@ -116,7 +107,7 @@ function hasMfaVerifiedCookie(
   }
 }
 
-export function middleware(req: NextRequest) {
+export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
 
   // Allow public paths through
@@ -152,7 +143,7 @@ export function middleware(req: NextRequest) {
   }
 
   // MFA enforcement: users with mfaEnabled must have completed MFA verification
-  if (session.mfaEnabled && !hasMfaVerifiedCookie(req, session.id)) {
+  if (session.mfaEnabled && !(await hasMfaVerifiedCookie(req, session.id))) {
     const verifyUrl = new URL('/mfa-verify', req.url)
     verifyUrl.searchParams.set('redirect', pathname)
     return NextResponse.redirect(verifyUrl)

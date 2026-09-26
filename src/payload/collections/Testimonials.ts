@@ -8,7 +8,7 @@ export const Testimonials: CollectionConfig = {
   },
   access: {
     // Public: can submit testimonials
-    create: () => true,
+    create: ({ req: { user } }) => Boolean(user) as any,
     // Admin/door_staff: read all for moderation
     // Public: read only approved testimonials
     read: ({ req: { user } }) => {

@@ -9,7 +9,7 @@ export const Bookings: CollectionConfig = {
   access: {
     // Public: create their own booking (cart/checkout flow).
     // Admin/door_staff: create is also allowed for manual bookings.
-    create: () => true,
+    create: ({ req: { user } }) => Boolean(user) as any,
     read: ({ req: { user } }) => {
       const u = user as { role?: string } | null
       // Admin: read all

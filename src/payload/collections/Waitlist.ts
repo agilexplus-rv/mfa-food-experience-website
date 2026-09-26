@@ -8,7 +8,7 @@ export const Waitlist: CollectionConfig = {
   },
   access: {
     // Public: create their own waitlist entry
-    create: () => true,
+    create: ({ req: { user } }) => Boolean(user) as any,
     // Only admin can read/update/delete
     read: ({ req: { user } }) => (user as { role?: string } | null)?.role === 'admin',
     update: ({ req: { user } }) => (user as { role?: string } | null)?.role === 'admin',

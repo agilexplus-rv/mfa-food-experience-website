@@ -21,7 +21,7 @@ async function payload(): Promise<Payload> {
  */
 export async function POST(req: NextRequest) {
   const p = await payload()
-  const currentUser = await verifySession(req, p)
+  const currentUser = await verifySession(req, p, true) // skip MFA — enrolling
 
   if (!currentUser) {
     return NextResponse.json({ error: 'unauthenticated' }, { status: 401 })

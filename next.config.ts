@@ -41,7 +41,7 @@ const nextConfig: NextConfig = {
             // `fullscreen` is allowed (self) for map/embedded content.
             key: 'Permissions-Policy',
             value: [
-              'camera=()',
+              'camera=(self)',
               'microphone=()',
               'geolocation=()',
               'payment=(self)',
