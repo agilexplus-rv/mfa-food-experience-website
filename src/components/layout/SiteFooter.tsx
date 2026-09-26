@@ -206,7 +206,7 @@ export async function SiteFooter() {
             reserved.
           </p>
           <a
-            href="/admin/login"
+            href="/dashboard"
             className="text-xs text-soft-beige/60 transition-colors hover:text-matte-gold"
           >
             Staff login
