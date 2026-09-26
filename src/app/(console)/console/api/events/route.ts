@@ -206,7 +206,8 @@ export async function POST(req: NextRequest) {
       { status: 201 },
     )
   } catch (err) {
-    console.error('[console/api/events] Create failed:', err)
-    return NextResponse.json({ error: 'create_failed' }, { status: 500 })
+    const msg = err instanceof Error ? `${err.name}: ${err.message}${err.stack ? '\n' + err.stack : ''}` : JSON.stringify(err)
+    console.error('[console/api/events] Create failed:', msg)
+    return NextResponse.json({ error: 'create_failed', detail: err instanceof Error ? err.message : 'unknown' }, { status: 500 })
   }
 }
