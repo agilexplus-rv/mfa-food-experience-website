@@ -233,11 +233,17 @@ export default function ConsoleBookingsPage() {
           {/* CSV Export -- right-aligned zone */}
           {events.length > 0 && (
             <div className="ml-auto flex items-end gap-2 border-l border-border pl-3">
+              <Button
+                variant="secondary"
+                onClick={() => window.open('/console/api/bookings/export', '_blank')}
+              >
+                Export All
+              </Button>
               <FilterSelect
                 value={exportEventId}
                 onChange={setExportEventId}
                 options={[
-                  { value: '', label: 'Export CSV...' },
+                  { value: '', label: 'Export one event...' },
                   ...events.map((ev) => ({
                     value: String(ev.id),
                     label: `${ev.title} (${formatDate(ev.date)})`,

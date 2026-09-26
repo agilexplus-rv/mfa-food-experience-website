@@ -238,7 +238,15 @@ export default function ConsoleEventsPage() {
           <h1 className="text-2xl font-black text-lunar-green tracking-tight">Events</h1>
           <p className="mt-1 text-sm text-text-light">Manage all events and schedules</p>
         </div>
-        <Button onClick={openCreate}>+ New Event</Button>
+        <div className="flex items-center gap-2">
+            <Button
+              variant="secondary"
+              onClick={() => window.open('/console/api/events/export', '_blank')}
+            >
+              Export CSV
+            </Button>
+            <Button onClick={openCreate}>+ New Event</Button>
+          </div>
       </header>
 
       {error && (
