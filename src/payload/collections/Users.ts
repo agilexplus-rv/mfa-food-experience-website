@@ -4,8 +4,11 @@ import { validatePasswordStrength } from '@/lib/rbac/password'
 export const Users: CollectionConfig = {
   slug: 'users',
   auth: {
-    maxLoginAttempts: 5,
-    lockTime: 15 * 60 * 1000, // 15-minute lockout per ADR-008 C5
+    // DBG-TXN: temporarily disable maxLoginAttempts to eliminate the
+    // intra-transaction findOne + updateOne from the login path. If login
+    // works with this disabled, the hang is in one of those DB calls.
+    maxLoginAttempts: 0,
+    lockTime: 15 * 60 * 1000,
     useAPIKey: false,
     forgotPassword: {
       generateEmailSubject: () =>
