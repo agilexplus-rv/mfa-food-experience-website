@@ -204,22 +204,29 @@ export const Users: CollectionConfig = {
         // ROOT CAUSE of "missing login/logout in audit log": this hook
         // previously ONLY did a console.info for MFA warnings and never
         // wrote an audit_logs entry. Login events were never persisted.
-        try {
-          await req.payload.create({
-            collection: 'audit_logs',
-            overrideAccess: true,
-            data: {
-              action: 'login',
-              actor: u.id,
-              collection: 'users',
-              documentId: String(u.id ?? ''),
-              detail: `User ${u.email || '(unknown)'} logged in (role: ${u.role || 'unknown'})`,
-            },
-          })
-        } catch (err) {
-          // Best-effort: do not block login if audit-log write fails.
-          console.error('[AuditLog] Failed to write login entry:', err)
-        }
+        // DBG-FIX: fire-and-forget audit log write to diagnose login hang.
+        // Previously awaited inside the transaction; if payload.create hangs
+        // (pool exhaustion / deadlock when nested inside initTransaction), the
+        // entire login blocks with zero response.  Run after a microtask yield
+        // so the login HTTP response goes out first.
+        const auditPayload = {
+          collection: 'audit_logs',
+          overrideAccess: true,
+          data: {
+            action: 'login',
+            actor: u.id,
+            collection: 'users',
+            documentId: String(u.id ?? ''),
+            detail: `User ${u.email || '(unknown)'} logged in (role: ${u.role || 'unknown'})`,
+          },
+        } as const
+        void (async () => {
+          try {
+            await req.payload.create(auditPayload)
+          } catch (err) {
+            console.error('[AuditLog] Failed to write login entry:', err)
+          }
+        })()
 
         if (u.role === 'admin' && !u.mfaEnabled) {
           console.info(
