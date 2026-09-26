@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "db:generate": "payload generate:types",
     "db:migrate": "payload migrate",
-    "db:seed": "npx tsx src/payload/seed.ts"
+    "db:seed": "npx tsx src/payload/seed.ts",
+    "postinstall": "node scripts/patch-multipart.mjs"
   },
   "engines": {
     "node": ">=22"
