@@ -4,15 +4,18 @@ import { validatePasswordStrength } from '@/lib/rbac/password'
 export const Users: CollectionConfig = {
   slug: 'users',
   auth: {
-    // Drizzle transactions on Azure Postgres hang when running findOne/updateOne
-    // inside initTransaction (the lock-check re-fetch + resetLoginAttempts).
-    // Root cause not fully isolated yet — likely a Drizzle/PG driver incompat
-    // with Azure's managed Postgres `sslmode=require`.  Setting maxLoginAttempts
-    // to 0 disables the intra-transaction queries and unblocks login.
-    // TODO: re-enable lockout after fixing the Drizzle transaction issue.
+    // Drizzle transactions on Azure Postgres hang when running DB operations
+    // inside initTransaction: findOne, updateOne, etc. The root cause is
+    // likely a Drizzle/PG driver incompat with Azure managed Postgres
+    // sslmode=require. We disable ALL intra-transaction DB writes:
+    //   - maxLoginAttempts: 0     → skip lock-check findOne + resetLoginAttempts
+    //   - useSessions: false      → skip addSessionToUser updateOne
+    // The afterLogin audit_log creation is fire-and-forget to avoid blocking.
+    // TODO: re-enable lockout + sessions after fixing Drizzle transaction issue.
     maxLoginAttempts: 0,
     lockTime: 15 * 60 * 1000,
     useAPIKey: false,
+    useSessions: false,
     forgotPassword: {
       generateEmailSubject: () =>
         'Malta Food Experience — Reset your password',
@@ -200,32 +203,27 @@ export const Users: CollectionConfig = {
       async ({ user, req }) => {
         const u = user as { role?: string; mfaEnabled?: boolean; id?: string | number; email?: string }
 
-        // Write a 'login' entry to the audit log. This runs server-side
-        // in Payload's afterLogin hook, so we have the full req.payload
-        // Local API available. Uses overrideAccess: true because the
-        // audit_logs collection's create access is () => true anyway,
-        // but we want to ensure the write succeeds even if access
-        // rules change later.
-        //
-        // ROOT CAUSE of "missing login/logout in audit log": this hook
-        // previously ONLY did a console.info for MFA warnings and never
-        // wrote an audit_logs entry. Login events were never persisted.
-        try {
-          await req.payload.create({
-            collection: 'audit_logs',
-            overrideAccess: true,
-            data: {
-              action: 'login',
-              actor: u.id,
-              collection: 'users',
-              documentId: String(u.id ?? ''),
-              detail: `User ${u.email || '(unknown)'} logged in (role: ${u.role || 'unknown'})`,
-            },
-          })
-        } catch (err) {
-          // Best-effort: do not block login if audit-log write fails.
-          console.error('[AuditLog] Failed to write login entry:', err)
-        }
+        // Write a 'login' entry to the audit log. Uses fire-and-forget so
+        // the DB write is not inside the login's Drizzle transaction
+        // (which hangs on Azure Postgres — see auth config comment).
+        // Best-effort: if this fails, the login still succeeds.
+        void (async () => {
+          try {
+            await req.payload.create({
+              collection: 'audit_logs',
+              overrideAccess: true,
+              data: {
+                action: 'login',
+                actor: u.id,
+                collection: 'users',
+                documentId: String(u.id ?? ''),
+                detail: `User ${u.email || '(unknown)'} logged in (role: ${u.role || 'unknown'})`,
+              },
+            })
+          } catch (err) {
+            console.error('[AuditLog] Failed to write login entry:', err)
+          }
+        })()
 
         if (u.role === 'admin' && !u.mfaEnabled) {
           console.info(
