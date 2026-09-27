@@ -21,6 +21,7 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   { label: 'Bookings', href: '/console/bookings', icon: 'BK' },
+  { label: 'Waitlist', href: '/console/waitlist', icon: 'WL' },
   { label: 'Events', href: '/console/events', icon: 'EV' },
   { label: 'Services', href: '/console/services', icon: 'SV' },
   { label: 'Content', href: '/console/content', icon: 'CN' },
