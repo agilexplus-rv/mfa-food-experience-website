@@ -201,6 +201,15 @@ export const Bookings: CollectionConfig = {
         description: 'VIVA refund TransactionId, set when a refund is issued via the cancel flow.',
       },
     },
+    {
+      name: 'paymentDeadline',
+      type: 'date',
+      admin: {
+        readOnly: true,
+        position: 'sidebar',
+        description: 'Time by which the customer must complete VIVA payment. After this, the booking auto-cancels and seats are released.',
+      },
+    },
     // ── Legacy Stripe fields (kept for existing data; not used for new bookings) ──
     {
       name: 'stripeCheckoutSessionId',

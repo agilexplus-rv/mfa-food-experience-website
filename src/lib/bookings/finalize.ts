@@ -139,6 +139,22 @@ export async function finalizeBookingFromVivaTransaction(input: {
   if (!booking) return { ok: false, reason: 'booking_not_found' }
   if (booking.status !== 'pending') return { ok: true }
 
+  // Check payment deadline — cancel if the customer ran out of time
+  if ((booking as unknown as { paymentDeadline?: string }).paymentDeadline) {
+    const deadline = (booking as unknown as { paymentDeadline: string }).paymentDeadline
+    if (Date.now() > new Date(deadline).getTime()) {
+      // Deadline expired: cancel the booking so seats are freed
+      const p2 = await payload()
+      await p2.update({
+        collection: 'bookings',
+        id: booking.id,
+        data: { status: 'cancelled' },
+        overrideAccess: true,
+      })
+      return { ok: false, reason: 'payment_deadline_expired' }
+    }
+  }
+
   // Store VIVA transaction details
   const result = await finalizeCore({
     booking,

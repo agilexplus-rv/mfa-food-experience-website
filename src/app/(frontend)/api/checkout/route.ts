@@ -207,6 +207,7 @@ export async function POST(req: NextRequest) {
         dietaryConsent: dietaryConsent ?? false,
         termsAccepted: termsAccepted ?? false,
         ...(couponId ? { coupon: couponId } : {}),
+        paymentDeadline: new Date(Date.now() + holdDurationMinutes() * 60 * 1000).toISOString(),
       },
       overrideAccess: true,
     })

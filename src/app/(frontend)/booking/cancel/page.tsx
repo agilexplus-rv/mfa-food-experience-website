@@ -5,6 +5,8 @@ import { StatusIcon } from '@/components/booking/StatusIcon'
 import { findBookingByPaymentRef, parseVivaOrderCode, type BookingLookupResult } from '@/lib/bookings/lookup'
 import { formatDay, formatTimeRange } from '@/lib/format-date'
 import { checkoutRedirectUrl } from '@/lib/viva/client'
+import { getPayload } from 'payload'
+import config from '@payload-config'
 
 export const metadata: Metadata = {
   title: 'Payment not completed | Malta Food Experience',
@@ -48,7 +50,28 @@ export default async function BookingCancelPage({ searchParams }: PageProps) {
     ? await findBookingByPaymentRef({ vivaOrderCode: orderCode })
     : null
 
-  const booking = lookup?.kind === 'found' ? lookup.booking : null
+  let booking = lookup?.kind === 'found' ? lookup.booking : null
+  let deadlineExpired = false
+
+  // Auto-cancel if payment deadline has passed
+  if (booking && booking.status === 'pending' && booking.paymentDeadline) {
+    deadlineExpired = Date.now() > new Date(booking.paymentDeadline).getTime()
+    if (deadlineExpired) {
+      try {
+        const p = await getPayload({ config })
+        await p.update({
+          collection: 'bookings',
+          id: booking.id,
+          data: { status: 'cancelled' },
+          overrideAccess: true,
+        })
+        booking = { ...booking, status: 'cancelled' }
+      } catch (err) {
+        console.error('[booking/cancel] Auto-cancel failed:', err)
+        // Still show expired UI even if the cancel write failed
+      }
+    }
+  }
 
   if (booking && (booking.status === 'confirmed' || booking.status === 'checked_in')) {
     return (
@@ -71,25 +94,46 @@ export default async function BookingCancelPage({ searchParams }: PageProps) {
   }
 
   const event = booking?.event ?? null
-  const canRetry = event?.status === 'scheduled'
+  const canRetry =
+    event?.status === 'scheduled' &&
+    orderCode != null &&
+    !deadlineExpired &&
+    booking?.status === 'pending'
 
   return (
     <section className="notranslate mx-auto max-w-2xl px-6 py-20 text-center">
       <StatusIcon variant="failed" />
 
-      <h1 className="mt-8 text-3xl font-black tracking-[-0.02em] text-lunar-green sm:text-4xl">
-        Your payment wasn&apos;t completed
-      </h1>
-      <p className="mx-auto mt-4 max-w-lg text-text-light">
-        The payment was cancelled or declined, so your booking has not been confirmed and{' '}
-        <strong className="font-semibold text-lunar-green">no payment has been taken</strong>. If your bank shows a
-        pending charge, it will be released automatically.
-      </p>
+      {deadlineExpired ? (
+        <>
+          <h1 className="mt-8 text-3xl font-black tracking-[-0.02em] text-lunar-green sm:text-4xl">
+            Payment time expired
+          </h1>
+          <p className="mx-auto mt-4 max-w-lg text-text-light">
+            The 15-minute payment window for this booking has ended. Your booking has been{' '}
+            <strong className="font-semibold text-lunar-green">cancelled</strong> and
+            the seats are now available for others.
+          </p>
+        </>
+      ) : (
+        <>
+          <h1 className="mt-8 text-3xl font-black tracking-[-0.02em] text-lunar-green sm:text-4xl">
+            Your payment wasn&apos;t completed
+          </h1>
+          <p className="mx-auto mt-4 max-w-lg text-text-light">
+            The payment was cancelled or declined, so your booking has not been confirmed and{' '}
+            <strong className="font-semibold text-lunar-green">no payment has been taken</strong>. If your bank shows a
+            pending charge, it will be released automatically.
+          </p>
+        </>
+      )}
 
       {booking && (
         <div className="mx-auto mt-10 max-w-md overflow-hidden rounded-xl border border-border bg-surface text-left shadow-sm">
           <div className="border-b border-dashed border-border bg-terracotta/5 px-6 py-3">
-            <span className="text-xs font-bold uppercase tracking-wide text-terracotta-dark">Not confirmed</span>
+            <span className="text-xs font-bold uppercase tracking-wide text-terracotta-dark">
+              {deadlineExpired ? 'Cancelled – time expired' : 'Not confirmed'}
+            </span>
           </div>
           <dl className="grid grid-cols-2 gap-x-6 gap-y-4 px-6 py-5 text-sm">
             {event && (
@@ -118,13 +162,20 @@ export default async function BookingCancelPage({ searchParams }: PageProps) {
       )}
 
       <p className="mx-auto mt-8 max-w-lg text-sm text-text-light">
-        {canRetry
-          ? 'Your seats are still held — you can retry the same payment below. No new booking is needed.'
-          : 'Any seats held for you will be released shortly so others can book them.'}
+        {deadlineExpired
+          ? 'The seats are now free for anyone to book. You can still start a new booking if the experience has space.'
+          : canRetry
+            ? 'Your seats are still held — you can retry the same payment below. No new booking is needed.'
+            : 'Any seats held for you will be released shortly so others can book them.'}
       </p>
 
       <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-        {canRetry && orderCode ? (
+        {deadlineExpired && event ? (
+          <Link href={`/booking/pay?eventId=${encodeURIComponent(String(event.id))}`} className={primaryCta}>
+            Start a new booking
+            <span aria-hidden="true">&rarr;</span>
+          </Link>
+        ) : canRetry ? (
           <>
             <a
               href={`${checkoutRedirectUrl()}?ref=${encodeURIComponent(orderCode)}`}

@@ -34,6 +34,7 @@ export interface BookingSummary {
   totalAmount: number
   leadAttendeeName: string
   email: string
+  paymentDeadline?: string | null
   event: BookingEventSummary | null
 }
 
@@ -96,6 +97,7 @@ export async function findBookingByPaymentRef(
         totalAmount: doc.totalAmount,
         leadAttendeeName: doc.leadAttendeeName,
         email: doc.email,
+        paymentDeadline: doc.paymentDeadline,
         event: event
           ? {
               id: event.id,
