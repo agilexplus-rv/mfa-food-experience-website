@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 
 import { createHoldSchema } from '@/lib/validations/booking'
 import { createSeatHold } from '@/lib/bookings/seat-holds'
-import { createRateLimiter, getClientIp } from '@/lib/rate-limit'
+import { createRateLimiter, getClientIp, isSameOriginRequest } from '@/lib/rate-limit'
 
 /**
  * POST /api/holds -- create a seat hold per ADR-002.
@@ -28,6 +28,10 @@ export async function POST(req: NextRequest) {
   const ip = getClientIp(req)
   if (!rateLimiter.check(ip)) {
     return NextResponse.json({ error: 'rate_limited' }, { status: 429 })
+  }
+  // Cross-site pages must not be able to reserve seats through visitors' browsers.
+  if (!isSameOriginRequest(req)) {
+    return NextResponse.json({ error: 'cross_origin_rejected' }, { status: 403 })
   }
 
   let body: unknown

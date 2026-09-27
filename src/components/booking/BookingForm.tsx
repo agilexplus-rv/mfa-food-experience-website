@@ -218,10 +218,11 @@ export function BookingForm({
 
   // Release the hold on unmount (best-effort, the sweeper is the safety net).
   useEffect(() => {
+    const sessionId = sessionIdRef.current
     return () => {
       const current = hold
       if (current) {
-        void fetch(`/api/holds/${current.id}`, { method: 'DELETE' }).catch(() => undefined)
+        void fetch(`/api/holds/${current.id}?sessionId=${encodeURIComponent(sessionId)}`, { method: 'DELETE' }).catch(() => undefined)
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -250,7 +251,7 @@ export function BookingForm({
       const previousHold = hold
       void acquireHold(clamped).then(() => {
         if (previousHold) {
-          void fetch(`/api/holds/${previousHold.id}`, { method: 'DELETE' }).catch(() => undefined)
+          void fetch(`/api/holds/${previousHold.id}?sessionId=${encodeURIComponent(sessionIdRef.current)}`, { method: 'DELETE' }).catch(() => undefined)
         }
       })
     },

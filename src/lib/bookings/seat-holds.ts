@@ -11,45 +11,38 @@ import { isEventBookable } from '@/lib/events/auto-close'
  *
  * ADR-002's ideal model is a serializable transaction with an
  * event-scoped Postgres advisory lock (`pg_advisory_xact_lock`) around
- * the "compute availability -> insert hold" window. Two constraints on
- * this project make that literal model unavailable everywhere:
+ * the "compute availability -> insert hold" window. That literal model
+ * is not available here: the demo environment runs on Turso/libSQL
+ * (no advisory locks) and Payload's Local API does not expose a way to
+ * wrap its calls in a caller-controlled transaction that works
+ * identically on both adapters.
  *
- *   1. The demo environment runs on Turso/libSQL (SQLite), which has no
- *      advisory-lock primitive and, per this session's prior findings,
- *      hangs on `next dev` introspection against Payload's Drizzle
- *      layer -- the sqlite adapter here has no meaningful
- *      cross-request locking story at all.
- *   2. Payload's Local API does not expose raw `pg_advisory_xact_lock`
- *      calls even against the Postgres adapter used in production.
+ * What is implemented instead -- "insert, then verify" (optimistic
+ * concurrency), which needs no lock and is race-safe as long as each
+ * statement is committed before the next one runs (true for autocommit
+ * Local API calls on both adapters):
  *
- * Compromise implemented here (documented per the task's atomicity
- * disclosure requirement):
- *   - We still perform the "read availability, then insert" sequence
- *     inside as tight a window as possible (no I/O between the check
- *     and the insert).
- *   - We re-check availability by doing a final read of active holds +
- *     bookings for the event immediately before inserting the hold row
- *     (defence-in-depth against the classic TOCTOU race), matching
- *     ADR-002's "READ COMMITTED + advisory lock" fallback described as
- *     an accepted alternative in the ADR ("Alternatively, with
- *     PostgreSQL's default READ COMMITTED + the advisory lock...").
- *   - We rely on the DB-level partial-unique-index style guarantee via
- *     an application-level check for an existing active hold for the
- *     same sessionId+event (one hold per cart), rather than a DB
- *     constraint, since SeatHolds.ts does not declare one -- this is a
- *     narrower guarantee than ADR-002's ideal and is called out here
- *     rather than silently assumed.
- *   - True overbooking-under-concurrency safety at MFA's actual scale
- *     (single-venue, ~30 capacity/event) is still achieved in practice
- *     because Vercel serverless functions rarely race on the exact
- *     same millisecond for the same event, and the webhook handler
- *     re-verifies capacity again (ADR-004 step 3) before confirming --
- *     but this is NOT a mathematical guarantee under true concurrent
- *     load the way SERIALIZABLE + advisory lock would be. If MFA moves
- *     to Postgres in production (ADR-001), upgrading this function to
- *     issue a raw `SELECT pg_advisory_xact_lock($1)` via a direct
- *     Drizzle/pg client (bypassing the Local API) would close this gap
- *     -- left as a follow-up, flagged in the final summary.
+ *   1. Cheap pre-check: reject immediately when `seats > remaining` so
+ *      the common "sold out" path returns an accurate `remaining`.
+ *   2. INSERT the hold row.
+ *   3. Re-read availability WITH our own hold counted. If
+ *      capacity - booked - holds < 0, we lost a race: delete our own
+ *      hold and return insufficient_seats.
+ *
+ * Why this cannot overbook: for two racing requests A and B, each
+ * inserts before it re-reads. Whichever re-read happens last sees both
+ * rows, so at least one of them (possibly both -- the customer simply
+ * retries) backs out. The same pattern is used for the pending booking
+ * in /api/checkout and the webhook additionally re-checks capacity
+ * before confirming (ADR-004 step 3). Residual risk: a false negative
+ * under a genuine simultaneous race (both back out) -- fail-safe, never
+ * fail-open.
+ *
+ * Other deviations from the ADR, unchanged and called out here:
+ *   - "One active hold per cart" is enforced in application code
+ *     (delete previous holds for sessionId+event before insert) rather
+ *     than by a DB partial unique index, since SeatHolds.ts declares
+ *     none.
  */
 
 let _payload: Payload | null = null
@@ -109,20 +102,49 @@ export async function createSeatHold(
     data: { event: eventId, sessionId, seats, expiresAt },
     overrideAccess: true,
   })
+  const holdId = (hold as { id: string | number }).id
+
+  // Post-insert verification (see header): re-read with our own hold now
+  // counted. A negative balance means a concurrent request won the race.
+  const after = await getAvailability(eventId)
+  const balance = after.capacity - after.booked - after.holds
+  if (balance < 0) {
+    await p.delete({ collection: 'seat_holds', id: holdId, overrideAccess: true }).catch(() => undefined)
+    return {
+      ok: false,
+      error: 'insufficient_seats',
+      remaining: Math.max(0, after.capacity - after.booked - (after.holds - seats)),
+    }
+  }
 
   return {
     ok: true,
-    hold: { id: (hold as { id: string | number }).id, expiresAt, seats, eventId },
+    hold: { id: holdId, expiresAt, seats, eventId },
   }
 }
 
-export async function releaseSeatHold(holdId: string | number): Promise<{ ok: boolean }> {
+/**
+ * Release a hold. When `sessionId` is given (always, from the public
+ * DELETE endpoint) the hold must belong to that cart: hold ids are
+ * sequential integers, so without this check anyone could enumerate and
+ * release other visitors' reservations. Server-internal callers (checkout
+ * rollback) pass no sessionId.
+ */
+export async function releaseSeatHold(
+  holdId: string | number,
+  sessionId?: string,
+): Promise<{ ok: boolean; error?: 'forbidden' }> {
   const p = await payload()
+  if (sessionId !== undefined) {
+    const existing = await getSeatHold(holdId)
+    // Already gone (expired + swept, or already released) -- idempotent no-op.
+    if (!existing) return { ok: true }
+    if (existing.sessionId !== sessionId) return { ok: false, error: 'forbidden' }
+  }
   try {
     await p.delete({ collection: 'seat_holds', id: holdId, overrideAccess: true })
     return { ok: true }
   } catch {
-    // Already gone (expired + swept, or already released) -- idempotent no-op.
     return { ok: true }
   }
 }

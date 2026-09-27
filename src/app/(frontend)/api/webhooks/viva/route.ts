@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-import { isVivaWebhookConfigured, vivaMerchantId, isVivaDemo } from '@/lib/env'
+import { isVivaWebhookConfigured, isVivaDemo } from '@/lib/env'
 import { finalizeBookingFromVivaTransaction } from '@/lib/bookings/finalize'
 import { getPayload } from 'payload'
 import type { Payload } from 'payload'
@@ -23,9 +23,17 @@ async function payload(): Promise<Payload> {
  * - Email, FullName, MerchantTrns (our booking reference)
  *
  * Security:
- * - In production, we verify the webhook secret header (X-Viva-Secret)
- * - In demo mode, we allow unverified requests (for testing)
- * - We ALWAYS verify the transaction via the VIVA API as defence-in-depth
+ * - The shared secret (X-Viva-Secret / Authorization: Bearer) is verified
+ *   whenever VIVA_WEBHOOK_SECRET is set. It is only skipped in demo mode
+ *   with no secret configured (local/sandbox testing).
+ * - The body is treated as a HINT only. We ALWAYS fetch the transaction
+ *   from the VIVA API and finalise using the API-verified OrderCode,
+ *   amount and merchantTrns: the body's OrderCode must match the
+ *   transaction's, the amount must equal the booking total, and a
+ *   TransactionId can confirm exactly one booking (see finalize.ts).
+ *   This is what makes the unauthenticated demo path safe: forging a
+ *   webhook still requires a real, fully-paid transaction for that exact
+ *   order.
  *
  * Idempotent: returns 200 for already-processed transactions.
  *
@@ -44,8 +52,8 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  // ── Auth check ──
-  if (!isVivaDemo()) {
+  // ── Auth check: verify whenever a secret is configured; demo mode may run without one ──
+  if (!isVivaDemo() || isVivaWebhookConfigured()) {
     if (!isVivaWebhookConfigured()) {
       return NextResponse.json(
         { error: 'webhook_not_configured', message: 'VIVA_WEBHOOK_SECRET is not set.' },
@@ -110,10 +118,10 @@ export async function POST(req: NextRequest) {
 
   // ── Defence-in-depth: verify transaction via VIVA API ──
   const { getTransaction } = await import('@/lib/viva/client')
-  let verifiedTransaction: { amount: number; statusId: string }
+  let verifiedTransaction: { amount: number; statusId: string; orderCode?: number | string; merchantTrns?: string }
   try {
     const tx = await getTransaction(eventData.TransactionId)
-    verifiedTransaction = { amount: tx.amount, statusId: tx.statusId }
+    verifiedTransaction = { amount: tx.amount, statusId: tx.statusId, orderCode: tx.orderCode, merchantTrns: tx.merchantTrns }
   } catch (err) {
     console.error('[webhooks/viva] Transaction verification failed:', err)
     return NextResponse.json({ error: 'verification_failed' }, { status: 502 })
@@ -124,12 +132,24 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ received: true, skipped: 'api_not_completed' }, { status: 200 })
   }
 
-  // ── Finalise the booking ──
+  // The body's OrderCode must be the order this transaction actually paid
+  // for; otherwise a real transaction could be pointed at someone else's
+  // pending booking.
+  if (verifiedTransaction.orderCode == null || String(verifiedTransaction.orderCode) !== String(eventData.OrderCode)) {
+    console.warn('[webhooks/viva] OrderCode in webhook body does not match verified transaction', {
+      bodyOrderCode: eventData.OrderCode,
+      verifiedOrderCode: verifiedTransaction.orderCode,
+      transactionId: eventData.TransactionId,
+    })
+    return NextResponse.json({ error: 'order_code_mismatch' }, { status: 400 })
+  }
+
+  // ── Finalise the booking using ONLY API-verified values ──
   const result = await finalizeBookingFromVivaTransaction({
-    orderCode: String(eventData.OrderCode),
+    orderCode: String(verifiedTransaction.orderCode),
     transactionId: eventData.TransactionId,
-    amount: eventData.Amount ?? verifiedTransaction.amount,
-    merchantTrns: eventData.MerchantTrns,
+    amount: verifiedTransaction.amount,
+    merchantTrns: verifiedTransaction.merchantTrns,
   })
 
   if (!result.ok) {

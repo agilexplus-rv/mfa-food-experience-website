@@ -8,10 +8,10 @@ import { getAvailability } from '@/lib/availability'
 import { getSeatHold, releaseSeatHold } from '@/lib/bookings/seat-holds'
 import { isEventBookable } from '@/lib/events/auto-close'
 import { generateBookingReference } from '@/lib/bookings/reference'
-import { validateCoupon } from '@/lib/coupons/validate'
+import { validateCoupon, getEventPricingContext } from '@/lib/coupons/validate'
 import { createOrder, checkoutRedirectUrl, VivaNotConfiguredError } from '@/lib/viva/client'
-import { serverUrl, holdDurationMinutes, isVivaConfigured, vivaSourceCode, turnstileSecretKey, isTurnstileConfigured } from '@/lib/env'
-import { createRateLimiter, getClientIp } from '@/lib/rate-limit'
+import { holdDurationMinutes, isVivaConfigured, vivaSourceCode, turnstileSecretKey, isTurnstileConfigured } from '@/lib/env'
+import { createRateLimiter, getClientIp, isSameOriginRequest } from '@/lib/rate-limit'
 
 let _payload: Payload | null = null
 async function payload(): Promise<Payload> {
@@ -25,9 +25,16 @@ async function payload(): Promise<Payload> {
  * 1. Re-validates the hold and re-checks availability.
  * 2. Optionally validates + prices a coupon.
  * 3. Verifies Cloudflare Turnstile token if configured.
- * 4. Creates the booking with status: 'pending'.
+ * 4. Creates the booking with status: 'pending', then re-verifies capacity
+ *    with the new booking counted ("insert, then verify" -- same optimistic
+ *    pattern as seat-holds.ts; a concurrent checkout that overshoots
+ *    capacity is rolled back here instead of at webhook time, when the
+ *    customer would already have paid).
  * 5. Creates a VIVA payment order → OrderCode.
  * 6. Returns { url } for the frontend to redirect to vivapayments.com/web/checkout.
+ *
+ * The amount is computed server-side only (event price × seats − validated
+ * coupon); the client never sends a price. Seats must equal the hold's.
  *
  * VIVA success/cancel URLs are configured per payment source in the VIVA banking
  * app, not per-order. VIVA appends ?t={TransactionId}&s={OrderCode} to both.
@@ -76,6 +83,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'rate_limited' }, { status: 429 })
   }
   rateLimiter.maybeCleanup()
+
+  // ── Cross-site guard: a third-party page must not be able to open checkouts through visitors' browsers ──
+  if (!isSameOriginRequest(req)) {
+    return NextResponse.json({ error: 'cross_origin_rejected' }, { status: 403 })
+  }
 
   // ── Parse + validate ──
   let body: unknown
@@ -151,39 +163,24 @@ export async function POST(req: NextRequest) {
 
   // ── Guard: VIVA must be configured ──
   if (!isVivaConfigured()) {
-    return NextResponse.json(
-      { error: 'payments_not_configured', message: 'VIVA Wallet is not configured (VIVA_CLIENT_ID / VIVA_CLIENT_SECRET unset).' },
-      { status: 503 },
-    )
+    return NextResponse.json({ error: 'payments_not_configured' }, { status: 503 })
   }
 
   // ── Coupon validation (preview pricing only; not consumed yet) ──
   let couponId: string | number | null = null
-  let discountAmountEuros = 0
   let totalAmountEuros = evt.pricePerPerson * persons
 
   if (couponCode) {
-    const pricing = await (await import('@/lib/coupons/validate')).getEventPricingContext(eventId)
-    if (pricing) {
-      const { validateCoupon } = await import('@/lib/coupons/validate')
-      const couponResult = await validateCoupon(
-        couponCode,
-        eventId,
-        persons,
-        pricing.pricePerPerson,
-        pricing.serviceId,
-      )
-
-      if (couponResult.ok && couponResult.coupon) {
-        couponId = couponResult.coupon.id
-        discountAmountEuros = couponResult.discountAmount ?? 0
-        totalAmountEuros = Math.max(0, couponResult.totalAfterDiscount ?? totalAmountEuros)
-      } else {
-        return NextResponse.json({ error: 'invalid_coupon', reason: couponResult.error }, { status: 400 })
-      }
-    } else {
+    const pricing = await getEventPricingContext(eventId)
+    if (!pricing) {
       return NextResponse.json({ error: 'event_not_found' }, { status: 404 })
     }
+    const couponResult = await validateCoupon(couponCode, eventId, persons, pricing.pricePerPerson, pricing.serviceId)
+    if (!couponResult.ok || !couponResult.coupon) {
+      return NextResponse.json({ error: 'invalid_coupon', reason: couponResult.error }, { status: 400 })
+    }
+    couponId = couponResult.coupon.id
+    totalAmountEuros = Math.max(0, couponResult.totalAfterDiscount ?? totalAmountEuros)
   }
 
   // ── Create booking (status: pending) ──
@@ -212,14 +209,25 @@ export async function POST(req: NextRequest) {
       overrideAccess: true,
     })
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err)
-    console.error('[checkout] Booking creation failed:', message)
+    // Log the detail server-side only: DB/validation messages must not reach the client.
+    console.error('[checkout] Booking creation failed:', err instanceof Error ? err.message : err)
     // Release the hold so seats aren't stuck
     await releaseSeatHold(hold.id).catch(() => undefined)
-    return NextResponse.json({ error: 'booking_creation_failed', message }, { status: 500 })
+    return NextResponse.json({ error: 'booking_creation_failed' }, { status: 500 })
   }
 
   const bookingId = booking.id
+
+  // ── Post-insert capacity verification (optimistic concurrency) ──
+  // The pending booking is now counted in `booked`; the caller's own hold
+  // is still excluded. A negative balance means a concurrent checkout for
+  // the same seats got in between our pre-check and our insert. Back out
+  // before any money changes hands.
+  const after = await getAvailability(eventId, { excludeSessionId: hold.sessionId })
+  if (after.capacity - after.booked - after.holds < 0) {
+    await p.delete({ collection: 'bookings', id: bookingId, overrideAccess: true }).catch(() => undefined)
+    return NextResponse.json({ error: 'insufficient_seats', remaining: after.remaining }, { status: 409 })
+  }
 
   // ── Create VIVA payment order ──
   try {

@@ -78,3 +78,36 @@ export function getClientIp(req: { headers: Headers | Map<string, string> }): st
     '127.0.0.1'
   )
 }
+
+/**
+ * Same-origin guard for the public, unauthenticated, state-changing JSON
+ * endpoints (/api/holds, /api/checkout). These endpoints have no cookie
+ * session to steal, so classic CSRF gains nothing -- but a cross-site page
+ * can still drive a visitor's browser to reserve seats / open checkouts,
+ * which launders the attacker's traffic through many victims' IPs and
+ * defeats the per-IP rate limiter (inventory lock-up via seat holds).
+ *
+ * Browsers always send `Sec-Fetch-Site` and, for cross-origin POSTs,
+ * `Origin`; both are forbidden headers a page cannot spoof. Requests with
+ * neither header (curl, server-to-server, tests) are allowed through and
+ * remain subject to the rate limiter.
+ */
+export function isSameOriginRequest(req: { headers: Headers }): boolean {
+  const h = req.headers
+  if (h.get('sec-fetch-site') === 'cross-site') return false
+
+  const origin = h.get('origin')
+  if (!origin) return true
+  // Opaque origin (sandboxed iframe, redirects from data: URLs): never legitimate here.
+  if (origin === 'null') return false
+
+  let originHost: string
+  try {
+    originHost = new URL(origin).host
+  } catch {
+    return false
+  }
+  const host = h.get('x-forwarded-host')?.split(',')[0]?.trim() || h.get('host')
+  if (!host) return true
+  return originHost.toLowerCase() === host.toLowerCase()
+}

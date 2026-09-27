@@ -8,6 +8,8 @@ import { checkoutRedirectUrl } from '@/lib/viva/client'
 import { getPayload } from 'payload'
 import config from '@payload-config'
 
+import { transitionBookingStatus } from '@/lib/db/atomic'
+
 export const metadata: Metadata = {
   title: 'Payment not completed | Malta Food Experience',
   robots: { index: false, follow: false },
@@ -43,6 +45,10 @@ const secondaryCta =
  * The page shows the booking reference, so its container is excluded from
  * Google Translate per ADR-006 Sec 4 (C17).
  */
+function isPastDeadline(deadlineIso: string): boolean {
+  return Date.now() > new Date(deadlineIso).getTime()
+}
+
 export default async function BookingCancelPage({ searchParams }: PageProps) {
   const { s } = await searchParams
   const orderCode = parseVivaOrderCode(s)
@@ -53,19 +59,23 @@ export default async function BookingCancelPage({ searchParams }: PageProps) {
   let booking = lookup?.kind === 'found' ? lookup.booking : null
   let deadlineExpired = false
 
-  // Auto-cancel if payment deadline has passed
+  // Auto-cancel if payment deadline has passed. The write is a single
+  // conditional UPDATE (pending -> cancelled) so it can never revert a
+  // booking the webhook confirmed between our read and our write; if we
+  // lose that race we re-read and show the real state instead.
   if (booking && booking.status === 'pending' && booking.paymentDeadline) {
-    deadlineExpired = Date.now() > new Date(booking.paymentDeadline).getTime()
+    deadlineExpired = isPastDeadline(booking.paymentDeadline)
     if (deadlineExpired) {
       try {
         const p = await getPayload({ config })
-        await p.update({
-          collection: 'bookings',
-          id: booking.id,
-          data: { status: 'cancelled' },
-          overrideAccess: true,
-        })
-        booking = { ...booking, status: 'cancelled' }
+        const cancelled = await transitionBookingStatus(p, booking.id, 'pending', 'cancelled')
+        if (cancelled) {
+          booking = { ...booking, status: 'cancelled' }
+        } else {
+          const fresh = await findBookingByPaymentRef({ vivaOrderCode: orderCode! })
+          if (fresh.kind === 'found') booking = fresh.booking
+          deadlineExpired = booking.status === 'cancelled'
+        }
       } catch (err) {
         console.error('[booking/cancel] Auto-cancel failed:', err)
         // Still show expired UI even if the cancel write failed
