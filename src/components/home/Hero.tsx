@@ -41,7 +41,7 @@ export async function Hero() {
   const cta = (
     <Link
       href="/services"
-      className="mt-8 inline-flex items-center gap-2 rounded-lg bg-terracotta-dark px-8 py-4 text-base font-bold text-white transition-colors hover:bg-terracotta/85 focus:outline-2 focus:outline-offset-2 focus:outline-terracotta"
+      className="mt-8 inline-flex items-center gap-2 rounded-lg bg-terracotta px-8 py-4 text-xl font-bold text-white transition-colors hover:bg-terracotta/85 focus:outline-2 focus:outline-offset-2 focus:outline-terracotta"
     >
       <MtText en="Explore Our Experiences" mt="Esplora l-Esperjenzi Tagħna" />
       <span aria-hidden="true">&rarr;</span>
@@ -114,7 +114,7 @@ export async function Hero() {
         {cta}
 
         {/* Subtle decorative divider */}
-        <div className="mt-4 h-px w-32 bg-matte-gold/40" />
+        <div aria-hidden="true" className="mt-4 h-px w-32 bg-matte-gold/40" />
       </div>
     </section>
   )

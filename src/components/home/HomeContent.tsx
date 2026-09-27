@@ -64,7 +64,7 @@ function ExploreCta() {
   return (
     <Link
       href="/services"
-      className="mt-8 inline-flex items-center gap-2 rounded-lg bg-terracotta-dark px-8 py-4 text-base font-bold text-white transition-colors hover:bg-terracotta/85 focus:outline-2 focus:outline-offset-2 focus:outline-terracotta"
+      className="mt-8 inline-flex items-center gap-2 rounded-lg bg-terracotta px-8 py-4 text-base font-bold text-white transition-colors hover:bg-terracotta/85 focus:outline-2 focus:outline-offset-2 focus:outline-terracotta"
     >
       <MtText en="Explore Our Experiences" mt="Esplora l-Esperjenzi Tagħna" />
       <span aria-hidden="true">&rarr;</span>

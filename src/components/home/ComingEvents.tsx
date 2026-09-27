@@ -133,7 +133,7 @@ export async function ComingEvents() {
                         'focus:outline-2 focus:outline-offset-2 focus:outline-terracotta',
                         fullyBooked
                           ? 'cursor-not-allowed bg-lunar-green/10 text-lunar-green/50'
-                          : 'bg-terracotta-dark text-white hover:bg-terracotta/85',
+                          : 'bg-terracotta-dark text-white hover:bg-terracotta-dark/85',
                       ].join(' ')}
                     >
                       {fullyBooked ? <MtText en="Full" mt="Mimli" /> : <MtText en="Book Now" mt="Ibbukkja Issa" />}

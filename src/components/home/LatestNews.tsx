@@ -66,7 +66,7 @@ export async function LatestNews() {
         <div className="mt-8 text-center">
           <Link
             href="/news"
-            className="inline-flex items-center rounded-lg border border-soft-beige/40 px-6 py-3 text-sm font-bold text-soft-beige transition-colors hover:bg-soft-beige/10"
+            className="inline-flex items-center rounded-lg border border-soft-beige/40 px-6 py-3 text-sm font-bold text-soft-beige transition-colors hover:bg-soft-beige/10 focus:outline-2 focus:outline-offset-2 focus:outline-soft-beige"
           >
             All news
           </Link>
