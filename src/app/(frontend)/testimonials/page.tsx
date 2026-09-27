@@ -3,14 +3,13 @@ import type { Metadata } from 'next'
 import config from '@payload-config'
 import { getPayload } from 'payload'
 
-import { Logo } from '@/components/brand/Logo'
 import { TestimonialForm } from '@/components/testimonials/TestimonialForm'
 import { TestimonialList } from '@/components/testimonials/TestimonialList'
 
 export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
-  title: 'Testimonials — Malta Food Experience',
+  title: 'Testimonials | Malta Food Experience',
   description:
     'Read what past participants say about Malta Food Experience experiences and classes. Share your own testimonial.',
 }
@@ -74,7 +73,6 @@ export default async function TestimonialsPage() {
   return (
     <section className="mx-auto max-w-7xl px-6 py-16">
       <header className="mx-auto max-w-2xl text-center">
-        <Logo variant="primary" size="sm" className="!p-0 mx-auto" />
         <h1 className="mt-4 text-4xl font-black tracking-[-0.02em] text-lunar-green sm:text-5xl">
           Testimonials
         </h1>

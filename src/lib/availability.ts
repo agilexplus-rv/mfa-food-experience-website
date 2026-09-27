@@ -1,5 +1,5 @@
 import { getPayload } from 'payload'
-import type { Payload } from 'payload'
+import type { Payload, Where } from 'payload'
 import config from '@payload-config'
 
 import type { AvailabilityStatus, EventAvailability, EventDoc } from './availability-types'
@@ -33,7 +33,10 @@ function deriveStatus(remaining: number, capacity: number): AvailabilityStatus {
   return 'available'
 }
 
-export async function getAvailability(eventId: string | number): Promise<EventAvailability> {
+export async function getAvailability(
+  eventId: string | number,
+  opts?: { excludeSessionId?: string },
+): Promise<EventAvailability> {
   const p = await payload()
 
   const bookedDocs = await p.find({
@@ -45,9 +48,13 @@ export async function getAvailability(eventId: string | number): Promise<EventAv
   const booked = (bookedDocs.docs as { persons?: number }[]).reduce((s, b) => s + (b.persons ?? 0), 0)
 
   const now = new Date().toISOString()
+  const holdWhere: Where[] = [{ event: { equals: eventId } }, { expiresAt: { greater_than: now } }]
+  if (opts?.excludeSessionId) {
+    holdWhere.push({ sessionId: { not_equals: opts.excludeSessionId } })
+  }
   const holdDocs = await p.find({
     collection: 'seat_holds',
-    where: { and: [{ event: { equals: eventId } }, { expiresAt: { greater_than: now } }] },
+    where: { and: holdWhere },
     limit: 0,
     overrideAccess: true,
   })
@@ -64,6 +71,7 @@ export async function getAvailability(eventId: string | number): Promise<EventAv
 
 export async function getAvailabilityForEvents(
   events: { id: string | number; capacity: number; fullyBookedOverride?: boolean }[],
+  opts?: { excludeSessionId?: string },
 ): Promise<Map<string, EventAvailability>> {
   const out = new Map<string, EventAvailability>()
   if (events.length === 0) return out
@@ -85,9 +93,13 @@ export async function getAvailabilityForEvents(
     bookedByEvent.set(key, (bookedByEvent.get(key) ?? 0) + (b.persons ?? 0))
   }
 
+  const holdWhere: Where[] = [{ event: { in: ids } }, { expiresAt: { greater_than: now } }]
+  if (opts?.excludeSessionId) {
+    holdWhere.push({ sessionId: { not_equals: opts.excludeSessionId } })
+  }
   const holdDocs = await p.find({
     collection: 'seat_holds',
-    where: { and: [{ event: { in: ids } }, { expiresAt: { greater_than: now } }] },
+    where: { and: holdWhere },
     limit: 0,
     overrideAccess: true,
   })

@@ -49,6 +49,9 @@ export async function POST(req: NextRequest) {
     if (result.error === 'event_not_found') {
       return NextResponse.json({ error: 'event_not_found' }, { status: 404 })
     }
+    if (result.error === 'event_not_bookable') {
+      return NextResponse.json({ error: 'event_not_bookable' }, { status: 409 })
+    }
     return NextResponse.json({ error: 'insufficient_seats', remaining: result.remaining }, { status: 409 })
   }
 

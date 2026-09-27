@@ -121,7 +121,7 @@ export const CancellationPolicy: GlobalConfig = {
       defaultValue: false,
       admin: {
         description:
-          'When enabled, customers are granted a voluntary cooling-off window after booking (not legally required — Art. 16(l) exempts scheduled leisure services). The standard disclosure text will update accordingly.',
+          'When enabled, customers are granted a voluntary cooling-off window after booking (not legally required: Art. 16(l) exempts scheduled leisure services). The standard disclosure text will update accordingly.',
         position: 'sidebar',
       },
     },

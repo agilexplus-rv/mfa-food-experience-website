@@ -5,8 +5,10 @@ import { useCallback, useEffect, useState } from 'react'
 import Button from '@/components/console/Button'
 import Card from '@/components/console/Card'
 import Modal from '@/components/console/Modal'
+import Link from 'next/link'
 import { Pagination } from '@/components/console/DataTable'
 import RichTextEditor from '@/components/console/editor/RichTextEditor'
+import { getExcerpt } from '@/lib/payload'
 
 interface PolicyRow {
   id: string | number
@@ -27,7 +29,7 @@ interface SearchResult {
 }
 
 function formatDate(iso: string | null): string {
-  if (!iso) return '\u2014'
+  if (!iso) return '-'
   return new Date(iso).toLocaleDateString('en-MT', {
     day: 'numeric',
     month: 'short',
@@ -100,6 +102,10 @@ export default function PoliciesPage() {
       setFormError('Title and slug are required.')
       return
     }
+    if (!getExcerpt(form.body, 1)) {
+      setFormError('Please write the policy body.')
+      return
+    }
 
     // Check if body changed and auto-set reviewedAt
     const currentBodyStr = JSON.stringify(form.body)
@@ -142,6 +148,9 @@ export default function PoliciesPage() {
 
   return (
     <div>
+      <Link href="/console/content" className="mb-4 inline-block text-sm font-semibold text-lunar-green hover:underline">
+        &larr; Back to Content
+      </Link>
       <header className="mb-6 flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-2xl font-black text-lunar-green tracking-tight">Policies</h1>
@@ -184,7 +193,7 @@ export default function PoliciesPage() {
                   <tr key={String(p.id)} className="border-b border-border/50 last:border-0 hover:bg-soft-beige/30 transition-colors">
                     <td className="px-4 py-3 font-semibold text-lunar-green">{p.title}</td>
                     <td className="px-4 py-3 text-xs text-text-light font-mono">{p.slug}</td>
-                    <td className="px-4 py-3 text-sm text-text-light">{p.version || '\u2014'}</td>
+                    <td className="px-4 py-3 text-sm text-text-light">{p.version || '-'}</td>
                     <td className="px-4 py-3 text-sm text-text-light">{formatDate(p.reviewedAt)}</td>
                     <td className="px-4 py-3 text-center">
                       <button

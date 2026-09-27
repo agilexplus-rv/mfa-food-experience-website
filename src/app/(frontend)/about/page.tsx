@@ -1,10 +1,9 @@
 import type { Metadata } from 'next'
-import { Logo } from '@/components/brand/Logo'
 
 export const metadata: Metadata = {
-  title: 'About — Malta Food Experience',
+  title: 'About | Malta Food Experience',
   description:
-    'Learn about the Malta Food Agency and the Maltese Food Experience — our mission, our team, and our commitment to authentic Maltese culinary and cultural experiences.',
+    'Learn about the Malta Food Agency and the Maltese Food Experience: our mission, our team, and our commitment to authentic Maltese culinary and cultural experiences.',
 }
 
 /**
@@ -21,7 +20,6 @@ export default function AboutPage() {
   return (
     <article className="mx-auto max-w-3xl px-6 py-16">
       <header className="text-center">
-        <Logo variant="primary" size="sm" className="!p-0 mx-auto" />
         <h1 className="mt-4 text-4xl font-black tracking-[-0.02em] text-lunar-green sm:text-5xl">
           About Us
         </h1>
@@ -31,7 +29,7 @@ export default function AboutPage() {
       <div className="mt-12 space-y-10 text-lunar-green">
         {/* NOTE: All copy below is placeholder per URD FR-7.3 — to be supplied by client. */}
         <p className="rounded-md border-l-4 border-matte-gold bg-soft-beige/60 px-4 py-3 text-sm font-semibold italic text-text-light">
-          About content — to be supplied by client.
+          About content, to be supplied by client.
         </p>
 
         {/* Mission */}
@@ -43,7 +41,7 @@ export default function AboutPage() {
             The Malta Food Agency exists to celebrate and share the authentic
             flavours of Malta. Through hands-on classes, guided tastings, and
             cultural experiences, we connect residents and visitors with the
-            island&apos;s rich culinary heritage — from traditional recipes
+            island&apos;s rich culinary heritage, from traditional recipes
             passed down through generations to the producers who keep them
             alive today.
           </p>

@@ -6,6 +6,7 @@ import config from '@payload-config'
 import { checkoutSchema } from '@/lib/validations/booking'
 import { getAvailability } from '@/lib/availability'
 import { getSeatHold, releaseSeatHold } from '@/lib/bookings/seat-holds'
+import { isEventBookable } from '@/lib/events/auto-close'
 import { generateBookingReference } from '@/lib/bookings/reference'
 import { validateCoupon } from '@/lib/coupons/validate'
 import { createOrder, checkoutRedirectUrl, VivaNotConfiguredError } from '@/lib/viva/client'
@@ -115,21 +116,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'hold_expired' }, { status: 410 })
   }
 
-  // ── Re-check availability ──
-  const availability = await getAvailability(eventId)
-  if (availability.remaining < persons) {
-    return NextResponse.json({ error: 'insufficient_seats', remaining: availability.remaining }, { status: 409 })
-  }
-
-  // ── Guard: VIVA must be configured ──
-  if (!isVivaConfigured()) {
-    return NextResponse.json(
-      { error: 'payments_not_configured', message: 'VIVA Wallet is not configured (VIVA_CLIENT_ID / VIVA_CLIENT_SECRET unset).' },
-      { status: 503 },
-    )
-  }
-
-  // ── Fetch event for pricing + metadata ──
+  // ── Fetch event for the bookability/pricing checks below ──
   const p = await payload()
   const event = await p.findByID({ collection: 'events', id: eventId, overrideAccess: true }).catch(() => null)
   if (!event) {
@@ -145,6 +132,29 @@ export async function POST(req: NextRequest) {
     pricePerPerson: number
     capacity: number
     locationRef: string
+    status: 'scheduled' | 'cancelled' | 'completed'
+    autoCloseHoursAfter?: number | null
+  }
+
+  // ── Booking cutoff: reject once the event is no longer bookable ──
+  if (evt.status !== 'scheduled' || !isEventBookable(evt)) {
+    return NextResponse.json({ error: 'event_not_bookable' }, { status: 409 })
+  }
+
+  // ── Re-check availability (exclude the caller's own hold: it already
+  // reserves these seats, so counting it again would make booking the
+  // exact remaining seats impossible) ──
+  const availability = await getAvailability(eventId, { excludeSessionId: hold.sessionId })
+  if (availability.remaining < persons) {
+    return NextResponse.json({ error: 'insufficient_seats', remaining: availability.remaining }, { status: 409 })
+  }
+
+  // ── Guard: VIVA must be configured ──
+  if (!isVivaConfigured()) {
+    return NextResponse.json(
+      { error: 'payments_not_configured', message: 'VIVA Wallet is not configured (VIVA_CLIENT_ID / VIVA_CLIENT_SECRET unset).' },
+      { status: 503 },
+    )
   }
 
   // ── Coupon validation (preview pricing only; not consumed yet) ──
@@ -207,7 +217,7 @@ export async function POST(req: NextRequest) {
     const result = await createOrder({
       // VIVA expects integer cents; round to avoid float artefacts (19.99 * 3 * 100 = 5996.999...).
       amount: Math.round(totalAmountEuros * 100),
-      customerTrns: `${evt.title} — ${persons} seat${persons === 1 ? '' : 's'}`,
+      customerTrns: `${evt.title}, ${persons} seat${persons === 1 ? '' : 's'}`,
       customer: {
         email,
         fullName: leadAttendeeName,

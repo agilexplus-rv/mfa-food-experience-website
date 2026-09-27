@@ -98,7 +98,7 @@ function blockToHtml(n: LexicalNode): string {
       // Nodes this editor can't edit (uploads, blocks, relationships...)
       // are kept verbatim as a non-editable placeholder so saving from the
       // console never silently deletes them.
-      return `<div contenteditable="false" data-lexical-json="${escapeHtml(JSON.stringify(n))}" class="my-2 rounded border border-dashed border-border px-3 py-2 text-xs text-text-light">[${escapeHtml(n.type || 'embedded')} content — edit in the full admin]</div>`
+      return `<div contenteditable="false" data-lexical-json="${escapeHtml(JSON.stringify(n))}" class="my-2 rounded border border-dashed border-border px-3 py-2 text-xs text-text-light">[${escapeHtml(n.type || 'embedded')} content, edit in the full admin]</div>`
   }
 }
 

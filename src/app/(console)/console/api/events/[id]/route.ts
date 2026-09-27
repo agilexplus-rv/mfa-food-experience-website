@@ -97,6 +97,15 @@ export async function PATCH(
     body.autoCloseHoursAfter =
       body.autoCloseHoursAfter === '' || body.autoCloseHoursAfter === null || !Number.isFinite(n) || n <= 0 ? null : n
   }
+  if ('locationRef' in body && !String(body.locationRef || '').trim()) {
+    return NextResponse.json({ error: 'locationRef is required' }, { status: 400 })
+  }
+  if ('startTime' in body && !body.startTime) {
+    return NextResponse.json({ error: 'startTime is required' }, { status: 400 })
+  }
+  if ('endTime' in body && !body.endTime) {
+    return NextResponse.json({ error: 'endTime is required' }, { status: 400 })
+  }
 
   try {
     const current = await p.findByID({

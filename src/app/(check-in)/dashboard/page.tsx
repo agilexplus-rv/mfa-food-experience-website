@@ -68,7 +68,7 @@ function formatCurrency(euros: number): string {
 }
 
 function formatDate(iso: string | null): string {
-  if (!iso) return '\u2014'
+  if (!iso) return '-'
   return new Date(iso).toLocaleDateString('en-MT', {
     day: 'numeric',
     month: 'short',
@@ -77,7 +77,7 @@ function formatDate(iso: string | null): string {
 }
 
 function formatDateTime(iso: string | null): string {
-  if (!iso) return '\u2014'
+  if (!iso) return '-'
   return new Date(iso).toLocaleString('en-MT', {
     day: 'numeric',
     month: 'short',
@@ -472,7 +472,7 @@ export default function DashboardPage() {
                         {b.reference}
                       </td>
                       <td className="px-4 py-3 text-lunar-green">
-                        {b.eventTitle || '\u2014'}
+                        {b.eventTitle || '-'}
                       </td>
                       <td className="px-4 py-3">
                         <div className="font-semibold text-lunar-green">
@@ -515,7 +515,7 @@ export default function DashboardPage() {
                         {formatDateTime(b.checkedInAt)}
                       </td>
                       <td className="px-4 py-3 text-xs text-text-light">
-                        {b.checkInStaffName || '\u2014'}
+                        {b.checkInStaffName || '-'}
                       </td>
                       {user?.role === 'admin' && (
                         <td className="px-4 py-3 text-center">
@@ -548,7 +548,7 @@ export default function DashboardPage() {
                               </button>
                             )}
                             {b.status === 'cancelled' && (
-                              <span className="text-[10px] text-text-light">{'\u2014'}</span>
+                              <span className="text-[10px] text-text-light">{'-'}</span>
                             )}
                           </div>
                         </td>
@@ -564,7 +564,7 @@ export default function DashboardPage() {
           <div className="mt-4 flex items-center justify-between text-sm text-text-light">
             <span>
               {results.totalDocs} booking{results.totalDocs !== 1 ? 's' : ''} found
-              {results.totalPages > 1 && ` \u2014 page ${results.page} of ${results.totalPages}`}
+              {results.totalPages > 1 && `, page ${results.page} of ${results.totalPages}`}
             </span>
             <div className="flex gap-2">
               <button

@@ -185,11 +185,11 @@ export async function POST(
         try {
           await p.sendEmail({
             to: entry.email,
-            subject: `Seats available — ${eventTitle}`,
+            subject: `Seats available: ${eventTitle}`,
             html: `<p>Hello ${entry.name},</p>
 <p>Good news! Seats are now available for <strong>${eventTitle}</strong>.</p>
 <p>Please visit the Malta Food Experience website to book your spot.</p>
-<p>— Malta Food Experience</p>`,
+<p>Malta Food Experience</p>`,
           })
         } catch (emailErr) {
           console.warn('[console/cancel/waitlist] Failed to send waitlist notification email:', emailErr)

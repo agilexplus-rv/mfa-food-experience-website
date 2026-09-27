@@ -3,7 +3,7 @@ import type { Metadata } from 'next'
 import { ConfirmationStatus } from '@/components/booking/ConfirmationStatus'
 
 export const metadata: Metadata = {
-  title: 'Booking confirmation — Malta Food Experience',
+  title: 'Booking confirmation | Malta Food Experience',
 }
 
 export const dynamic = 'force-dynamic'

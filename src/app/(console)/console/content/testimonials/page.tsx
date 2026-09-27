@@ -2,6 +2,7 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
+import Link from 'next/link'
 import Button from '@/components/console/Button'
 import Badge from '@/components/console/Badge'
 import Card from '@/components/console/Card'
@@ -27,7 +28,7 @@ interface SearchResult {
 }
 
 function formatDate(iso: string | null): string {
-  if (!iso) return '\u2014'
+  if (!iso) return '-'
   return new Date(iso).toLocaleDateString('en-MT', {
     day: 'numeric',
     month: 'short',
@@ -88,6 +89,9 @@ export default function TestimonialsModerationPage() {
 
   return (
     <div>
+      <Link href="/console/content" className="mb-4 inline-block text-sm font-semibold text-lunar-green hover:underline">
+        &larr; Back to Content
+      </Link>
       <header className="mb-6 flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-2xl font-black text-lunar-green tracking-tight">Testimonials Moderation</h1>
@@ -158,7 +162,7 @@ export default function TestimonialsModerationPage() {
                       <div className="line-clamp-2">{t.text}</div>
                     </td>
                     <td className="px-4 py-3 text-sm text-text-light">
-                      {t.eventTitle || '\u2014'}
+                      {t.eventTitle || '-'}
                     </td>
                     <td className="px-4 py-3 text-xs text-text-light">{formatDate(t.createdAt)}</td>
                     <td className="px-4 py-3 text-center">

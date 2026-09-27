@@ -2,12 +2,11 @@ import type { Metadata } from 'next'
 
 import { listVisibleServices } from '@/lib/services/queries'
 import { ExperienceRow } from '@/components/services/ExperienceRow'
-import { Logo } from '@/components/brand/Logo'
 
 export const metadata: Metadata = {
-  title: 'Experiences — Malta Food Experience',
+  title: 'Experiences | Malta Food Experience',
   description:
-    'Browse all current Malta Food Experience offerings — hands-on classes and guided tastings hosted by the Malta Food Agency.',
+    'Browse all current Malta Food Experience offerings: hands-on classes and guided tastings hosted by the Malta Food Agency.',
 }
 
 export const revalidate = 60
@@ -20,7 +19,6 @@ export default async function ServicesIndexPage() {
   return (
     <section className="mx-auto max-w-7xl px-6 py-16">
       <header className="mx-auto max-w-2xl text-center">
-        <Logo variant="primary" size="sm" className="!p-0 mx-auto" />
         <h1 className="mt-4 text-4xl font-black tracking-[-0.02em] text-lunar-green sm:text-5xl">
           Our Experiences
         </h1>

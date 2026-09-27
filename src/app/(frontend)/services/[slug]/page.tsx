@@ -18,9 +18,9 @@ export async function generateMetadata({
 }: PageProps): Promise<Metadata> {
   const { slug } = await params
   const service = await getServiceBySlug(slug)
-  if (!service) return { title: 'Not found — Malta Food Experience' }
+  if (!service) return { title: 'Not found | Malta Food Experience' }
   return {
-    title: `${service.name} — Malta Food Experience`,
+    title: `${service.name} | Malta Food Experience`,
     description: `Upcoming ${service.name} dates, prices, and availability.`,
   }
 }
@@ -95,12 +95,12 @@ export default async function ServicePage({ params }: PageProps) {
         </a>
         {/* Service image */}
         {imageryUrl && (
-          <div className="mt-8 mx-auto max-w-2xl overflow-hidden rounded-xl shadow-md">
+          <div className="mt-8 mx-auto max-w-2xl aspect-[16/9] overflow-hidden rounded-xl shadow-md">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={imageryUrl}
               alt={imageryAlt || service.name}
-              className="w-full h-auto object-cover"
+              className="h-full w-full object-cover"
             />
           </div>
         )}

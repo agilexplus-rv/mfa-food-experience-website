@@ -40,12 +40,12 @@ function formatCurrency(euros: number): string {
 }
 
 function formatDate(iso: string | null): string {
-  if (!iso) return '\u2014'
+  if (!iso) return '-'
   return new Date(iso).toLocaleDateString('en-MT', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
 function formatDateTime(iso: string | null): string {
-  if (!iso) return '\u2014'
+  if (!iso) return '-'
   return new Date(iso).toLocaleString('en-MT', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
 }
 
@@ -131,7 +131,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
             <div className="flex justify-between">
               <dt className="text-text-light">Event</dt>
               <dd className="text-right text-lunar-green font-semibold">
-                {booking.eventTitle || '\u2014'}
+                {booking.eventTitle || '-'}
                 <div className="text-xs text-text-light">{formatDate(booking.eventDate)}</div>
               </dd>
             </div>
@@ -180,14 +180,14 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
             </div>
             <div className="flex justify-between">
               <dt className="text-text-light">Checked In By</dt>
-              <dd className="text-right text-lunar-green">{booking.checkInStaffName || '\u2014'}</dd>
+              <dd className="text-right text-lunar-green">{booking.checkInStaffName || '-'}</dd>
             </div>
             <div className="flex justify-between">
               <dt className="text-text-light">Payment Method</dt>
               <dd className="text-right">
                 {booking.paymentMethod ? (
                   <Badge variant={booking.paymentMethod}>{booking.paymentMethod.replace('_', ' ')}</Badge>
-                ) : '—'}
+                ) : '-'}
               </dd>
             </div>
             <div className="flex justify-between">
@@ -195,7 +195,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
               <dd className="text-right">
                 {booking.refundStatus && booking.refundStatus !== 'none' ? (
                   <Badge variant={booking.refundStatus}>{booking.refundStatus}</Badge>
-                ) : '\u2014'}
+                ) : '-'}
               </dd>
             </div>
             {booking.refundId && (

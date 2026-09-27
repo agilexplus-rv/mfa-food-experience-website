@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
-  title: 'Booking not completed — Malta Food Experience',
+  title: 'Booking not completed | Malta Food Experience',
 }
 
 /**

@@ -71,7 +71,7 @@ export async function GET(req: NextRequest) {
     'Event ID', 'Title', 'Experience (service)', 'Date', 'Start', 'End', 'Location', 'Status',
     'Capacity', 'Seats booked', 'Seats remaining', 'Confirmed bookings', 'Checked-in guests',
     'No-shows', 'Cancelled bookings', 'Price/person (EUR)', 'Revenue (EUR)',
-    'Fully booked override', 'Auto-close (hours after end)', 'Series ID', 'Created', 'Last updated',
+    'Fully booked override', 'Booking cutoff (hours before start)', 'Series ID', 'Created', 'Last updated',
   ]
 
   const rows = eventsRes.docs.map((e) => {

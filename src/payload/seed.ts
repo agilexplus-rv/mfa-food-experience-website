@@ -198,12 +198,12 @@ export async function seed(p?: Payload) {
               {
                 type: 'heading',
                 tag: 'h2',
-                children: [{ type: 'text', text: '3. Right of Withdrawal — Important Notice' }],
+                children: [{ type: 'text', text: '3. Right of Withdrawal: Important Notice' }],
               },
               {
                 type: 'paragraph',
                 children: [
-                  { type: 'text', text: '\u26a0 [DRAFT \u2014 PLACEHOLDER LEGAL TEXT]', format: 'bold' },
+                  { type: 'text', text: '\u26a0 [DRAFT: PLACEHOLDER LEGAL TEXT]', format: 'bold' },
                 ],
               },
               {
@@ -238,7 +238,7 @@ export async function seed(p?: Payload) {
               {
                 type: 'paragraph',
                 children: [
-                  { type: 'text', text: '\u26a0 [DRAFT \u2014 PLACEHOLDER LEGAL TEXT]', format: 'bold' },
+                  { type: 'text', text: '\u26a0 [DRAFT: PLACEHOLDER LEGAL TEXT]', format: 'bold' },
                 ],
               },
               {
@@ -397,7 +397,7 @@ export async function seed(p?: Payload) {
               {
                 type: 'paragraph',
                 children: [
-                  { type: 'text', text: '\u26a0 [DRAFT \u2014 PLACEHOLDER: verify VAT number with Agency administration before publication.]', format: 'bold' },
+                  { type: 'text', text: '\u26a0 [DRAFT: PLACEHOLDER, verify VAT number with Agency administration before publication.]', format: 'bold' },
                 ],
               },
             ],

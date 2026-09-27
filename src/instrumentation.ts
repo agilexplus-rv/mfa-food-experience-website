@@ -1,12 +1,12 @@
 /**
  * Next.js instrumentation hook -- runs once when the server starts.
  *
- * Schedules the event auto-close sweep in-process: events with an
- * `autoCloseHoursAfter` window need to flip to "completed" within
- * minutes of that window passing, and the production host (Azure
- * Container Apps) has no external cron configured in this repo. The
- * sweep is idempotent, so running it on every replica (and alongside
- * the /api/cron/complete-events endpoint) is safe.
+ * Schedules the event auto-close sweep in-process: scheduled events
+ * need to flip to "completed" once their calendar day has passed, and
+ * the production host (Azure Container Apps) has no external cron
+ * configured in this repo. The sweep is idempotent, so running it on
+ * every replica (and alongside the /api/cron/complete-events endpoint)
+ * is safe.
  *
  * Interval: AUTO_CLOSE_INTERVAL_MINUTES (default 15; set 0 to disable).
  */

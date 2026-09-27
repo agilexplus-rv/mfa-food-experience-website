@@ -77,7 +77,7 @@ function eventLabel(e: StaffEvent): string {
   const d = new Date(e.date)
   const dateStr = d.toLocaleDateString('en-MT', { day: 'numeric', month: 'short' })
   const t = e.startTime ? new Date(e.startTime).toLocaleTimeString('en-MT', { hour: '2-digit', minute: '2-digit' }) : ''
-  return `${dateStr} ${t ? t + ' — ' : ''}${e.title}`
+  return `${dateStr} ${t ? t + ', ' : ''}${e.title}`
 }
 
 const MAX_SYNC_RETRIES = 3
@@ -531,7 +531,7 @@ export default function ScanPage() {
 
           <dt className="text-text-light">Experience</dt>
           <dd className="font-semibold text-lunar-green">
-            {result.eventTitle || '\u2014'}
+            {result.eventTitle || '-'}
           </dd>
 
           <dt className="text-text-light">Attendee</dt>
@@ -550,7 +550,7 @@ export default function ScanPage() {
                   minute: '2-digit',
                   second: '2-digit',
                 })
-              : '\u2014'}
+              : '-'}
           </dd>
 
           {/* Scope 5: staff accountability */}
@@ -699,7 +699,7 @@ export default function ScanPage() {
       {/* Scope 1: Queue indicator */}
       {queueLength > 0 && !syncing && (
         <div className="mb-4 rounded-lg border border-matte-gold/50 bg-accent-text/5 p-2 text-center text-xs font-semibold text-accent-text">
-          {queueLength} scan{queueLength !== 1 ? 's' : ''} queued — will sync when back online
+          {queueLength} scan{queueLength !== 1 ? 's' : ''} queued. Will sync when back online
         </div>
       )}
 
@@ -858,7 +858,7 @@ export default function ScanPage() {
                           {b.leadAttendeeName}
                         </p>
                         <p className="text-xs text-text-light">
-                          {b.reference} &middot; {b.eventTitle || '\u2014'} &middot; {b.persons} person{b.persons !== 1 ? 's' : ''}
+                          {b.reference} &middot; {b.eventTitle || '-'} &middot; {b.persons} person{b.persons !== 1 ? 's' : ''}
                         </p>
                         <p className="text-xs">
                           <span

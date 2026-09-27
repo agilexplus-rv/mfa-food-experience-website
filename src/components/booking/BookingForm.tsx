@@ -139,15 +139,17 @@ export function BookingForm({
           setHold(null)
           setHoldError(
             data.error === 'insufficient_seats'
-              ? `Only ${data.remaining} seat${data.remaining === 1 ? '' : 's'} left — please lower the number of seats.`
-              : 'Could not reserve your seats. Please try again.',
+              ? `Only ${data.remaining} seat${data.remaining === 1 ? '' : 's'} left. Please lower the number of seats.`
+              : data.error === 'event_not_bookable'
+                ? 'Bookings are closed for this experience.'
+                : 'Could not reserve your seats. Please try again.',
           )
           return
         }
         setHold(data.hold)
       } catch {
         setHold(null)
-        setHoldError('Could not reserve your seats — check your connection and try again.')
+        setHoldError('Could not reserve your seats. Check your connection and try again.')
       }
     },
     [eventId],
@@ -270,7 +272,7 @@ export function BookingForm({
       }
       setCouponStatus({ state: 'valid', totalAfterDiscount: data.totalAfterDiscount })
     } catch {
-      setCouponStatus({ state: 'invalid', message: 'Could not check this code — please try again.' })
+      setCouponStatus({ state: 'invalid', message: 'Could not check this code. Please try again.' })
     }
   }, [couponCode, eventId, seats])
 
@@ -283,7 +285,7 @@ export function BookingForm({
       setSubmitError(null)
 
       if (!hold || holdExpired) {
-        setSubmitError('Your seat hold has expired — please reserve again before paying.')
+        setSubmitError('Your seat hold has expired. Please reserve again before paying.')
         return
       }
       if (!policyAccepted) {
@@ -321,35 +323,35 @@ export function BookingForm({
 
         if (res.status === 503 && data.error === 'payments_not_configured') {
           setSubmitError(
-            'Online payment is being finalised and isn\u2019t available just yet. Your seats are held as pending \u2014 please check back soon, or contact us directly to complete your booking.',
+            'Online payments are temporarily unavailable, so we couldn\u2019t start your booking. No payment has been taken. Your seats are only held for a few minutes, so please try again soon or contact us to complete your booking.',
           )
           return
         }
         if (!res.ok) {
           const messages: Record<string, string> = {
-            hold_not_found_or_expired: 'Your seat hold has expired — please reserve again before paying.',
-            hold_mismatch: 'Your seat hold no longer matches this booking — please refresh and try again.',
-            hold_expired: 'Your seat hold has expired — please reserve again before paying.',
-            seats_mismatch: 'The number of seats changed — please refresh and try again.',
+            hold_not_found_or_expired: 'Your seat hold has expired. Please reserve again before paying.',
+            hold_mismatch: 'Your seat hold no longer matches this booking. Please refresh and try again.',
+            hold_expired: 'Your seat hold has expired. Please reserve again before paying.',
+            seats_mismatch: 'The number of seats changed. Please refresh and try again.',
             event_not_found: 'This experience could not be found.',
             event_not_bookable: 'This experience is no longer bookable.',
             insufficient_seats: 'There aren\u2019t enough seats left for this booking.',
-            invalid_coupon: 'Your discount code is no longer valid — remove it and try again.',
+            invalid_coupon: 'Your discount code is no longer valid. Remove it and try again.',
             invalid_input: 'Please check the details you entered and try again.',
-            payment_error: 'We couldn\u2019t start the payment — please try again in a moment.',
+            payment_error: 'We couldn\u2019t start the payment. Please try again in a moment.',
             bot_check_required: 'Please complete the security check below.',
-            bot_check_failed: 'Security check failed — please try again.',
+            bot_check_failed: 'Security check failed. Please try again.',
           }
-          setSubmitError(data.message ?? messages[data.error] ?? 'Something went wrong — please try again.')
+          setSubmitError(data.message ?? messages[data.error] ?? 'Something went wrong. Please try again.')
           return
         }
         if (data.url) {
           window.location.href = data.url
           return
         }
-        setSubmitError('Something went wrong — please try again.')
+        setSubmitError('Something went wrong. Please try again.')
       } catch {
-        setSubmitError('Could not reach the server — check your connection and try again.')
+        setSubmitError('Could not reach the server. Check your connection and try again.')
       } finally {
         setSubmitting(false)
       }
@@ -503,7 +505,7 @@ export function BookingForm({
           </button>
         </div>
         {couponStatus.state === 'valid' && (
-          <p className="mt-1.5 text-xs font-semibold text-lunar-green">Code applied — total updated below.</p>
+          <p className="mt-1.5 text-xs font-semibold text-lunar-green">Code applied. Total updated below.</p>
         )}
         {couponStatus.state === 'invalid' && (
           <p className="mt-1.5 text-xs font-semibold text-terracotta-dark">{couponStatus.message}</p>
@@ -609,11 +611,11 @@ export function BookingForm({
       {/* Total + submit */}
       <div className="rounded-xl border border-border bg-surface p-6">
         <div className="flex items-baseline justify-between">
-          <span className="text-sm font-semibold text-lunar-green">Total</span>
-          <span className="text-2xl font-black text-lunar-green">{formatPrice(displayTotal)}</span>
+          <span className="text-sm font-semibold text-lunar-green">Total (inc. VAT)</span>
+          <span className="text-2xl font-black text-lunar-green">{formatPrice(displayTotal)} inc. VAT</span>
         </div>
         {couponStatus.state === 'valid' && displayTotal !== baseTotal && (
-          <p className="mt-1 text-right text-xs text-text-light line-through">{formatPrice(baseTotal)}</p>
+          <p className="mt-1 text-right text-xs text-text-light line-through">{formatPrice(baseTotal)} inc. VAT</p>
         )}
 
         {submitError && (

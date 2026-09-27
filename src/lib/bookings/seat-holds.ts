@@ -4,6 +4,7 @@ import config from '@payload-config'
 
 import { getAvailability } from '@/lib/availability'
 import { holdDurationMinutes } from '@/lib/env'
+import { isEventBookable } from '@/lib/events/auto-close'
 
 /**
  * Seat-hold creation/release per ADR-002.
@@ -61,6 +62,7 @@ export type CreateHoldResult =
   | { ok: true; hold: { id: string | number; expiresAt: string; seats: number; eventId: string | number } }
   | { ok: false; error: 'insufficient_seats'; remaining: number }
   | { ok: false; error: 'event_not_found' }
+  | { ok: false; error: 'event_not_bookable' }
 
 export async function createSeatHold(
   eventId: string | number,
@@ -71,6 +73,10 @@ export async function createSeatHold(
 
   const event = await p.findByID({ collection: 'events', id: eventId, overrideAccess: true }).catch(() => null)
   if (!event) return { ok: false, error: 'event_not_found' }
+  const evt = event as { date?: string; startTime?: string; autoCloseHoursAfter?: number | null; status?: string }
+  if (evt.status !== 'scheduled' || !isEventBookable(evt)) {
+    return { ok: false, error: 'event_not_bookable' }
+  }
 
   // Release any previous active hold this session already holds for this
   // event before creating a new one (one active hold per cart/event).

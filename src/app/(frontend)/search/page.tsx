@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { siteSearch, type SearchResultItem } from '@/lib/search/queries'
 
 export const metadata: Metadata = {
-  title: 'Search — Malta Food Experience',
+  title: 'Search | Malta Food Experience',
   description: 'Search across experiences, upcoming sessions, news, and testimonials on the Malta Food Experience site.',
 }
 

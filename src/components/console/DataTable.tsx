@@ -106,7 +106,7 @@ export function Pagination({ page, totalPages, totalDocs, onPageChange }: Pagina
     <div className="mt-4 flex items-center justify-between text-sm text-text-light">
       <span>
         {totalDocs} result{totalDocs !== 1 ? 's' : ''} found
-        {totalPages > 1 ? ` — page ${page} of ${totalPages}` : ''}
+        {totalPages > 1 ? `, page ${page} of ${totalPages}` : ''}
       </span>
       {totalPages > 1 && (
         <div className="flex gap-2">

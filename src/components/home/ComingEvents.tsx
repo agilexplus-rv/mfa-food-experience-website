@@ -104,7 +104,7 @@ export async function ComingEvents() {
                   </p>
                   <p className="mt-2 font-semibold text-terracotta-dark text-lg">
                     {formatPrice(event.pricePerPerson ?? 0)}
-                    <span className="text-sm font-regular text-text-light"> / person</span>
+                    <span className="text-sm font-regular text-text-light"> / person, inc. VAT</span>
                   </p>
 
                   {/* Spacer pushes the action row to the bottom for equal-height alignment */}
@@ -115,7 +115,7 @@ export async function ComingEvents() {
                     <ReadMoreButton
                       content={{
                         title: event.title,
-                        subtitle: `${formatDay(event.date)} · ${formatTimeRange(event.startTime, event.endTime)} · ${formatPrice(event.pricePerPerson ?? 0)} per person`,
+                        subtitle: `${formatDay(event.date)} · ${formatTimeRange(event.startTime, event.endTime)} · ${formatPrice(event.pricePerPerson ?? 0)} per person, inc. VAT`,
                         descriptionHtml: info?.descriptionHtml,
                         imageUrl: info?.url,
                         imageAlt: info?.alt,
@@ -137,7 +137,7 @@ export async function ComingEvents() {
                     )}
                     <Link
                       href={fullyBooked ? '/services' : bookHref}
-                      aria-label={fullyBooked ? `${event.title} — fully booked` : `Book ${event.title}`}
+                      aria-label={fullyBooked ? `${event.title}, fully booked` : `Book ${event.title}`}
                       aria-disabled={fullyBooked}
                       tabIndex={fullyBooked ? -1 : 0}
                       className={[

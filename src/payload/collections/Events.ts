@@ -171,7 +171,7 @@ export const Events: CollectionConfig = {
       min: 0,
       admin: {
         position: 'sidebar',
-        description: 'Optional. Automatically set event status to "Completed" this many hours after endTime. Leave empty to disable auto-close.',
+        description: 'Optional. Stop accepting new bookings this many hours before the experience starts. Leave empty for no cutoff.',
       },
     },
     {

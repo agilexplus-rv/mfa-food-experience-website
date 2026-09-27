@@ -149,10 +149,10 @@ export default function WaitlistPage() {
               <tbody>
                 {results.docs.map((entry) => (
                   <tr key={String(entry.id)} className="border-b border-border/50 last:border-0 hover:bg-soft-beige/30 transition-colors">
-                    <td className="px-4 py-3 text-xs text-lunar-green font-semibold">{entry.eventTitle || '\u2014'}</td>
+                    <td className="px-4 py-3 text-xs text-lunar-green font-semibold">{entry.eventTitle || '-'}</td>
                     <td className="px-4 py-3 text-xs text-lunar-green font-mono">{entry.email}</td>
                     <td className="px-4 py-3 text-xs text-lunar-green">{entry.name}</td>
-                    <td className="px-4 py-3 text-xs text-text-light">{entry.phone || '\u2014'}</td>
+                    <td className="px-4 py-3 text-xs text-text-light">{entry.phone || '-'}</td>
                     <td className="px-4 py-3 text-center text-xs text-lunar-green">{entry.persons}</td>
                     <td className="px-4 py-3">
                       <Badge variant={entry.status}>{entry.status}</Badge>
@@ -160,7 +160,7 @@ export default function WaitlistPage() {
                     <td className="px-4 py-3 text-xs text-text-light">
                       {entry.notifiedAt
                         ? new Date(entry.notifiedAt).toLocaleString('en-MT', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
-                        : '\u2014'}
+                        : '-'}
                     </td>
                     <td className="px-4 py-3 text-xs text-text-light">
                       {new Date(entry.createdAt).toLocaleDateString('en-MT')}

@@ -55,7 +55,7 @@ function formatCurrency(euros: number): string {
 }
 
 function formatDate(iso: string | null): string {
-  if (!iso) return '\u2014'
+  if (!iso) return '-'
   return new Date(iso).toLocaleDateString('en-MT', {
     day: 'numeric',
     month: 'short',
@@ -64,7 +64,7 @@ function formatDate(iso: string | null): string {
 }
 
 function formatDateTime(iso: string | null): string {
-  if (!iso) return '\u2014'
+  if (!iso) return '-'
   return new Date(iso).toLocaleString('en-MT', {
     day: 'numeric',
     month: 'short',
@@ -167,6 +167,11 @@ export default function ConsoleBookingsPage() {
       setCreateError('Event, name, and email are required.')
       return
     }
+    const personsNum = parseInt(createForm.persons, 10)
+    if (!createForm.persons.trim() || !Number.isFinite(personsNum) || personsNum < 1) {
+      setCreateError('Persons must be a number of at least 1.')
+      return
+    }
     setCreateError(null)
     try {
       const res = await fetch('/console/api/bookings', {
@@ -177,7 +182,7 @@ export default function ConsoleBookingsPage() {
           leadAttendeeName: createForm.leadAttendeeName.trim(),
           email: createForm.email.trim(),
           phone: createForm.phone.trim() || undefined,
-          persons: parseInt(createForm.persons, 10) || 1,
+          persons: personsNum,
           dietaryNotes: createForm.dietaryNotes.trim() || undefined,
           paymentMethod: createForm.paymentMethod,
           totalAmount: createForm.totalAmount ? parseFloat(createForm.totalAmount) : undefined,
@@ -306,7 +311,7 @@ export default function ConsoleBookingsPage() {
                     >
                       <td className="px-4 py-3 font-mono text-xs text-lunar-green">{b.reference}</td>
                       <td className="px-4 py-3 text-lunar-green">
-                        <div>{b.eventTitle || '\u2014'}</div>
+                        <div>{b.eventTitle || '-'}</div>
                         <div className="text-xs text-text-light">{formatDate(b.eventDate)}</div>
                       </td>
                       <td className="px-4 py-3">
@@ -330,11 +335,11 @@ export default function ConsoleBookingsPage() {
                         {b.paymentMethod ? (
                           <Badge variant={b.paymentMethod}>{b.paymentMethod.replace('_', ' ')}</Badge>
                         ) : (
-                          <span className="text-xs text-text-light">—</span>
+                          <span className="text-xs text-text-light">-</span>
                         )}
                       </td>
                       <td className="px-4 py-3 text-xs text-text-light">{formatDateTime(b.checkedInAt)}</td>
-                      <td className="px-4 py-3 text-xs text-text-light">{b.checkInStaffName || '\u2014'}</td>
+                      <td className="px-4 py-3 text-xs text-text-light">{b.checkInStaffName || '-'}</td>
                       <td className="px-4 py-3 text-center" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-center gap-1 flex-wrap">
                           {b.status !== 'cancelled' && (
@@ -365,7 +370,7 @@ export default function ConsoleBookingsPage() {
                             </button>
                           )}
                           {b.status === 'cancelled' && (
-                            <span className="text-[10px] text-text-light">{'\u2014'}</span>
+                            <span className="text-[10px] text-text-light">{'-'}</span>
                           )}
                         </div>
                       </td>
@@ -468,7 +473,7 @@ export default function ConsoleBookingsPage() {
           </div>
           <div>
             <label className="block text-sm font-semibold text-lunar-green mb-1">
-              Total Amount (EUR) — leave empty to auto-calculate
+              Total Amount (EUR), leave empty to auto-calculate
             </label>
             <input
               type="number"

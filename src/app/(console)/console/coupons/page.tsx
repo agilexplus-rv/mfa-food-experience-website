@@ -90,6 +90,10 @@ export default function CouponsPage() {
       setCreateError('Valid from and valid until dates are required')
       return
     }
+    if (!Number.isFinite(createForm.value) || createForm.value <= 0) {
+      setCreateError('Value must be a number greater than 0')
+      return
+    }
     setSaving(true)
     setCreateError(null)
     try {
@@ -190,7 +194,7 @@ export default function CouponsPage() {
             <tbody>
               {coupons.map((c) => {
                 const status = getStatus(c)
-                const code = c.code || '\u2014'
+                const code = c.code || '-'
                 return (
                   <tr key={String(c.id)} className="border-b border-border/50 last:border-0 hover:bg-soft-beige/30 transition-colors">
                     <td className="px-4 py-3 font-mono text-xs text-lunar-green font-bold">{code}</td>
@@ -250,7 +254,7 @@ export default function CouponsPage() {
 
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="flex-1">
-              <label className="block text-xs font-semibold text-text-light mb-1">Type</label>
+              <label className="block text-xs font-semibold text-text-light mb-1">Type *</label>
               <select
                 value={createForm.type}
                 onChange={(e) => setCreateForm(prev => ({ ...prev, type: e.target.value as 'percentage' | 'fixed' }))}
@@ -263,7 +267,7 @@ export default function CouponsPage() {
             </div>
             <div className="flex-1">
               <label className="block text-xs font-semibold text-text-light mb-1">
-                Value{createForm.type === 'percentage' ? ' (%)' : ' (EUR)'}
+                Value{createForm.type === 'percentage' ? ' (%)' : ' (EUR)'} *
               </label>
               <input
                 type="number"

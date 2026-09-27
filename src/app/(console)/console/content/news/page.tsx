@@ -2,6 +2,7 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
+import Link from 'next/link'
 import Button from '@/components/console/Button'
 import Badge from '@/components/console/Badge'
 import Card from '@/components/console/Card'
@@ -38,7 +39,7 @@ interface MediaOption {
 }
 
 function formatDate(iso: string | null): string {
-  if (!iso) return '\u2014'
+  if (!iso) return '-'
   return new Date(iso).toLocaleDateString('en-MT', {
     day: 'numeric',
     month: 'short',
@@ -144,8 +145,8 @@ export default function NewsManagementPage() {
   }
 
   const handleSave = async () => {
-    if (!form.title.trim() || !form.slug.trim()) {
-      setFormError('Title and slug are required.')
+    if (!form.title.trim() || !form.slug.trim() || !form.date.trim()) {
+      setFormError('Title, slug, and date are required.')
       return
     }
     if (!getExcerpt(form.body, 1)) {
@@ -225,6 +226,9 @@ export default function NewsManagementPage() {
 
   return (
     <div>
+      <Link href="/console/content" className="mb-4 inline-block text-sm font-semibold text-lunar-green hover:underline">
+        &larr; Back to Content
+      </Link>
       <header className="mb-6 flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-2xl font-black text-lunar-green tracking-tight">News</h1>

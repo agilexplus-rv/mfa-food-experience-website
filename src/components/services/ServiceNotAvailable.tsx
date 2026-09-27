@@ -14,7 +14,7 @@ export interface ServiceNotAvailableProps {
 }
 
 export function ServiceNotAvailable({ serviceName }: ServiceNotAvailableProps) {
-  const title = serviceName ? `${serviceName} — not available` : 'Not available'
+  const title = serviceName ? `${serviceName}: not available` : 'Not available'
   return (
     <section className="mx-auto max-w-2xl px-6 py-24 text-center">
       <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-lunar-green/5">
@@ -27,7 +27,7 @@ export function ServiceNotAvailable({ serviceName }: ServiceNotAvailableProps) {
       </h1>
       <p className="mx-auto mt-4 max-w-md text-lg leading-relaxed text-text-light">
         This experience isn&apos;t currently on our public schedule. New dates
-        are added regularly — please explore our other experiences or check
+        are added regularly. Please explore our other experiences or check
         back soon.
       </p>
       <Link

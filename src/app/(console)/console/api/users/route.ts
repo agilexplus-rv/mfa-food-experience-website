@@ -149,7 +149,7 @@ export async function POST(req: NextRequest) {
   try {
     await p.sendEmail({
       to: email,
-      subject: 'Welcome to Malta Food Experience — your staff account',
+      subject: 'Welcome to Malta Food Experience: your staff account',
       html:
         '<div style="font-family:Montserrat,sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#F9F4EF;border-radius:12px;color:#33483D">' +
         '<h1 style="font-size:1.25rem;margin:0 0 8px">Your staff account is ready</h1>' +
@@ -315,7 +315,7 @@ export async function DELETE(req: NextRequest) {
         actor: currentUser.id,
         collection: 'users',
         documentId: String(userId),
-        detail: `Admin-triggered MFA reset for user ${email} — MFA enrollment cleared, user must re-enroll at /mfa-setup`,
+        detail: `Admin-triggered MFA reset for user ${email}. MFA enrollment cleared, user must re-enroll at /mfa-setup`,
       },
       overrideAccess: true,
     })

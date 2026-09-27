@@ -31,12 +31,12 @@ interface SearchResult {
 }
 
 function formatDate(iso: string | null): string {
-  if (!iso) return '\u2014'
+  if (!iso) return '-'
   return new Date(iso).toLocaleDateString('en-MT', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
 function formatDateTime(iso: string | null): string {
-  if (!iso) return '\u2014'
+  if (!iso) return '-'
   return new Date(iso).toLocaleString('en-MT', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
 }
 
@@ -141,7 +141,7 @@ export default function EventAttendeesPage({ params }: { params: Promise<{ id: s
           <div>
             <p className="text-sm text-lunar-green">
               <span className="font-bold text-lg">{totalPersons}</span> of{' '}
-              <span className="font-bold">{capacity || '\u2014'}</span> seats booked
+              <span className="font-bold">{capacity || '-'}</span> seats booked
               {' '}across <span className="font-bold">{bookingCount}</span> booking{bookingCount !== 1 ? 's' : ''}
             </p>
           </div>

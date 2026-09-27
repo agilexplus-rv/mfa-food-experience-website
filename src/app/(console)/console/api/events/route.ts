@@ -139,8 +139,21 @@ export async function POST(req: NextRequest) {
 
   const p = await payload()
   const body = await req.json().catch(() => null)
-  if (!body || !body.title || !body.serviceId || !body.date || !body.capacity || body.pricePerPerson == null) {
-    return NextResponse.json({ error: 'title, serviceId, date, capacity, pricePerPerson are required' }, { status: 400 })
+  if (
+    !body ||
+    !body.title ||
+    !body.serviceId ||
+    !body.date ||
+    !body.startTime ||
+    !body.endTime ||
+    !body.capacity ||
+    body.pricePerPerson == null ||
+    !String(body.locationRef || '').trim()
+  ) {
+    return NextResponse.json(
+      { error: 'title, serviceId, date, startTime, endTime, capacity, pricePerPerson, and locationRef are required' },
+      { status: 400 },
+    )
   }
 
   // --- Recurrence (Rudie 2026-07-12) ---

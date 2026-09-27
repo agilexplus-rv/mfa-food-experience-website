@@ -148,6 +148,6 @@ export async function submitContact(
 
   return {
     ok: true,
-    message: `Thank you, ${name}. Your message has been sent — we will reply to ${email} shortly.`,
+    message: `Thank you, ${name}. Your message has been sent. We will reply to ${email} shortly.`,
   }
 }

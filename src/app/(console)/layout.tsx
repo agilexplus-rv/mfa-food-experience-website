@@ -3,7 +3,7 @@ import '@/app/(frontend)/globals.css'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Operator Console — Malta Food Experience',
+  title: 'Operator Console | Malta Food Experience',
   robots: 'noindex, nofollow',
 }
 

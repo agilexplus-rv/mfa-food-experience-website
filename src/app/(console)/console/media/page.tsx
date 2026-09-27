@@ -26,7 +26,7 @@ interface SearchResult {
 }
 
 function formatDate(iso: string | null): string {
-  if (!iso) return '\u2014'
+  if (!iso) return '-'
   return new Date(iso).toLocaleDateString('en-MT', {
     day: 'numeric',
     month: 'short',
@@ -35,7 +35,7 @@ function formatDate(iso: string | null): string {
 }
 
 function formatFileSize(bytes: number | null): string {
-  if (bytes === null || bytes === undefined) return '\u2014'
+  if (bytes === null || bytes === undefined) return '-'
   if (bytes < 1024) return `${bytes} B`
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
@@ -225,10 +225,10 @@ export default function MediaLibraryPage() {
                       )}
                     </td>
                     <td className="px-4 py-2 text-xs text-lunar-green font-mono max-w-[160px] truncate" title={m.filename || ''}>
-                      {m.filename || '\u2014'}
+                      {m.filename || '-'}
                     </td>
                     <td className="px-4 py-2 text-sm text-text-light max-w-[160px] truncate" title={m.alt}>
-                      {m.alt || '\u2014'}
+                      {m.alt || '-'}
                     </td>
                     <td className="px-4 py-2 text-xs text-text-light">{formatFileSize(m.filesize)}</td>
                     <td className="px-4 py-2 text-xs text-text-light">{formatDate(m.createdAt)}</td>
@@ -332,11 +332,11 @@ export default function MediaLibraryPage() {
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
                 <span className="text-text-light">Filename</span>
-                <p className="font-mono text-xs text-lunar-green mt-0.5 break-all">{detailMedia.filename || '\u2014'}</p>
+                <p className="font-mono text-xs text-lunar-green mt-0.5 break-all">{detailMedia.filename || '-'}</p>
               </div>
               <div>
                 <span className="text-text-light">Type</span>
-                <p className="text-xs text-lunar-green mt-0.5">{detailMedia.mimeType || '\u2014'}</p>
+                <p className="text-xs text-lunar-green mt-0.5">{detailMedia.mimeType || '-'}</p>
               </div>
               <div>
                 <span className="text-text-light">Size</span>
@@ -349,7 +349,7 @@ export default function MediaLibraryPage() {
             </div>
             <div>
               <span className="text-text-light text-sm">Alt Text</span>
-              <p className="text-sm text-lunar-green mt-0.5">{detailMedia.alt || '\u2014'}</p>
+              <p className="text-sm text-lunar-green mt-0.5">{detailMedia.alt || '-'}</p>
             </div>
             {detailMedia.url && (
               <div>

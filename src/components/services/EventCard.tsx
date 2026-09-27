@@ -114,7 +114,7 @@ export function EventCard({
               Per person
             </dt>
             <dd className="font-semibold text-lunar-green">
-              {formatPrice(pricePerPerson)}
+              {formatPrice(pricePerPerson)} <span className="font-normal text-text-light">inc. VAT</span>
             </dd>
           </div>
         </dl>
@@ -127,7 +127,7 @@ export function EventCard({
           <ReadMoreButton
             content={{
               title,
-              subtitle: [formatDay(date), timeRange, `${formatPrice(pricePerPerson)} per person`].filter(Boolean).join(' · '),
+              subtitle: [formatDay(date), timeRange, `${formatPrice(pricePerPerson)} per person, inc. VAT`].filter(Boolean).join(' · '),
               descriptionHtml,
               imageUrl,
               imageAlt,
@@ -139,7 +139,7 @@ export function EventCard({
         <div className="mt-4 pt-4 border-t border-border">
           <Link
             href={linkHref}
-            aria-label={fullyBooked ? `${title} — fully booked` : `Book ${title}`}
+            aria-label={fullyBooked ? `${title}, fully booked` : `Book ${title}`}
             aria-disabled={fullyBooked}
             tabIndex={fullyBooked ? -1 : 0}
             className={[

@@ -171,7 +171,7 @@ export default function AuditLogPage() {
                       })}
                     </td>
                     <td className="px-4 py-3 text-xs text-lunar-green font-mono">
-                      {entry.actorEmail || String(entry.actorId || '\u2014')}
+                      {entry.actorEmail || String(entry.actorId || '-')}
                     </td>
                     <td className="px-4 py-3">
                       <span className="inline-block rounded-full bg-lunar-green/10 px-2 py-0.5 text-xs font-mono text-lunar-green">
@@ -179,13 +179,13 @@ export default function AuditLogPage() {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-xs text-text-light capitalize">
-                      {entry.collection ? String(entry.collection).replace(/_/g, ' ') : '\u2014'}
+                      {entry.collection ? String(entry.collection).replace(/_/g, ' ') : '-'}
                     </td>
                     <td className="px-4 py-3 text-xs text-text-light font-mono">
-                      {entry.documentId != null ? String(entry.documentId) : '\u2014'}
+                      {entry.documentId != null ? String(entry.documentId) : '-'}
                     </td>
                     <td className="px-4 py-3 text-xs text-text-light max-w-[320px]">
-                      <div className="truncate" title={entry.detail || undefined}>{entry.detail || '\u2014'}</div>
+                      <div className="truncate" title={entry.detail || undefined}>{entry.detail || '-'}</div>
                       {entry.changes && (
                         <details className="mt-1">
                           <summary className="cursor-pointer text-[11px] font-semibold text-accent-text">
@@ -198,7 +198,7 @@ export default function AuditLogPage() {
                       )}
                     </td>
                     <td className="px-4 py-3 text-xs text-text-light font-mono whitespace-nowrap" title={entry.userAgent || undefined}>
-                      {entry.ipAddress || '\u2014'}
+                      {entry.ipAddress || '-'}
                     </td>
                   </tr>
                 ))}

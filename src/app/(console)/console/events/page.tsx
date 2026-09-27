@@ -161,8 +161,22 @@ export default function ConsoleEventsPage() {
   }
 
   const handleSave = async () => {
-    if (!form.title.trim() || !form.serviceId || !form.date) {
-      setFormError('Title, service, and date are required.')
+    if (!form.title.trim() || !form.serviceId || !form.date || !form.locationRef.trim()) {
+      setFormError('Title, service, date, and location are required.')
+      return
+    }
+    if (!form.startTime.trim() || !form.endTime.trim()) {
+      setFormError('Start time and end time are required.')
+      return
+    }
+    const capacityNum = parseInt(form.capacity, 10)
+    if (!form.capacity.trim() || !Number.isFinite(capacityNum) || capacityNum < 1) {
+      setFormError('Capacity must be a number of at least 1.')
+      return
+    }
+    const priceNum = parseFloat(form.pricePerPerson)
+    if (!form.pricePerPerson.trim() || !Number.isFinite(priceNum) || priceNum < 0) {
+      setFormError('Price per person must be a number of 0 or more.')
       return
     }
     setSaveLoading(true)
@@ -177,14 +191,10 @@ export default function ConsoleEventsPage() {
         // When repeating, the pickers give bare HH:MM -- compose them
         // onto the first-occurrence date; the POST handler then shifts
         // the time-of-day onto every generated occurrence.
-        startTime: form.startTime
-          ? (form.startTime.includes('T') ? form.startTime : `${form.date}T${form.startTime}`)
-          : form.date,
-        endTime: form.endTime
-          ? (form.endTime.includes('T') ? form.endTime : `${form.date}T${form.endTime}`)
-          : form.date,
-        capacity: parseInt(form.capacity, 10) || 1,
-        pricePerPerson: parseFloat(form.pricePerPerson) || 0,
+        startTime: form.startTime.includes('T') ? form.startTime : `${form.date}T${form.startTime}`,
+        endTime: form.endTime.includes('T') ? form.endTime : `${form.date}T${form.endTime}`,
+        capacity: capacityNum,
+        pricePerPerson: priceNum,
         locationRef: form.locationRef,
         status: form.status,
         fullyBookedOverride: form.fullyBookedOverride,
@@ -289,7 +299,7 @@ export default function ConsoleEventsPage() {
                 {results.docs.map((ev) => (
                   <tr key={String(ev.id)} className="border-b border-border/50 last:border-0 hover:bg-soft-beige/30 transition-colors">
                     <td className="px-4 py-3 text-lunar-green font-semibold">{ev.title}</td>
-                    <td className="px-4 py-3 text-text-light">{ev.serviceName || '\u2014'}</td>
+                    <td className="px-4 py-3 text-text-light">{ev.serviceName || '-'}</td>
                     <td className="px-4 py-3 text-xs text-text-light">
                       {formatDate(ev.date)}
                       {ev.seriesId && (
@@ -431,7 +441,7 @@ export default function ConsoleEventsPage() {
                 (no misleading date part -- Rudie 2026-07-12); the form
                 value is composed back to <date>T<time> on save. */}
             <div>
-              <label className="block text-sm font-semibold text-lunar-green mb-1">Start Time</label>
+              <label className="block text-sm font-semibold text-lunar-green mb-1">Start Time *</label>
               {isRepeating ? (
                 <input type="time" value={timePart(form.startTime)} onChange={(e) => setForm(p => ({ ...p, startTime: e.target.value }))}
                   className="w-full rounded-lg border border-border px-4 py-2.5 text-sm text-lunar-green focus:outline-none focus:ring-2 focus:ring-lunar-green/30"
@@ -443,7 +453,7 @@ export default function ConsoleEventsPage() {
               )}
             </div>
             <div>
-              <label className="block text-sm font-semibold text-lunar-green mb-1">End Time</label>
+              <label className="block text-sm font-semibold text-lunar-green mb-1">End Time *</label>
               {isRepeating ? (
                 <input type="time" value={timePart(form.endTime)} onChange={(e) => setForm(p => ({ ...p, endTime: e.target.value }))}
                   className="w-full rounded-lg border border-border px-4 py-2.5 text-sm text-lunar-green focus:outline-none focus:ring-2 focus:ring-lunar-green/30"
@@ -470,7 +480,7 @@ export default function ConsoleEventsPage() {
             </div>
           </div>
           <div>
-            <label className="block text-sm font-semibold text-lunar-green mb-1">Location</label>
+            <label className="block text-sm font-semibold text-lunar-green mb-1">Location *</label>
             <input type="text" value={form.locationRef} onChange={(e) => setForm(p => ({ ...p, locationRef: e.target.value }))}
               className="w-full rounded-lg border border-border px-4 py-2.5 text-sm text-lunar-green focus:outline-none focus:ring-2 focus:ring-lunar-green/30"
               style={{ boxSizing: 'border-box' }} />
@@ -495,7 +505,7 @@ export default function ConsoleEventsPage() {
           </div>
           <div>
             <label htmlFor="auto-close-hours" className="block text-sm font-semibold text-lunar-green mb-1">
-              Auto-close after (hours)
+              Auto-close before (hours)
             </label>
             <input id="auto-close-hours" type="number" min="0" step="0.5" value={form.autoCloseHoursAfter}
               onChange={(e) => setForm(p => ({ ...p, autoCloseHoursAfter: e.target.value }))}
@@ -504,7 +514,7 @@ export default function ConsoleEventsPage() {
               className="w-40 rounded-lg border border-border px-4 py-2.5 text-sm text-lunar-green focus:outline-none focus:ring-2 focus:ring-lunar-green/30"
               style={{ boxSizing: 'border-box' }} />
             <p id="auto-close-help" className="mt-1 text-xs text-text-light">
-              Optional. The experience is automatically marked Completed this many hours after its end time. Leave empty to close it the day after.
+              Stop accepting bookings this many hours before the experience starts. Leave empty for no cutoff.
             </p>
           </div>
           {formError && (

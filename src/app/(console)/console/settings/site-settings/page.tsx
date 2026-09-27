@@ -2,6 +2,7 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
+import Link from 'next/link'
 import Button from '@/components/console/Button'
 import Card from '@/components/console/Card'
 
@@ -170,6 +171,9 @@ export default function SiteSettingsPage() {
 
   return (
     <div>
+      <Link href="/console/settings" className="mb-4 inline-block text-sm font-semibold text-lunar-green hover:underline">
+        &larr; Back to Settings
+      </Link>
       <h1 className="mb-8 text-2xl font-black text-lunar-green tracking-tight">Site Settings</h1>
 
       {error && (

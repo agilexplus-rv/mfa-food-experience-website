@@ -112,7 +112,7 @@ export function ConfirmationStatus({ sessionId }: { sessionId: string }) {
       <div>
         <h1 className="text-3xl font-black tracking-[-0.02em] text-lunar-green">Confirming your payment…</h1>
         <p className="mt-4 text-text-light">
-          Booking reference <span className="font-mono font-semibold">{state.booking.reference}</span> — this
+          Booking reference <span className="font-mono font-semibold">{state.booking.reference}</span>. This
           usually takes a few seconds.
         </p>
       </div>

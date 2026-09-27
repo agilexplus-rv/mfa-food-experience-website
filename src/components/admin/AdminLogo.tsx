@@ -13,7 +13,7 @@ import Link from 'next/link'
  */
 export default function AdminLogo() {
   return (
-    <Link href="/" aria-label="Malta Food Experience — go to homepage">
+    <Link href="/" aria-label="Malta Food Experience, go to homepage">
       <img
         src="/brand/logos/Malta Food - Primary.svg"
         alt="Malta Food Experience"

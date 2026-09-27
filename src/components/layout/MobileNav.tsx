@@ -85,11 +85,13 @@ export function MobileNav() {
         )}
       </button>
 
-      {/* Overlay */}
+      {/* Overlay -- visual dimming only. Not a click-to-close target: the
+          drawer holds a search input, and a stray tap near its edge while
+          typing must not discard what the visitor typed. Close via the
+          explicit close button, Escape, or picking a nav link. */}
       {open && (
         <div
           className="fixed inset-0 z-50 bg-black/40 md:hidden"
-          onClick={() => setOpen(false)}
           aria-hidden="true"
         />
       )}

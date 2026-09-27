@@ -136,7 +136,7 @@ export default function DataSubjectPage() {
                 {matches.map((m) => (
                   <tr key={m.reference} className="border-b border-border/30 last:border-0">
                     <td className="py-2 font-mono text-xs text-lunar-green">{m.reference}</td>
-                    <td className="py-2 text-lunar-green">{m.eventTitle || '\u2014'}</td>
+                    <td className="py-2 text-lunar-green">{m.eventTitle || '-'}</td>
                     <td className="py-2 text-lunar-green">{m.status}</td>
                     <td className="py-2 text-xs text-text-light">
                       {new Date(m.createdAt).toLocaleDateString('en-MT')}

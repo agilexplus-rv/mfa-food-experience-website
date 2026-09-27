@@ -90,7 +90,7 @@ export function EventGrid({ events, availability, eventHref }: EventGridProps) {
             No upcoming dates
           </p>
           <p className="mt-2 text-sm text-text-light">
-            New dates are added regularly — please check back soon.
+            New dates are added regularly. Please check back soon.
           </p>
         </div>
       ) : (

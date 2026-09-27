@@ -1,9 +1,8 @@
 import type { Metadata } from 'next'
-import { Logo } from '@/components/brand/Logo'
 import { ContactForm } from './ContactForm'
 
 export const metadata: Metadata = {
-  title: 'Contact — Malta Food Experience',
+  title: 'Contact | Malta Food Experience',
   description:
     'Get in touch with the Malta Food Agency. Find us at Pitkali Road, Ta\u2019 Qali, Attard, or send us a message using the contact form.',
 }
@@ -35,7 +34,6 @@ export default function ContactPage() {
   return (
     <section className="mx-auto max-w-7xl px-6 py-16">
       <header className="mx-auto max-w-2xl text-center">
-        <Logo variant="primary" size="sm" className="!p-0 mx-auto" />
         <h1 className="mt-4 text-4xl font-black tracking-[-0.02em] text-lunar-green sm:text-5xl">
           Contact Us
         </h1>

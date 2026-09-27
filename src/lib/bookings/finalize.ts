@@ -277,8 +277,8 @@ async function finalizeCore(input: FinalizeCoreInput): Promise<FinalizeBookingRe
       try {
         await p.sendEmail({
           to: adminAlertEmail,
-          subject: `[MFA Alert] ${eventInfo?.title ?? 'Event'} — ${statusLabel}`,
-          html: `<p><strong>${eventInfo?.title ?? 'Event'}</strong> — ${statusLabel}</p>
+          subject: `[MFA Alert] ${eventInfo?.title ?? 'Event'}: ${statusLabel}`,
+          html: `<p><strong>${eventInfo?.title ?? 'Event'}</strong>: ${statusLabel}</p>
 <p>Capacity: ${capacity} | Booked: ${afterAvailability.booked} | Holds: ${afterAvailability.holds}</p>
 <p>Booking reference: ${(b as unknown as { reference: string }).reference}</p>
 <p>This is an automated alert from Malta Food Experience.</p>`,

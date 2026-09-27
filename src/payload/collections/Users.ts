@@ -25,7 +25,7 @@ export const Users: CollectionConfig = {
     useSessions: false,
     forgotPassword: {
       generateEmailSubject: () =>
-        'Malta Food Experience — Reset your password',
+        'Malta Food Experience: Reset your password',
       generateEmailHTML: (args) => {
         const token = args?.token ?? ''
         const user = args?.user as { email?: string } | undefined
@@ -261,7 +261,7 @@ export const Users: CollectionConfig = {
         } catch (err) {
           if (err instanceof Error && err.message.startsWith('Cannot delete')) throw err
           // If the query itself fails (DB issue), deny to be safe
-          throw new Error('Unable to verify admin count — deletion blocked.')
+          throw new Error('Unable to verify admin count. Deletion blocked.')
         }
       },
     ],

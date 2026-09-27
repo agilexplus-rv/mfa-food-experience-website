@@ -11,6 +11,7 @@ import { formatPrice } from '@/lib/availability-types'
 import { coolingOffHours, getCancellationPolicy } from '@/lib/policies/cancellation'
 import { getTermsAndConditions } from '@/lib/policies/terms'
 import { formatDay, formatTimeRange } from '@/lib/format-date'
+import { isEventBookable } from '@/lib/events/auto-close'
 
 export const dynamic = 'force-dynamic'
 
@@ -35,15 +36,16 @@ const getEvent = cache(async function getEvent(id: string) {
     locationRef: string
     status: 'scheduled' | 'cancelled' | 'completed'
     fullyBookedOverride?: boolean
+    autoCloseHoursAfter?: number | null
   } | null
 })
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { id } = await params
   const event = await getEvent(id)
-  if (!event) return { title: 'Not found — Malta Food Experience' }
+  if (!event) return { title: 'Not found | Malta Food Experience' }
   return {
-    title: `Book: ${event.title} — Malta Food Experience`,
+    title: `Book: ${event.title} | Malta Food Experience`,
     description: `Reserve your seat for ${event.title}.`,
   }
 }
@@ -66,6 +68,7 @@ export default async function BookEventPage({ params }: PageProps) {
   if (!event) notFound()
 
   const availability = await getAvailability(event.id)
+  const bookable = isEventBookable(event)
 
   // Fetch cancellation policy for the withdrawal-right disclosure
   // and to know whether cancellations are enabled at all.
@@ -95,7 +98,7 @@ export default async function BookEventPage({ params }: PageProps) {
           </div>
           <div>
             <dt className="text-xs font-semibold uppercase tracking-wide text-text-light">Per person</dt>
-            <dd className="font-semibold text-lunar-green">{formatPrice(event.pricePerPerson)}</dd>
+            <dd className="font-semibold text-lunar-green">{formatPrice(event.pricePerPerson)} inc. VAT</dd>
           </div>
           <div className="col-span-2 sm:col-span-3">
             <dt className="text-xs font-semibold uppercase tracking-wide text-text-light">Location</dt>
@@ -112,6 +115,15 @@ export default async function BookEventPage({ params }: PageProps) {
               {event.status === 'cancelled'
                 ? 'This experience has been cancelled.'
                 : 'This experience has already taken place.'}
+            </p>
+          </div>
+        ) : !bookable ? (
+          <div className="mx-auto max-w-2xl rounded-xl border border-dashed border-border bg-surface/60 px-6 py-16 text-center">
+            <p className="text-lg font-semibold text-lunar-green">Bookings are closed for this experience</p>
+            <p className="mt-2 text-sm text-text-light">
+              {event.autoCloseHoursAfter != null && event.autoCloseHoursAfter > 0
+                ? `Bookings for this experience close ${event.autoCloseHoursAfter} hour${event.autoCloseHoursAfter === 1 ? '' : 's'} before it starts.`
+                : 'This experience has already started.'}
             </p>
           </div>
         ) : availability.status === 'fully_booked' ? (

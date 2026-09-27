@@ -47,18 +47,18 @@ export async function generateMetadata({
   const { slug } = await params
   if (slug === "cancellation-policy") {
     return {
-      title: "Cancellation Policy — Malta Food Experience",
+      title: "Cancellation Policy | Malta Food Experience",
       description:
         "Our cancellation and refund terms for scheduled food experiences.",
     }
   }
   if (slug === "terms-and-conditions") {
-    return { title: "Terms & Conditions — Malta Food Experience" }
+    return { title: "Terms & Conditions | Malta Food Experience" }
   }
   const policy = await getPolicyBySlug(slug)
-  if (!policy) return { title: "Not found — Malta Food Experience" }
+  if (!policy) return { title: "Not found | Malta Food Experience" }
   return {
-    title: `${policy.title} — Malta Food Experience`,
+    title: `${policy.title} | Malta Food Experience`,
   }
 }
 

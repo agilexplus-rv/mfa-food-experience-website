@@ -52,5 +52,5 @@ export function formatTimeRange(startIso: string, endIso: string): string {
     minute: '2-digit',
     hour12: false,
   })
-  return `${fmt.format(s)} – ${fmt.format(e)}`
+  return `${fmt.format(s)} - ${fmt.format(e)}`
 }

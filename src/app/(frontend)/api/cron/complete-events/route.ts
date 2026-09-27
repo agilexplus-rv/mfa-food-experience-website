@@ -7,8 +7,8 @@ import { completeFinishedEvents } from '@/lib/events/auto-close'
 
 /**
  * GET /api/cron/complete-events -- transitions finished events from
- * scheduled -> completed (see completeFinishedEvents for the rules,
- * including the per-event `autoCloseHoursAfter` window).
+ * scheduled -> completed once their calendar day has passed (see
+ * completeFinishedEvents for the rule).
  *
  * The same sweep also runs in-process every 15 minutes (see
  * src/instrumentation.ts), so auto-close works without an external
