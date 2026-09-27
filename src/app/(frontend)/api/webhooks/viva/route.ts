@@ -35,6 +35,7 @@ export async function GET() {
   try {
     const { getWebhookVerificationKey } = await import('@/lib/viva/client')
     const key = await getWebhookVerificationKey()
+    // Viva's code example uses lowercase { key: ... } in the response body
     return NextResponse.json({ Key: key }, { status: 200 })
   } catch (err) {
     console.error('[webhooks/viva] Webhook verification key retrieval failed:', err)

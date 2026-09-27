@@ -259,8 +259,11 @@ export async function getWebhookVerificationKey(): Promise<string> {
     throw new Error('VIVA_MERCHANT_ID or VIVA_API_KEY not set; required for webhook verification.')
   }
 
+  const isDemo = process.env.VIVA_DEMO_MODE === 'true'
+  const base = isDemo ? 'https://demo.vivapayments.com' : 'https://www.vivapayments.com'
+
   const credentials = Buffer.from(`${merchantId}:${apiKey}`).toString('base64')
-  const res = await fetch(`${accountsBase()}/api/messages/config/token`, {
+  const res = await fetch(`${base}/api/messages/config/token`, {
     headers: { Authorization: `Basic ${credentials}` },
   })
 
