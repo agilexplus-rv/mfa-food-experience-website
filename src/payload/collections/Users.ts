@@ -1,6 +1,7 @@
 import type { CollectionConfig } from 'payload'
 import { validatePasswordStrength } from '@/lib/rbac/password'
 import { auditLog, diffChanges, requestMeta } from '@/lib/audit/helper'
+import { MFA_VERIFIED_COOKIE } from '@/lib/mfa/session'
 
 export const Users: CollectionConfig = {
   slug: 'users',
@@ -387,6 +388,16 @@ export const Users: CollectionConfig = {
     ],
     afterLogout: [
       async ({ req }) => {
+        // Expire the MFA trust cookie alongside payload-token so the next
+        // password login must present a TOTP code again. Payload merges
+        // req.responseHeaders into the logout response (appending, so both
+        // Set-Cookie headers survive).
+        req.responseHeaders = new Headers(req.responseHeaders)
+        req.responseHeaders.append(
+          'Set-Cookie',
+          `${MFA_VERIFIED_COOKIE}=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax${process.env.NODE_ENV === 'production' ? '; Secure' : ''}`,
+        )
+
         const user = req.user as { id?: string | number; email?: string } | null
         if (!user?.id) return
         // The staff console records the logout itself (before its session

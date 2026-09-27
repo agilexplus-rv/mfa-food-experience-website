@@ -23,9 +23,34 @@ import { CancellationPolicy } from './src/payload/globals/CancellationPolicy.ts'
 import { SiteSettings } from './src/payload/globals/SiteSettings.ts'
 import { SocialMediaSettings } from './src/payload/globals/SocialMediaSettings.ts'
 import { TermsAndConditions } from './src/payload/globals/TermsAndConditions.ts'
+import { requireMfaCollection, requireMfaGlobal } from './src/payload/hooks/requireMfa.ts'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
+
+// Fail closed: without PAYLOAD_SECRET in production every payload-token and
+// mfa-verified cookie would be signed with a guessable fallback. The check is
+// skipped during `next build` (same heuristic as Payload's isNextBuild()),
+// because the Docker build stage runs `npm run build` without the secret.
+const isNextBuild =
+  process.env.NEXT_PHASE === 'phase-production-build' ||
+  process.env.npm_lifecycle_event === 'build'
+if (process.env.NODE_ENV === 'production' && !process.env.PAYLOAD_SECRET && !isNextBuild) {
+  throw new Error('PAYLOAD_SECRET must be set in production.')
+}
+
+// Appends a beforeOperation hook while keeping any hooks the collection or
+// global already defines. Used to put the MFA gate (requireMfa.ts) on every
+// user-defined collection and global. Payload's internal collections
+// (payload-preferences, payload-locked-documents, payload-migrations) are
+// added by Payload itself and are not wrapped.
+const withMfa = <H, T extends { hooks?: { beforeOperation?: H[] } }>(config: T, hook: H): T => ({
+  ...config,
+  hooks: {
+    ...config.hooks,
+    beforeOperation: [...(config.hooks?.beforeOperation ?? []), hook],
+  },
+})
 
 // DB selection is driven entirely by DATABASE_URL's scheme:
 //   postgres(ql)://...                   -> Postgres (production)
@@ -97,6 +122,7 @@ export default buildConfig({
       beforeLogin: [
         '@/components/admin/AdminPasswordReveal#default',
       ],
+      afterLogin: ['@/components/admin/AdminLoginError#default'],
       header: [
         '@/components/admin/MfaSetupBanner#default',
       ],
@@ -130,13 +156,13 @@ export default buildConfig({
     Policies,
     AuditLog,
     Waitlist,
-  ],
+  ].map((c) => withMfa(c, requireMfaCollection)),
   globals: [
     CancellationPolicy,
     SiteSettings,
     SocialMediaSettings,
     TermsAndConditions,
-  ],
+  ].map((g) => withMfa(g, requireMfaGlobal)),
   db: dbAdapter,
   email: nodemailerAdapter({
     defaultFromAddress: process.env.FROM_EMAIL || 'noreply@foodagency.mt',

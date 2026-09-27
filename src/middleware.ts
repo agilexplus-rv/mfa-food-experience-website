@@ -96,9 +96,13 @@ async function hasMfaVerifiedCookie(
 ): Promise<boolean> {
   const verifiedToken = req.cookies.get('mfa-verified')?.value
   if (!verifiedToken) return false
+  // Fail closed: jose accepts an empty HS256 key, so an unset secret would
+  // let anyone forge the cookie.
+  const envSecret = process.env.PAYLOAD_SECRET
+  if (!envSecret) return false
 
   try {
-    const secret = new TextEncoder().encode(process.env.PAYLOAD_SECRET || '')
+    const secret = new TextEncoder().encode(envSecret)
     const { payload } = await jwtVerify(verifiedToken, secret)
     if (userId && payload.sub !== String(userId)) return false
     return payload.mfa === true
@@ -109,6 +113,17 @@ async function hasMfaVerifiedCookie(
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
+
+  // Admin server actions (POST + Next-Action header) run as the cookie's
+  // user even when posted to a public admin path like /admin/login, so
+  // require MFA for them before the public-path early return. Requests
+  // without a session (login, create-first-user) are never blocked.
+  if (req.method === 'POST' && req.headers.has('next-action') && pathname.startsWith('/admin')) {
+    const s = getPayloadFromToken(req)
+    if (s?.mfaEnabled && !(await hasMfaVerifiedCookie(req, s.id))) {
+      return new NextResponse('MFA verification required.', { status: 403 })
+    }
+  }
 
   // Allow public paths through
   if (isPublicPath(pathname)) return NextResponse.next()

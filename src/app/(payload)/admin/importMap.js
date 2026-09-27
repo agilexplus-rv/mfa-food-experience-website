@@ -29,6 +29,7 @@ import AdminThemeStyles from '@/components/admin/AdminThemeStyles'
 import AdminLogo from '@/components/admin/AdminLogo'
 import AdminIcon from '@/components/admin/AdminIcon'
 import AdminPasswordReveal from '@/components/admin/AdminPasswordReveal'
+import AdminLoginError from '@/components/admin/AdminLoginError'
 import MfaSetupBanner from '@/components/admin/MfaSetupBanner'
 import CreateFirstUserView from '@/components/admin/CreateFirstUserView'
 import CreateFirstUserProvider from '@/components/admin/CreateFirstUserProvider'
@@ -66,6 +67,7 @@ export const importMap = {
   "@/components/admin/AdminLogo#default": AdminLogo,
   "@/components/admin/AdminIcon#default": AdminIcon,
   "@/components/admin/AdminPasswordReveal#default": AdminPasswordReveal,
+  "@/components/admin/AdminLoginError#default": AdminLoginError,
   "@/components/admin/MfaSetupBanner#default": MfaSetupBanner,
   "@/components/admin/CreateFirstUserView#default": CreateFirstUserView,
   "@/components/admin/CreateFirstUserProvider#default": CreateFirstUserProvider

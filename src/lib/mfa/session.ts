@@ -91,3 +91,9 @@ export const MFA_COOKIE_OPTIONS = {
   sameSite: 'lax' as const,
   path: '/',
 }
+// Persistent cookie that expires with the token (24 h), instead of a browser
+// session cookie that can outlive the token or be restored across restarts.
+export const MFA_VERIFIED_COOKIE_OPTIONS = {
+  ...MFA_COOKIE_OPTIONS,
+  maxAge: MFA_VERIFIED_MAX_AGE,
+}

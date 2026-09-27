@@ -42,6 +42,19 @@ import { useEffect, useState } from 'react'
  * resetPasswordBaseClass in their respective view source files),
  * present on <section> since the very first paint, so this is a
  * reliable signal rather than guessing from form field names.
+ *
+ * Bug fix (2026-09-27): `data-form-ready="false"` is ALSO true in the
+ * server-rendered HTML on every page load (before the form mounts),
+ * not just while a real submit is processing. Since this component's
+ * effect runs before the form's own mount effect flips the attribute,
+ * `check()` was reading a stale "false" and flashing the full-screen
+ * overlay on every page load AND on every failed submit (Payload keeps
+ * the form mounted on failure and just shows a toast -- there is no
+ * reload -- so that flash was the entire "looks like a refresh" bug).
+ * The overlay is now "armed" only by a real user `submit` event on
+ * `form.form`; `check()` shows the overlay only while armed AND
+ * processing, and disarms as soon as processing ends (success,
+ * failure, or the failsafe timeout).
  */
 export default function AdminSubmitOverlay() {
   const [visible, setVisible] = useState(false)
@@ -50,10 +63,11 @@ export default function AdminSubmitOverlay() {
   useEffect(() => {
     const forms = () => Array.from(document.querySelectorAll<HTMLFormElement>('form.form'))
     let timeoutId: ReturnType<typeof setTimeout> | null = null
+    let armed = false
 
     const check = () => {
       const anyProcessing = forms().some((f) => f.getAttribute('data-form-ready') === 'false')
-      setVisible(anyProcessing)
+      setVisible(armed && anyProcessing)
       if (anyProcessing) {
         const isLogin = !!document.querySelector('section.login')
         setLabel(isLogin ? 'Logging in…' : 'Submitting…')
@@ -63,10 +77,12 @@ export default function AdminSubmitOverlay() {
         if (!timeoutId) {
           timeoutId = setTimeout(() => {
             setVisible(false)
+            armed = false
             timeoutId = null
           }, 30_000)
         }
       } else {
+        armed = false
         if (timeoutId) {
           clearTimeout(timeoutId)
           timeoutId = null
@@ -75,6 +91,15 @@ export default function AdminSubmitOverlay() {
     }
 
     check()
+
+    // Only a real user submit should be able to make the overlay visible.
+    const onSubmit = (e: Event) => {
+      if ((e.target as HTMLElement | null)?.matches?.('form.form')) {
+        armed = true
+        check()
+      }
+    }
+    document.addEventListener('submit', onSubmit, true)
 
     const observer = new MutationObserver(check)
     // Observe the whole body for attribute changes on any current or
@@ -88,6 +113,7 @@ export default function AdminSubmitOverlay() {
 
     return () => {
       observer.disconnect()
+      document.removeEventListener('submit', onSubmit, true)
       if (timeoutId) clearTimeout(timeoutId)
     }
   }, [])

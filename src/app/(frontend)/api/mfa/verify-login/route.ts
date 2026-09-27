@@ -8,15 +8,19 @@ import { verifyTotpCode } from '@/lib/mfa/totp'
 import {
   createMfaVerifiedToken,
   MFA_VERIFIED_COOKIE,
-  MFA_COOKIE_OPTIONS,
+  MFA_VERIFIED_COOKIE_OPTIONS,
 } from '@/lib/mfa/session'
 import { auditLog, clientMeta } from '@/lib/audit/helper'
+import { createRateLimiter } from '@/lib/rate-limit'
 
 let _payload: Payload | null = null
 async function payload(): Promise<Payload> {
   if (!_payload) _payload = await getPayload({ config })
   return _payload
 }
+
+// Caps TOTP guesses: 10 attempts per user+IP per 5 minutes.
+const limiter = createRateLimiter({ windowMs: 5 * 60_000, max: 10 })
 
 /**
  * POST /api/mfa/verify-login
@@ -47,6 +51,14 @@ export async function POST(req: NextRequest) {
     userId = String(v.id)
   } catch {
     return NextResponse.json({ error: 'invalid_token' }, { status: 401 })
+  }
+
+  limiter.maybeCleanup()
+  if (!limiter.check(`${userId}:${clientMeta(req).ipAddress ?? 'unknown'}`)) {
+    return NextResponse.json(
+      { error: 'Too many attempts. Wait a few minutes and try again.' },
+      { status: 429 },
+    )
   }
 
   let body: Record<string, unknown>
@@ -107,6 +119,6 @@ export async function POST(req: NextRequest) {
   // Door staff can't access the admin console -- send them to their dashboard.
   const home = record.role === 'admin' ? '/console' : '/dashboard'
   const response = NextResponse.json({ success: true, redirect: home })
-  response.cookies.set(MFA_VERIFIED_COOKIE, verifiedToken, MFA_COOKIE_OPTIONS)
+  response.cookies.set(MFA_VERIFIED_COOKIE, verifiedToken, MFA_VERIFIED_COOKIE_OPTIONS)
   return response
 }

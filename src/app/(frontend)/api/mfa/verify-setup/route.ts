@@ -9,7 +9,7 @@ import {
   createMfaVerifiedToken,
   verifyMfaVerifiedToken,
   MFA_VERIFIED_COOKIE,
-  MFA_COOKIE_OPTIONS,
+  MFA_VERIFIED_COOKIE_OPTIONS,
 } from '@/lib/mfa/session'
 import { actingAs } from '@/lib/audit/helper'
 
@@ -128,6 +128,6 @@ export async function POST(req: NextRequest) {
     message:
       'MFA setup complete. You will need a verification code on next login.',
   })
-  response.cookies.set(MFA_VERIFIED_COOKIE, verifiedToken, MFA_COOKIE_OPTIONS)
+  response.cookies.set(MFA_VERIFIED_COOKIE, verifiedToken, MFA_VERIFIED_COOKIE_OPTIONS)
   return response
 }
