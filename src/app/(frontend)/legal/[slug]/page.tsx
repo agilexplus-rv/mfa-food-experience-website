@@ -132,7 +132,7 @@ export default async function LegalPolicyPage({ params }: PageProps) {
   if (slug === "terms-and-conditions") {
     const terms = await getTermsAndConditions().catch(() => null)
     // Always render the page, even when the Global body is empty
-    // or the Global has never been saved — it shows a graceful
+    // or the Global has never been saved, it shows a graceful
     // "being prepared" message instead of a 404.
     policy = { id: "terms-and-conditions", slug, title: terms?.title || "Terms & Conditions", body: null }
     bodyHtml = terms?.html || ""
@@ -207,7 +207,7 @@ async function CancellationPolicyPage({
           </h1>
         </header>
 
-        {/* Intro text — admin-editable free-text */}
+        {/* Intro text, admin-editable free-text */}
         {policy.introText && (
           <p className="mt-10 text-lunar-green/80 leading-relaxed whitespace-pre-line">
             {policy.introText}
@@ -215,7 +215,7 @@ async function CancellationPolicyPage({
         )}
 
         {!policy.enabled ? (
-          /* Cancellations disabled — clear message, no table */
+          /* Cancellations disabled, clear message, no table */
           <div className="mt-10 rounded-xl border border-dashed border-terracotta/30 bg-terracotta/5 px-6 py-8">
             <p className="text-center text-lg font-semibold text-terracotta-dark">
               Cancellations are not currently accepted for this experience.
@@ -289,7 +289,7 @@ async function CancellationPolicyPage({
           </div>
         )}
 
-        {/* Withdrawal right disclosure — legally required */}
+        {/* Withdrawal right disclosure, legally required */}
         {policy.withdrawalRightDisclosure && (
           <div className="mt-12 border-t border-lunar-green/15 pt-8">
             <h2 className="text-sm font-semibold uppercase tracking-wide text-accent-text">

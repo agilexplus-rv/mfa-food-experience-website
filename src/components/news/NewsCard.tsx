@@ -13,7 +13,7 @@ export interface NewsCardProps {
 
 /**
  * Reusable news card (FR-7.2).
- * Links to /news/[slug] — detail page deferred per URD open question 6.
+ * Links to /news/[slug], detail page deferred per URD open question 6.
  */
 export function NewsCard({ title, date, slug, image, excerpt }: NewsCardProps) {
   const imageUrl = typeof image === "object" ? image?.url : null

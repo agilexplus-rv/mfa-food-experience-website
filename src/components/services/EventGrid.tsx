@@ -7,7 +7,7 @@ import { MonthFilter, type MonthOption } from './MonthFilter'
 import type { EventAvailability } from '@/lib/availability-types'
 
 /**
- * EventGrid — client wrapper that holds the active month filter and
+ * EventGrid: client wrapper that holds the active month filter and
  * renders MonthFilter + the filtered list of EventCards.
  *
  * Receives server-rendered event data + a Map of availability keyed by

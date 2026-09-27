@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 
 /**
- * LanguageSwitcher — EN | MT dropdown.
+ * LanguageSwitcher: EN | MT dropdown.
  *
  * 2026-07-12 (Rudie): converted from a two-pill button toggle to a
  * dropdown. All selection/consent/cookie logic is UNCHANGED -- only the
@@ -13,7 +13,7 @@ import { useCallback, useEffect, useRef, useState } from "react"
  * re-activation) all still apply verbatim.
  *
  * Safe to render multiple times simultaneously (e.g. once in SiteHeader
- * for desktop, once inside MobileNav's drawer for mobile — both are
+ * for desktop, once inside MobileNav's drawer for mobile, both are
  * always mounted in the DOM at once, just visibility-toggled via CSS, not
  * actually unmounted at any breakpoint). This component only owns the
  * pill buttons + cookie read/write; the actual Google Translate widget
@@ -51,12 +51,12 @@ import { useCallback, useEffect, useRef, useState } from "react"
  * Google's Website Translator widget exposes a hidden `<select class="goog-te-combo">`
  * that in theory can be driven programmatically by setting `.value` and dispatching a
  * `change` event. In practice this is unreliable across Google Translate script
- * versions/CDN builds — the event handler GT actually listens for is an internal one
+ * versions/CDN builds, the event handler GT actually listens for is an internal one
  * attached after the widget's own iframes finish booting, and a synthetic `change`
  * event frequently fires before that, or against an already-stale listener. The
  * documented-reliable alternative (used by most production integrations) is the
  * `googtrans` cookie: GT reads `googtrans=/{from}/{to}` during widget initialisation
- * and auto-applies the translation itself — no fragile DOM event needed. Switching
+ * and auto-applies the translation itself, no fragile DOM event needed. Switching
  * language therefore sets/clears that cookie and reloads the page so the widget
  * re-initialises against the new cookie value.
  */

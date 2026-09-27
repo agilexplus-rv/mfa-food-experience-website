@@ -1,7 +1,7 @@
 import Link from 'next/link'
 
 /**
- * ServiceNotAvailable — rendered when a service's `visible` flag is
+ * ServiceNotAvailable: rendered when a service's `visible` flag is
  * false (FR-1.3). Replaces the event grid with a calm, on-brand
  * "not available" state instead of a 404 or a blank page.
  *

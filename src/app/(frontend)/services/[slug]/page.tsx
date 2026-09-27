@@ -29,7 +29,7 @@ export async function generateMetadata({
  * Dynamic service route.
  *
  * FR-1.3: a service with `visible=false` (e.g. Tastings) renders the
- * "not available" state — the URL still resolves, no 404 or redirect.
+ * "not available" state, the URL still resolves, no 404 or redirect.
  * FR-1.5: a visible service renders a grid of upcoming scheduled
  * events, filterable by month (client-side via EventGrid/MonthFilter).
  *

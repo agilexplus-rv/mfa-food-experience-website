@@ -1,5 +1,6 @@
 import type { GlobalConfig } from 'payload'
 import { globalAuditHook } from '@/lib/audit/helper'
+import { buildDefaultTermsLexical } from '@/lib/policies/termsDefault'
 
 /**
  * TermsAndConditions — Payload Global (single-document, admin-editable).
@@ -36,6 +37,9 @@ export const TermsAndConditions: GlobalConfig = {
       type: 'richText',
       label: 'Terms and conditions body',
       required: true,
+      // Drafted default Terms (src/lib/policies/termsDefault.ts), also used as
+      // the public fallback while the saved body is empty.
+      defaultValue: buildDefaultTermsLexical(),
     },
     {
       name: 'bookingCheckboxLabel',

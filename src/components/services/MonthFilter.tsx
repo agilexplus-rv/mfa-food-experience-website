@@ -1,7 +1,7 @@
 'use client'
 
 /**
- * MonthFilter — client-side month picker for the event grid.
+ * MonthFilter: client-side month picker for the event grid.
  *
  * Renders a horizontal row of pill buttons: "All months" plus one
  * pill per month that has events. Selecting a month filters the grid

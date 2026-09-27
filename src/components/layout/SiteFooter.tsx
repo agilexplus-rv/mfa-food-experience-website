@@ -5,18 +5,18 @@ import type { ReactElement } from "react"
 import Link from "next/link"
 
 /**
- * SiteFooter — Lunar Green background, Soft Beige text.
+ * SiteFooter: Lunar Green background, Soft Beige text.
  *
  * Three-column layout (desktop) collapsing to stacked (mobile):
- * 1. Brand mark — inverted logo + short agency description.
- * 2. Navigation — the same nav items as the header.
- * 3. Legal — Cancellation Policy, Customer Policy, Provider Info.
+ * 1. Brand mark, inverted logo + short agency description.
+ * 2. Navigation: the same nav items as the header.
+ * 3. Legal: Cancellation Policy, Customer Policy, Provider Info.
  *
  * Social media links are now admin-configurable via the
  * `social-media-settings` Payload Global. Only platforms with
  * `published: true` and a non-empty URL are rendered. If the Global
  * is unavailable (e.g. before migration), no social icons render
- * (graceful degradation — the footer still works, just without
+ * (graceful degradation, the footer still works, just without
  * social links, rather than crashing the page).
  *
  * Brand compliance: 4-colour palette only, Montserrat via the font variable.
@@ -127,7 +127,7 @@ async function getSocialLinks(): Promise<SocialLink[]> {
       (p) => p.published && p.url && p.platform,
     )
   } catch {
-    // Global not yet migrated or unavailable — render no social links.
+    // Global not yet migrated or unavailable, render no social links.
     return []
   }
 }

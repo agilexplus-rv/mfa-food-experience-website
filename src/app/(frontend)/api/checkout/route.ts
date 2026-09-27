@@ -20,7 +20,7 @@ async function payload(): Promise<Payload> {
 }
 
 /**
- * POST /api/checkout — VIVA Smart Checkout (replaces Stripe, ADR-004 pattern).
+ * POST /api/checkout: VIVA Smart Checkout (replaces Stripe, ADR-004 pattern).
  *
  * 1. Re-validates the hold and re-checks availability.
  * 2. Optionally validates + prices a coupon.
@@ -38,7 +38,7 @@ const rateLimiter = createRateLimiter({ windowMs: 60_000, max: 10 })
 async function verifyTurnstileToken(token: string): Promise<boolean> {
   const secret = turnstileSecretKey()
   if (!secret) {
-    console.warn('[checkout] Turnstile secret key is unset — skipping bot verification.')
+    console.warn('[checkout] Turnstile secret key is unset, skipping bot verification.')
     return true
   }
 

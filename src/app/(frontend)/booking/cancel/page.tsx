@@ -6,10 +6,10 @@ export const metadata: Metadata = {
 }
 
 /**
- * /booking/cancel — Stripe Checkout cancel_url target (ADR-004).
+ * /booking/cancel: Stripe Checkout cancel_url target (ADR-004).
  * Reached when the visitor abandons the Stripe-hosted payment page.
  * The booking remains 'pending' and its seat hold expires naturally
- * per ADR-002 — nothing to clean up here, just a friendly message.
+ * per ADR-002, nothing to clean up here, just a friendly message.
  */
 export default function BookingCancelPage() {
   return (

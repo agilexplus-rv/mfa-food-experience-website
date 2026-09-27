@@ -71,7 +71,7 @@ export async function POST(
     try {
       const refund = await refundTransaction({
         transactionId: b.vivaTransactionId,
-        amount: 0, // full refund — VIVA's fastrefund defaults to full amount when 0
+        amount: 0, // full refund, VIVA's fastrefund defaults to full amount when 0
         merchantTrns: b.reference,
       })
       refundResult = { refundId: refund.transactionId, refundStatus: 'succeeded' }
@@ -87,7 +87,7 @@ export async function POST(
       }
     }
   } else if (isVivaConfigured() && !b.vivaTransactionId) {
-    console.info('[cancel] No vivaTransactionId on booking', b.reference, '— skipping refund, cancelling directly')
+    console.info('[cancel] No vivaTransactionId on booking', b.reference, 'skipping refund, cancelling directly')
   }
 
   // Mark booking as cancelled

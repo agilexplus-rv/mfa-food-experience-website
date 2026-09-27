@@ -4,11 +4,11 @@ import { useRouter } from "next/navigation"
 import { useState } from "react"
 
 /**
- * SiteSearch — a brand-styled, keyboard-accessible search input for
+ * SiteSearch: a brand-styled, keyboard-accessible search input for
  * the site header (desktop) and mobile drawer.
  *
  * On submit (Enter or button click), navigates to /search?q=<query>.
- * No live per-keystroke queries — submit-on-enter keeps things simple
+ * No live per-keystroke queries, submit-on-enter keeps things simple
  * and avoids unnecessary server round-trips.
  *
  * Uses only brand tokens: Lunar Green, Terracotta, Matte Gold, Soft Beige.

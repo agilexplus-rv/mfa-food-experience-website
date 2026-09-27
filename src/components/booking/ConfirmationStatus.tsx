@@ -18,7 +18,7 @@ type State =
   | { phase: 'confirmed'; booking: BookingStatus }
 
 const POLL_INTERVAL_MS = 2000
-const MAX_POLL_ATTEMPTS = 60 // ~2 minutes — generous for webhook delivery latency
+const MAX_POLL_ATTEMPTS = 60 // ~2 minutes, generous for webhook delivery latency
 
 export function ConfirmationStatus({ sessionId }: { sessionId: string }) {
   const [state, setState] = useState<State>({ phase: 'resolving' })

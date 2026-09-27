@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 
 /**
- * MtText — curated Maltese for short UI strings that Google Translate
+ * MtText: curated Maltese for short UI strings that Google Translate
  * gets wrong (Rudie 2026-07-12).
  *
  * Root cause this fixes: the Google Translate widget machine-translates

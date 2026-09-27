@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 /**
  * OpenStreetMap embed for the Malta Food Agency facility.
  *
- * No API key required — this uses the free openstreetmap.org export embed
+ * No API key required, this uses the free openstreetmap.org export embed
  * endpoint. Coordinates: Pitkali Road, Ta' Qali, Attard (approx. 35.8917, 14.4022).
  * The bbox is a tight box around the facility so the marker is centred.
  */
@@ -27,7 +27,7 @@ const OSM_LINK_URL =
  *  - Right: address block + embedded OpenStreetMap iframe.
  *
  * The form is a styled static form for now (Phase 1.4). Submission wiring is
- * Phase 2 — the POST handler stub in src/app/contact/actions.ts receives the
+ * Phase 2: the POST handler stub in src/app/contact/actions.ts receives the
  * data and logs it; real delivery (email/Payload) comes later.
  */
 export default function ContactPage() {

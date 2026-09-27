@@ -81,13 +81,6 @@ export default async function TestimonialsPage() {
         </p>
       </header>
 
-      {/* Omnibus statement (FR-11.2) */}
-      <p className="mx-auto mt-6 max-w-2xl text-center text-sm italic text-accent-text">
-        Testimonials are submitted by site visitors and moderated for
-        appropriateness before publication. They are not verified as originating
-        from attendees of a specific experience.
-      </p>
-
       {/* Approved testimonials grid */}
       {listItems.length > 0 ? (
         <div className="mt-12">

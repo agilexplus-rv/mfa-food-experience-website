@@ -4,7 +4,7 @@ import config from '@payload-config'
 import Link from "next/link"
 
 /**
- * Hero — homepage hero section.
+ * Hero: homepage hero section.
  *
  * By default renders centered text + CTA on a Soft-Beige background,
  * sized so header + hero fit in one viewport. When the `site-settings`
@@ -12,7 +12,7 @@ import Link from "next/link"
  * section renders with that image as a darkened background (overlay
  * gradient ensures WCAG-compliant text contrast). When unset, falls
  * back to the default layout. The brand logo lives in the site header
- * only — it is not repeated in the hero.
+ * only; it is not repeated in the hero.
  */
 export async function Hero() {
   // Fetch site settings to check for a hero background image.
@@ -43,7 +43,7 @@ export async function Hero() {
       href="/services"
       className="mt-8 inline-flex items-center gap-2 rounded-lg bg-terracotta-dark px-8 py-4 text-base font-bold text-white transition-colors hover:bg-terracotta/85 focus:outline-2 focus:outline-offset-2 focus:outline-terracotta"
     >
-      <MtText en="Book an Experience" mt="Ibbukkja Esperjenza" />
+      <MtText en="Explore Our Experiences" mt="Esplora l-Esperjenzi Tagħna" />
       <span aria-hidden="true">&rarr;</span>
     </Link>
   )
@@ -66,13 +66,21 @@ export async function Hero() {
 
         {/* Content layer */}
         <div className="relative z-10 flex max-h-full flex-col items-center">
-          <h1 className="max-w-2xl text-4xl font-black tracking-[-0.02em] text-soft-beige sm:text-5xl lg:text-6xl">
-            Authentic Maltese Culinary Experiences
+          <h1 className="max-w-3xl text-4xl font-black tracking-[-0.02em] text-soft-beige sm:text-5xl">
+            Experience the authentic flavours of Malta, from field, farm and sea.
           </h1>
 
-          <p className="mt-6 max-w-lg text-lg leading-relaxed text-soft-beige/90">
-            Discover the flavours of Malta with hands-on classes, guided
-            tastings, and cultural experiences hosted by the Malta Food Agency.
+          <p className="mt-6 max-w-2xl text-lg leading-relaxed text-soft-beige/90">
+            The Malta Food Experience, brought to you by the Malta Food Agency,
+            is a celebration of the flavours, traditions and stories that make
+            Maltese cuisine unique. Through hands-on cooking classes and
+            tasting experiences, discover authentic local ingredients, learn
+            from chefs and food artisans, and explore the connection between
+            Malta&apos;s land, sea and culinary heritage.
+          </p>
+
+          <p className="mt-4 text-lg font-semibold text-soft-beige">
+            Cook, taste, learn and experience Malta through its food.
           </p>
 
           {cta}
@@ -81,18 +89,26 @@ export async function Hero() {
     )
   }
 
-  // Default: Soft Beige — centered text + CTA (no logo repeated here;
+  // Default: Soft Beige, centered text + CTA (no logo repeated here;
   // the site header already carries the brand mark).
   return (
     <section className={`${sectionBase} justify-center bg-soft-beige text-center`}>
       <div className="mx-auto flex w-full max-w-3xl flex-col items-center gap-6">
-        <h1 className="max-w-2xl text-4xl font-black tracking-[-0.02em] text-lunar-green sm:text-5xl lg:text-6xl">
-          Authentic Maltese Culinary Experiences
+        <h1 className="max-w-3xl text-4xl font-black tracking-[-0.02em] text-lunar-green sm:text-5xl">
+          Experience the authentic flavours of Malta, from field, farm and sea.
         </h1>
 
-        <p className="max-w-lg text-lg leading-relaxed text-text-light">
-          Discover the flavours of Malta with hands-on classes, guided
-          tastings, and cultural experiences hosted by the Malta Food Agency.
+        <p className="max-w-2xl text-lg leading-relaxed text-text-light">
+          The Malta Food Experience, brought to you by the Malta Food Agency,
+          is a celebration of the flavours, traditions and stories that make
+          Maltese cuisine unique. Through hands-on cooking classes and
+          tasting experiences, discover authentic local ingredients, learn
+          from chefs and food artisans, and explore the connection between
+          Malta&apos;s land, sea and culinary heritage.
+        </p>
+
+        <p className="text-lg font-semibold text-lunar-green">
+          Cook, taste, learn and experience Malta through its food.
         </p>
 
         {cta}

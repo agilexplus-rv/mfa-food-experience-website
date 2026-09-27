@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react"
 
 /**
- * GoogleTranslateWidgetHost — the SINGLE, singleton host for the actual
+ * GoogleTranslateWidgetHost: the SINGLE, singleton host for the actual
  * Google Translate widget (hidden div + script load + TranslateElement
  * instantiation).
  *
@@ -105,7 +105,7 @@ function loadWidget(widgetDiv: HTMLElement): Promise<void> {
 
 // FIFTH root cause (2026-07-10): CSP style-src blocked the widget's CSS at
 // www.gstatic.com. The element.js script calls _loadCss() which creates a
-// <link rel=stylesheet> to gstatic.com — and the CSP header had style-src:
+// <link rel=stylesheet> to gstatic.com, and the CSP header had style-src:
 // 'self' 'unsafe-inline' with NO gstatic.com allowance. The browser silently
 // blocked this cross-origin stylesheet; without it, TranslateElement
 // constructed successfully but its internal init never populated
@@ -115,11 +115,11 @@ function loadWidget(widgetDiv: HTMLElement): Promise<void> {
 // event fires but wasn't being listened for (now recommended to always
 // listen during debugging). The fix is a one-line CSP change in
 // next.config.ts: add https://www.gstatic.com to style-src. This is the
-// MINIMAL fix — the widget has always loaded this CSS; it was only noticed
+// MINIMAL fix, the widget has always loaded this CSS; it was only noticed
 // as broken after Phase 4.4 added a strict CSP that finally blocked it.
 // Symptom: goog-te-combo exists but options.length === 0, zero JS errors,
 // zero console warnings, cookies + lang attr all correct. The gstatic.com
-// CSS request shows duration:0 transferSize:0 in Performance API — a
+// CSS request shows duration:0 transferSize:0 in Performance API, a
 // hallmark of a CSP-blocked subresource.
 //
 // Belt-and-suspenders fallback: GT's widget is documented to auto-apply

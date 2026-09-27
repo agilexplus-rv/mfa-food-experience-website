@@ -13,7 +13,7 @@ async function payload(): Promise<Payload> {
 }
 
 /**
- * POST /api/webhooks/viva — Transaction Payment Created webhook.
+ * POST /api/webhooks/viva: Transaction Payment Created webhook.
  *
  * VIVA sends a JSON payload with EventData containing:
  * - OrderCode: the order created at checkout

@@ -6,7 +6,7 @@ import { formatPrice } from '@/lib/availability-types'
 import { formatDay, formatTimeRange } from '@/lib/format-date'
 
 /**
- * EventCard — single upcoming event in a service grid.
+ * EventCard: single upcoming event in a service grid.
  *
  * Per FR-1.5: title, short description, next date, price per person,
  * availability status, a "Read more" link (to the event's own page) and
@@ -14,18 +14,18 @@ import { formatDay, formatTimeRange } from '@/lib/format-date'
  *
  * The Events collection has no dedicated `shortDescription` field, so
  * the short description line is derived from location + time range
- * (kept to one line, plain text — never placeholder/lorem). When a
+ * (kept to one line, plain text, never placeholder/lorem). When a
  * `shortDescription` prop is supplied (e.g. from a future field), it
  * takes precedence.
  *
  * Affordance rules (impeccable): card is a real card (white surface,
- * border, rounded) — the right affordance for a discrete bookable
+ * border, rounded), the right affordance for a discrete bookable
  * event. Hover lifts slightly; focus-visible outlines the CTA; the
  * primary CTA is the explicit Terracotta button per the brand spec.
  * Fully-booked cards disable the CTA and dim it (no false affordance).
  */
 export interface EventCardProps {
-  /** Event id — used to build the booking link (Phase 2). */
+  /** Event id, used to build the booking link (Phase 2). */
   id: string | number
   title: string
   /** ISO date string (dayOnly) e.g. "2026-09-14". */
@@ -112,7 +112,7 @@ export function EventCard({
         {/* Spacer */}
         <div className="flex-1" />
 
-        {/* Read more — links to the event's own page */}
+        {/* Read more, links to the event's own page */}
         <div className="mt-3">
           <Link
             href={`/events/${id}`}

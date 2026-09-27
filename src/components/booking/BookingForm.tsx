@@ -7,7 +7,7 @@ import { formatPrice } from '@/lib/availability-types'
 export interface BookingFormProps {
   eventId: string | number
   pricePerPerson: number
-  /** Upper bound for the seats input — min(20, remaining availability). */
+  /** Upper bound for the seats input, min(20, remaining availability). */
   maxSeats: number
   /**
    * Article 16(l) / 6(1)(k) withdrawal-right disclosure text, fetched
@@ -55,7 +55,7 @@ declare global {
 }
 
 function newSessionId(): string {
-  // Not a security token — just a stable per-tab cart identifier the
+  // Not a security token, just a stable per-tab cart identifier the
   // hold/checkout APIs use to correlate a hold with its eventual booking.
   return `sess_${Date.now()}_${Math.random().toString(36).slice(2, 15)}`
 }
@@ -69,7 +69,7 @@ function formatCountdown(msRemaining: number): string {
 }
 
 /**
- * BookingForm — the Phase 2 checkout entry point.
+ * BookingForm: the Phase 2 checkout entry point.
  *
  * Flow (ADR-002 / ADR-004):
  * 1. On mount, acquire a seat hold for 1 seat (the minimum) so the
@@ -78,7 +78,7 @@ function formatCountdown(msRemaining: number): string {
  * 2. Show a live countdown of the hold's remaining time.
  * 3. Collect attendee details, optional dietary info + consent,
  *    optional coupon code (previewed via /api/coupons/validate,
- *    NOT consumed until payment completes — ADR-005), and the
+ *    NOT consumed until payment completes; see ADR-005), and the
  *    cancellation-policy acknowledgement checkbox.
  * 4. On submit, call /api/checkout and redirect to the returned
  VIVA Smart Checkout URL. Button text is "Pay now" per ADR-004 / EU Legal D.5.
@@ -186,7 +186,7 @@ export function BookingForm({
         })
         turnstileWidgetId.current = id
       } catch {
-        // Widget render failed — degrade gracefully (checkout will skip verification
+        // Widget render failed, degrade gracefully (checkout will skip verification
         // or show bot_check_required depending on server config).
       }
     }
@@ -194,7 +194,7 @@ export function BookingForm({
     if (window.turnstile) {
       renderWidget()
     } else {
-      // Script hasn't loaded yet — wait for it
+      // Script hasn't loaded yet, wait for it
       const onLoad = () => renderWidget()
       window.addEventListener('load', onLoad)
       // Also try after a short delay in case the script loads after window.onload
@@ -212,7 +212,7 @@ export function BookingForm({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Release the hold on unmount (best-effort — the sweeper is the safety net).
+  // Release the hold on unmount (best-effort, the sweeper is the safety net).
   useEffect(() => {
     return () => {
       const current = hold
@@ -456,7 +456,7 @@ export function BookingForm({
         </div>
       </fieldset>
 
-      {/* Dietary — data-minimised, explicit consent (DPIA measure 5) */}
+      {/* Dietary: data-minimised, explicit consent (DPIA measure 5) */}
       <fieldset className="space-y-3 rounded-xl border border-border bg-surface/60 p-4">
         <legend className="px-1 text-sm font-semibold text-lunar-green">Dietary requirements (optional)</legend>
         <label className="flex items-start gap-2.5 text-sm text-lunar-green">
@@ -512,7 +512,7 @@ export function BookingForm({
         )}
       </div>
 
-      {/* Article 16(l) / 6(1)(k) withdrawal-right disclosure —
+      {/* Article 16(l) / 6(1)(k) withdrawal-right disclosure,
           surfaced directly on the booking page before payment,
           per EU Consumer Rights Directive.
           @at-compliance EU-Legal-5 */}
@@ -536,7 +536,7 @@ export function BookingForm({
         </div>
       )}
 
-      {/* Terms & Conditions — full text on the page + mandatory acceptance */}
+      {/* Terms & Conditions, full text on the page + mandatory acceptance */}
       {termsAndConditionsUrl && (
         <div className="space-y-3">
           {termsHtml && (
@@ -600,7 +600,7 @@ export function BookingForm({
         </span>
       </label>
 
-      {/* Cloudflare Turnstile — bot mitigation (ADR-008 C16).
+      {/* Cloudflare Turnstile: bot mitigation (ADR-008 C16).
           Only rendered when the site key is configured. */}
       {TURNSTILE_SITE_KEY && (
         <div className="flex justify-center">

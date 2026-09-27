@@ -13,7 +13,7 @@ async function payload(): Promise<Payload> {
 }
 
 /**
- * GET /api/staff/events?event=ID — list upcoming events and capacity info
+ * GET /api/staff/events?event=ID: list upcoming events and capacity info
  * for door staff (event selector + live capacity counter, Phase 6 scope 3).
  *
  * Without ?event: returns a list of today's and upcoming scheduled events.

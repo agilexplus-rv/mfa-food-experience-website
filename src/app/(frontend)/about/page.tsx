@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Link from 'next/link'
 
 export const metadata: Metadata = {
   title: 'About | Malta Food Experience',
@@ -13,7 +14,7 @@ export const metadata: Metadata = {
  * placeholder-tolerant: every section is clearly marked so the client can
  * replace it without touching layout.
  *
- * Submission wiring / CMS connection is Phase 2 — for now this is a static,
+ * Submission wiring / CMS connection is Phase 2, for now this is a static,
  * brand-styled page that renders as a Server Component.
  */
 export default function AboutPage() {
@@ -27,9 +28,12 @@ export default function AboutPage() {
       </header>
 
       <div className="mt-12 space-y-10 text-lunar-green">
-        {/* NOTE: All copy below is placeholder per URD FR-7.3 — to be supplied by client. */}
-        <p className="rounded-md border-l-4 border-matte-gold bg-soft-beige/60 px-4 py-3 text-sm font-semibold italic text-text-light">
-          About content, to be supplied by client.
+        <p className="rounded-md border-l-4 border-matte-gold bg-soft-beige/60 px-4 py-3 text-base text-text-light">
+          Find out more about our experiences on the{' '}
+          <Link href="/" className="font-semibold text-terracotta-dark underline-offset-2 hover:underline focus:outline-2 focus:outline-offset-2 focus:outline-terracotta">homepage</Link>{' '}
+          or{' '}
+          <Link href="/contact" className="font-semibold text-terracotta-dark underline-offset-2 hover:underline focus:outline-2 focus:outline-offset-2 focus:outline-terracotta">contact us</Link>{' '}
+          for details.
         </p>
 
         {/* Mission */}

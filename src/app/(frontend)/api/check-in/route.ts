@@ -15,7 +15,7 @@ async function payload(): Promise<Payload> {
 }
 
 /**
- * POST /api/check-in — QR scan check-in endpoint per ADR-003.
+ * POST /api/check-in: QR scan check-in endpoint per ADR-003.
  *
  * @compliance ADR-003 verification section, ADR-008 C9 (rate-limited),
  *   C6 (RBAC: admin + door_staff only), C18 (session-only auth).

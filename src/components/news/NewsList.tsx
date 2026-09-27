@@ -22,7 +22,7 @@ export interface NewsListProps {
 }
 
 /**
- * NewsList — client-side "Show more" wrapper for the News listing.
+ * NewsList: client-side "Show more" wrapper for the News listing.
  *
  * Renders the first `initialPageSize` items, then reveals
  * `pageSize` more on each button click until all are shown.

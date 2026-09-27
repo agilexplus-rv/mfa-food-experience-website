@@ -66,16 +66,16 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (!event) return { title: 'Not found | Malta Food Experience' }
   return {
     title: `${event.title} | Malta Food Experience`,
-    description: `${event.title} — ${formatDay(event.date, 'long')}, ${formatTimeRange(event.startTime, event.endTime)}.`,
+    description: `${event.title}: ${formatDay(event.date, 'long')}, ${formatTimeRange(event.startTime, event.endTime)}.`,
   }
 }
 
 /**
- * /events/[id] — the event's own public page.
+ * /events/[id]: the event's own public page.
  *
  * The Events collection has no description/image of its own; both are
  * resolved from the populated `service` relation (depth 2). Replaces the
- * former "Read more" modal — clicking through from a card now lands here,
+ * former "Read more" modal, clicking through from a card now lands here,
  * with the option to proceed to /book/[id].
  */
 export default async function EventPage({ params }: PageProps) {

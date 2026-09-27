@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 
 /**
- * I18nDebugPanel — an on-page, no-dev-tools-required diagnostic panel for
+ * I18nDebugPanel: an on-page, no-dev-tools-required diagnostic panel for
  * the language switcher / Google Translate widget, added 2026-07-09 after
  * repeated back-and-forth trying to diagnose "translation not working" on
  * an iPad where the reporting user has no access to browser dev tools.

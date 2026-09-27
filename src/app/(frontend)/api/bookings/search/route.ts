@@ -75,7 +75,7 @@ export async function GET(req: NextRequest) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const staff = booking.checkInStaff as any
 
-      // Door-staff: restricted view — no financial fields
+      // Door-staff: restricted view, no financial fields
       const base = {
         id: booking.id,
         reference: booking.reference,

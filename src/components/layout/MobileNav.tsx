@@ -6,7 +6,7 @@ import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher"
 import { SiteSearch } from "@/components/search/SiteSearch"
 
 /**
- * MobileNav — hamburger drawer for viewports < 960px.
+ * MobileNav: hamburger drawer for viewports < 960px.
  *
  * - A hamburger button is visible only below the md breakpoint.
  * - Clicking opens a right-aligned slide-over drawer with the same nav
@@ -61,7 +61,7 @@ export function MobileNav() {
 
   return (
     <>
-      {/* Hamburger toggle — visible only below md (<960px) */}
+      {/* Hamburger toggle, visible only below md (<960px) */}
       <button
         ref={toggleRef}
         type="button"
@@ -123,7 +123,7 @@ export function MobileNav() {
           </button>
         </div>
 
-        {/* Site search — mobile lives here in the drawer. */}
+        {/* Site search, mobile lives here in the drawer. */}
         <div className="border-b border-soft-beige/20 px-4 py-3">
           <span className="mb-2 block text-xs font-semibold uppercase tracking-wider text-soft-beige/80">
             Search

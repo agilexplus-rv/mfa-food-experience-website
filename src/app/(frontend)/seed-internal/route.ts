@@ -4,7 +4,7 @@ import config from '@payload-config'
 import { seed } from '@/payload/seed'
 
 /**
- * POST /seed-internal — Run the seed (idempotent).
+ * POST /seed-internal: Run the seed (idempotent).
  * Called from entrypoint.sh after the server starts.
  */
 export async function POST() {

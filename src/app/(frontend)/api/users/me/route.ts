@@ -12,7 +12,7 @@ async function payload(): Promise<Payload> {
 }
 
 /**
- * GET /api/users/me — return the current user's profile.
+ * GET /api/users/me: return the current user's profile.
  *
  * Used by the dashboard and scan pages for role checks and
  * staff identity display (Phase 6 scope 5).

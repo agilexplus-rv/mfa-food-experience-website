@@ -9,7 +9,7 @@
 @plugin "@tailwindcss/typography";
 
 @theme {
-  /* Brand palette — Malta Food Experience */
+  /* Brand palette, Malta Food Experience */
   --color-lunar-green: #33483D;
   --color-terracotta: #C9643D;
   --color-matte-gold: #B8974D;
@@ -23,18 +23,18 @@
   --color-background: var(--color-soft-beige);
   --color-surface: #FFFFFF;
   --color-text: var(--color-lunar-green);
-  /* #58685E = 4.87:1 on soft-beige, 5.20:1 on white — WCAG AA for normal text.
+  /* #58685E = 4.87:1 on soft-beige, 5.20:1 on white, WCAG AA for normal text.
      Previously #6B7F74 (3.91:1 on soft-beige) failed AA on both backgrounds. */
   --color-text-light: #58685E;
-  /* #9C4E2F = 5.42:1 on soft-beige, 5.92:1 on white — WCAG AA for normal text.
-     Brand terracotta (#C9643D) is 3.58:1 on soft-beige — decorative-only, not for text. */
+  /* #9C4E2F = 5.42:1 on soft-beige, 5.92:1 on white, WCAG AA for normal text.
+     Brand terracotta (#C9643D) is 3.58:1 on soft-beige, decorative-only, not for text. */
   --color-terracotta-dark: #9C4E2F;
-  /* #8B7035 = 5.89:1 on soft-beige, 6.29:1 on white — WCAG AA for normal text.
-     Brand matte-gold (#B8974D) is 2.54:1 on soft-beige — decorative-only, not for text. */
+  /* #8B7035 = 5.89:1 on soft-beige, 6.29:1 on white, WCAG AA for normal text.
+     Brand matte-gold (#B8974D) is 2.54:1 on soft-beige, decorative-only, not for text. */
   --color-accent-text: #8B7035;
   --color-border: #D4C8B8;
 
-  /* Typography — Montserrat via next/font */
+  /* Typography: Montserrat via next/font */
   --font-sans: var(--font-montserrat), ui-sans-serif, system-ui, sans-serif;
 }
 
@@ -90,7 +90,7 @@ body {
   outline-offset: 2px;
 }
 
-/* Print styles — hide console chrome for roster/table printing */
+/* Print styles, hide console chrome for roster/table printing */
 @media print {
   /* Hide sidebar and top bar */
   aside,

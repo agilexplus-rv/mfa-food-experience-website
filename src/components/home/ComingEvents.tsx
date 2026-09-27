@@ -67,7 +67,7 @@ export async function ComingEvents() {
   )
 
   // Hide the section entirely when there are no upcoming events
-  // (consistent with LatestNews — no "no events" message shown).
+  // (consistent with LatestNews, no "no events" message shown).
   if (events.length === 0) return null
 
   return (
@@ -100,7 +100,7 @@ export async function ComingEvents() {
                   {/* Spacer pushes the action row to the bottom for equal-height alignment */}
                   <div className="flex-1" />
 
-                  {/* Read more — links to the event's own page */}
+                  {/* Read more, links to the event's own page */}
                   <div className="mt-2">
                     <Link
                       href={`/events/${event.id}`}

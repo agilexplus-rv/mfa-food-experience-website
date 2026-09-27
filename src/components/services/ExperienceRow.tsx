@@ -15,7 +15,7 @@ export interface ExperienceRowProps {
 }
 
 /**
- * ExperienceRow — a single experience in the /services list.
+ * ExperienceRow: a single experience in the /services list.
  *
  * Desktop: image on one side, text+CTA on the other, alternating per row.
  * Mobile: single-column stack, alternating image-above vs image-below.

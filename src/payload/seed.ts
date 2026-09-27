@@ -203,12 +203,6 @@ export async function seed(p?: Payload) {
               {
                 type: 'paragraph',
                 children: [
-                  { type: 'text', text: '\u26a0 [DRAFT: PLACEHOLDER LEGAL TEXT]', format: 'bold' },
-                ],
-              },
-              {
-                type: 'paragraph',
-                children: [
                   { type: 'text', text: 'Pursuant to Article 16(l) of Directive 2011/83/EU (Consumer Rights Directive), the supply of leisure services on a specific date or performance period is exempt from the 14-day right of withdrawal. By booking a Malta Food Experience event, you acknowledge that the 14-day cooling-off period does not apply and that the cancellation terms set out above govern any refund or rescheduling request.' },
                 ],
               },
@@ -235,12 +229,6 @@ export async function seed(p?: Payload) {
             version: 1,
             direction: 'ltr',
             children: [
-              {
-                type: 'paragraph',
-                children: [
-                  { type: 'text', text: '\u26a0 [DRAFT: PLACEHOLDER LEGAL TEXT]', format: 'bold' },
-                ],
-              },
               {
                 type: 'heading',
                 tag: 'h2',
@@ -392,12 +380,6 @@ export async function seed(p?: Payload) {
                 type: 'paragraph',
                 children: [
                   { type: 'text', text: 'MT 2651 5131' },
-                ],
-              },
-              {
-                type: 'paragraph',
-                children: [
-                  { type: 'text', text: '\u26a0 [DRAFT: PLACEHOLDER, verify VAT number with Agency administration before publication.]', format: 'bold' },
                 ],
               },
             ],
@@ -605,7 +587,7 @@ export async function seed(p?: Payload) {
             type: 'paragraph',
             children: [
               { type: 'text', text: 'Under the GDPR, you have the right to access, rectify, erase, restrict, or port your personal data, and to object to processing. To exercise any of these rights, contact us at ' },
-              { type: 'text', text: 'denise.grima-connell@gov.mt', format: 'bold' },
+              { type: 'text', text: 'dpo.mfa@gov.mt', format: 'bold' },
               { type: 'text', text: '. We will respond within one month. You also have the right to lodge a complaint with the Office of the Information and Data Protection Commissioner (idpc.org.mt).' },
             ],
           },
@@ -617,7 +599,7 @@ export async function seed(p?: Payload) {
           {
             type: 'paragraph',
             children: [
-              { type: 'text', text: 'Data Protection Officer: Malta Food Agency. Email: denise.grima-connell@gov.mt.', format: 'bold' },
+              { type: 'text', text: 'Data Protection Officer: Malta Food Agency. Email: dpo.mfa@gov.mt.', format: 'bold' },
             ],
           },
           {
@@ -697,7 +679,7 @@ export async function seed(p?: Payload) {
             type: 'paragraph',
             children: [
               { type: 'text', text: 'We welcome feedback on the accessibility of this site. If you encounter a barrier, please contact us at ' },
-              { type: 'text', text: 'denise.grima-connell@gov.mt', format: 'bold' },
+              { type: 'text', text: 'dpo.mfa@gov.mt', format: 'bold' },
               { type: 'text', text: '. We aim to respond within five working days.' },
             ],
           },

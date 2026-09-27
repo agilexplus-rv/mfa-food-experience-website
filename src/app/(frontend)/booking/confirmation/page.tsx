@@ -17,7 +17,7 @@ interface PageProps {
 }
 
 /**
- * /booking/confirmation — VIVA Smart Checkout success_url target
+ * /booking/confirmation: VIVA Smart Checkout success_url target
  * (or legacy Stripe Checkout success_url for existing bookings).
  *
  * VIVA appends ?t={TransactionId}&s={OrderCode} to the configured success

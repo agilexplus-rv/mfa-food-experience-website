@@ -18,7 +18,7 @@ export interface TestimonialListProps {
 }
 
 /**
- * TestimonialList — client-side "Show more" wrapper for testimonials.
+ * TestimonialList: client-side "Show more" wrapper for testimonials.
  *
  * Renders the first `initialPageSize` items, then reveals
  * `pageSize` more on each button click until all are shown.

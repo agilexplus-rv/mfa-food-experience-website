@@ -9,7 +9,7 @@ const NAV_LINKS = [
   { label: "Home", href: "/" },
   { label: "About", href: "/about" },
   { label: "Experiences", href: "/services" },
-  // "Tastings" intentionally omitted from nav — Tastings.visible=false
+  // "Tastings" intentionally omitted from nav, Tastings.visible=false
   // per FR-1.2; its route returns the "not available" state (FR-1.3).
 ]
 
@@ -41,7 +41,7 @@ export function SiteHeader() {
           />
         </Link>
 
-        {/* Navigation — desktop only, hidden below md (<960px) */}
+        {/* Navigation: desktop only, hidden below md (<960px) */}
         <nav className="hidden items-center gap-1 md:flex md:justify-self-center">
           {NAV_LINKS.map((link) => (
             <Link
@@ -55,13 +55,13 @@ export function SiteHeader() {
         </nav>
 
         <div className="flex items-center gap-3 md:justify-self-end">
-          {/* Site search — desktop only, hidden below md.
+          {/* Site search, desktop only, hidden below md.
               On mobile it lives inside the MobileNav drawer. */}
           <div className="hidden md:block">
             <SiteSearch />
           </div>
 
-          {/* EN | MT language switcher — functional per ADR-006.
+          {/* EN | MT language switcher, functional per ADR-006.
               Hidden below md: on mobile it lives inside the MobileNav
               drawer instead, so the header doesn't get crowded and the
               switcher sits alongside the rest of the nav in the menu. */}
@@ -69,7 +69,7 @@ export function SiteHeader() {
             <LanguageSwitcher />
           </div>
 
-          {/* Hamburger menu — mobile only, hidden at md and above.
+          {/* Hamburger menu, mobile only, hidden at md and above.
               Renders its own LanguageSwitcher inside the drawer. */}
           <MobileNav />
         </div>

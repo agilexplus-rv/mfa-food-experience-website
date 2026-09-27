@@ -5,7 +5,7 @@ import Link from "next/link"
 import { montserrat } from "@/lib/fonts"
 
 /**
- * CookieBanner — ePrivacy / GDPR cookie consent banner.
+ * CookieBanner: ePrivacy / GDPR cookie consent banner.
  *
  * Displays on first visit (localStorage flag). Brand-styled with the 4-colour
  * palette (Lunar Green #33483D, Terracotta #C9643D, Matte Gold #B8974D,
@@ -24,7 +24,7 @@ import { montserrat } from "@/lib/fonts"
  *    Exempt from consent.
  *  - Google Translate widget: loads a third-party script from
  *    translate.google.com and may set cookies (_ga, googtrans, etc.). This is
- *    NOT strictly necessary — consent IS required before the script loads.
+ *    NOT strictly necessary, consent IS required before the script loads.
  *    The LanguageSwitcher respects this by checking the consent state.
  *
  * @at-compliance DPIA-8, EU-Legal-8 (cookie banner gating non-essential scripts)

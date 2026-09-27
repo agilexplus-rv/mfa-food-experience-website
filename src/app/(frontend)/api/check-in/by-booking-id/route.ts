@@ -8,11 +8,11 @@ import { createRateLimiter, getClientIp } from '@/lib/rate-limit'
 import { performCheckIn } from '@/lib/check-in/perform-check-in'
 
 /**
- * POST /api/check-in/by-booking-id — manual-lookup check-in endpoint.
+ * POST /api/check-in/by-booking-id: manual-lookup check-in endpoint.
  *
  * Allows door staff to check in a booking by its database ID
  * (e.g. from a name/reference search) instead of by QR token.
- * Reuses the shared performCheckIn() logic — no duplication of
+ * Reuses the shared performCheckIn() logic, no duplication of
  * the audit-log or booking-update logic.
  *
  * @compliance ADR-008 C6 (RBAC: admin + door_staff only),

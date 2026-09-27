@@ -51,7 +51,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 /**
- * /book/[id] — Phase 2 booking form entry point.
+ * /book/[id]: Phase 2 booking form entry point.
  *
  * Per ADR-002/003/004/005 + ADR-008 (compliance gate): shows the event
  * summary, collects attendee details + optional coupon, acquires a

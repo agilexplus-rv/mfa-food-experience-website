@@ -33,7 +33,7 @@ async function passwordMatches(password: string, salt: string, hash: string): Pr
 }
 
 /**
- * POST /api/account/password — any signed-in staff member (admin or
+ * POST /api/account/password: any signed-in staff member (admin or
  * door staff) changes their OWN password.
  *
  * Body: { currentPassword, newPassword }

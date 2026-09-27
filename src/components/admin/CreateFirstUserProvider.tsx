@@ -9,7 +9,7 @@ import CreateFirstUserView from './CreateFirstUserView'
  * built-in MinimalTemplate + form.
  *
  * The admin.components.views.createFirstUser override in payload.config.ts
- * is the documented hook, but it does not activate in Payload v3.85.x —
+ * is the documented hook, but it does not activate in Payload v3.85.x,
  * getRouteData.ts still resolves to the stock client page. A provider is
  * the only interception point that runs before template branching, so the
  * custom view replaces EVERYTHING inside the admin root (template included).
