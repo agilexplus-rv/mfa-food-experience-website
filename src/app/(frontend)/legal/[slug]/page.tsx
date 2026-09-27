@@ -131,10 +131,11 @@ export default async function LegalPolicyPage({ params }: PageProps) {
   let bodyHtml = ""
   if (slug === "terms-and-conditions") {
     const terms = await getTermsAndConditions().catch(() => null)
-    if (terms?.html) {
-      policy = { id: "terms-and-conditions", slug, title: terms.title, body: null }
-      bodyHtml = terms.html
-    }
+    // Always render the page, even when the Global body is empty
+    // or the Global has never been saved — it shows a graceful
+    // "being prepared" message instead of a 404.
+    policy = { id: "terms-and-conditions", slug, title: terms?.title || "Terms & Conditions", body: null }
+    bodyHtml = terms?.html || ""
   }
 
   // ── Other known slugs: render from the Policies collection ──
