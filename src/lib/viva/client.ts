@@ -240,3 +240,39 @@ export class VivaNotConfiguredError extends Error {
     this.name = 'VivaNotConfiguredError'
   }
 }
+
+// ── Webhook verification key ──────────────────────────────────────
+
+/**
+ * Retrieve the webhook verification key.
+ *
+ * Viva's webhook URL verification uses a challenge-response scheme:
+ * 1. Call this endpoint (GET /api/messages/config/token) with Basic auth
+ *    (MerchantId:ApiKey) to get a verification key.
+ * 2. The GET handler on the webhook URL must return the same key as JSON.
+ * 3. Viva then GETs the webhook URL and checks the response matches.
+ */
+export async function getWebhookVerificationKey(): Promise<string> {
+  const merchantId = process.env.VIVA_MERCHANT_ID
+  const apiKey = process.env.VIVA_API_KEY
+  if (!merchantId || !apiKey) {
+    throw new Error('VIVA_MERCHANT_ID or VIVA_API_KEY not set; required for webhook verification.')
+  }
+
+  const credentials = Buffer.from(`${merchantId}:${apiKey}`).toString('base64')
+  const res = await fetch(`${accountsBase()}/api/messages/config/token`, {
+    headers: { Authorization: `Basic ${credentials}` },
+  })
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => '')
+    throw new Error(`VIVA webhook key retrieval failed (${res.status}): ${text}`)
+  }
+
+  const data = (await res.json()) as { Key?: string }
+  if (!data.Key) {
+    throw new Error('VIVA webhook key response missing Key field')
+  }
+
+  return data.Key
+}

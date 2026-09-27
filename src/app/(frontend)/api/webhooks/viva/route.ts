@@ -32,7 +32,14 @@ async function payload(): Promise<Payload> {
  * GET requests are used by Viva's URL verification when creating a webhook.
  */
 export async function GET() {
-  return NextResponse.json({ ok: true }, { status: 200 })
+  try {
+    const { getWebhookVerificationKey } = await import('@/lib/viva/client')
+    const key = await getWebhookVerificationKey()
+    return NextResponse.json({ Key: key }, { status: 200 })
+  } catch (err) {
+    console.error('[webhooks/viva] Webhook verification key retrieval failed:', err)
+    return NextResponse.json({ error: 'webhook_verification_unavailable' }, { status: 503 })
+  }
 }
 
 export async function POST(req: NextRequest) {
