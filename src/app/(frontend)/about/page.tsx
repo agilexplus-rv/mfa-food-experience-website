@@ -47,9 +47,9 @@ const DISCOVER_POINTS = [
   'Meet the stories behind the food.',
 ]
 
-const h2 = 'text-3xl font-bold tracking-tight text-lunar-green sm:text-4xl'
-const body = 'mt-4 text-lg leading-relaxed text-text-light'
-const lead = 'mt-4 text-xl font-semibold text-lunar-green'
+const h2 = 'text-2xl font-bold tracking-tight text-lunar-green sm:text-3xl'
+const body = 'mt-3 text-base leading-relaxed text-text-light sm:text-lg'
+const lead = 'mt-3 text-lg font-semibold text-lunar-green sm:text-xl'
 
 function Bullet({ children }: { children: ReactNode }) {
   return (
@@ -64,7 +64,7 @@ function ExploreCta() {
   return (
     <Link
       href="/services"
-      className="mt-8 inline-flex items-center gap-2 rounded-lg bg-teracotta-dark px-8 py-4 text-base font-bold text-white transition-colors hover:bg-teracotta/85 focus:outline-2 focus:outline-offset-2 focus:outline-teracotta"
+      className="mt-8 inline-flex items-center gap-2 rounded-lg bg-terracotta px-8 py-4 text-xl font-bold text-white transition-colors hover:bg-terracotta/85 focus:outline-2 focus:outline-offset-2 focus:outline-terracotta"
     >
       <MtText en="Explore Our Experiences" mt="Esplora l-Esperjenzi Tagħna" />
       <span aria-hidden="true">&rarr;</span>
@@ -72,10 +72,15 @@ function ExploreCta() {
   )
 }
 
+/** Shared fade-up class applied to each section. */
+const fade = 'opacity-0 animate-fade-up' as const
+
+const delay = (ms: number) => ({ animationDelay: `${ms}ms` } as React.CSSProperties)
+
 export default function AboutPage() {
   return (
-    <article className="mx-auto max-w-3xl px-6 py-16">
-      <header className="text-center">
+    <article className="mx-auto max-w-4xl px-6 py-16">
+      <header className="text-center opacity-0 animate-fade-up" style={delay(0)}>
         <h1 className="mt-4 text-4xl font-black tracking-[-0.02em] text-lunar-green sm:text-5xl">
           About Us
         </h1>
@@ -84,8 +89,8 @@ export default function AboutPage() {
 
       <div className="mt-12 space-y-0">
         {/* Kitchen for Everyone */}
-        <section className="bg-surface px-6 py-16 md:py-20 -mx-6">
-          <div className="mx-auto max-w-3xl">
+        <section className={`bg-surface px-6 py-14 md:py-16 -mx-6 ${fade}`} style={delay(100)}>
+          <div className="mx-auto max-w-4xl">
             <h2 className={h2}>Kitchen for Everyone</h2>
             <p className={lead}>A welcoming space where food brings people together.</p>
             <p className={body}>
@@ -112,8 +117,8 @@ export default function AboutPage() {
         </section>
 
         {/* Celebrating Malta's Food Heritage */}
-        <section className="bg-soft-beige px-6 py-16 md:py-20 -mx-6">
-          <div className="mx-auto max-w-3xl">
+        <section className={`bg-soft-beige px-6 py-14 md:py-16 -mx-6 ${fade}`} style={delay(200)}>
+          <div className="mx-auto max-w-4xl">
             <h2 className={h2}>Celebrating Malta&apos;s Food Heritage</h2>
             <p className={body}>
               Malta&apos;s food culture has been shaped over generations by
@@ -142,8 +147,8 @@ export default function AboutPage() {
         </section>
 
         {/* From Local Producers to Your Plate */}
-        <section className="bg-surface px-6 py-16 md:py-20 -mx-6">
-          <div className="mx-auto max-w-3xl">
+        <section className={`bg-surface px-6 py-14 md:py-16 -mx-6 ${fade}`} style={delay(300)}>
+          <div className="mx-auto max-w-4xl">
             <h2 className={h2}>From Local Producers to Your Plate</h2>
             <p className={lead}>Behind every ingredient is a story.</p>
             <p className={body}>
@@ -164,8 +169,8 @@ export default function AboutPage() {
         </section>
 
         {/* How Does a Cooking Class Work? */}
-        <section className="bg-soft-beige px-6 py-16 md:py-20 -mx-6">
-          <div className="mx-auto max-w-3xl">
+        <section className={`bg-soft-beige px-6 py-14 md:py-16 -mx-6 ${fade}`} style={delay(400)}>
+          <div className="mx-auto max-w-4xl">
             <h2 className={h2}>How Does a Cooking Class Work?</h2>
             <p className={body}>
               Each class is a relaxed, hands-on experience lasting
@@ -183,11 +188,11 @@ export default function AboutPage() {
                     {i + 1}
                   </span>
                   <div>
-                    <h3 className="text-xl font-bold text-lunar-green">
+                    <h3 className="text-lg font-bold text-lunar-green sm:text-xl">
                       <span className="sr-only">{i + 1}. </span>
                       {step.title}
                     </h3>
-                    <p className="mt-2 text-lg leading-relaxed text-text-light">
+                    <p className="mt-2 text-base leading-relaxed text-text-light sm:text-lg">
                       {step.text}
                     </p>
                   </div>
@@ -198,8 +203,8 @@ export default function AboutPage() {
         </section>
 
         {/* Who Can Join? / Accompanying Guests / Dietary Requirements */}
-        <section className="bg-surface px-6 py-16 md:py-20 -mx-6">
-          <div className="mx-auto max-w-3xl space-y-14">
+        <section className={`bg-surface px-6 py-14 md:py-16 -mx-6 ${fade}`} style={delay(500)}>
+          <div className="mx-auto max-w-4xl space-y-12">
             <div>
               <h2 className={h2}>Who Can Join?</h2>
               <p className={lead}>Everyone is welcome.</p>
@@ -211,7 +216,7 @@ export default function AboutPage() {
                 Each cooking workstation can comfortably accommodate up to two
                 participants, making the experience ideal for:
               </p>
-              <ul className="mt-4 space-y-2 text-lg leading-relaxed text-text-light">
+              <ul className="mt-4 space-y-2 text-base leading-relaxed text-text-light sm:text-lg">
                 {WHO_CAN_JOIN.map((item) => (
                   <Bullet key={item}>{item}</Bullet>
                 ))}
@@ -232,14 +237,14 @@ export default function AboutPage() {
               </p>
             </div>
 
-            <div className="rounded-xl border border-border bg-soft-beige/60 px-6 py-8">
-              <h2 className={h2}>Dietary Requirements &amp; Allergies</h2>
-              <p className={body}>
+            <div className="rounded-lg border border-border bg-soft-beige/40 px-4 py-4 sm:px-5 sm:py-5">
+              <h2 className="text-xl font-bold tracking-tight text-lunar-green sm:text-2xl">Dietary Requirements &amp; Allergies</h2>
+              <p className="mt-2 text-sm leading-relaxed text-text-light sm:text-base">
                 We will do our best to accommodate specific dietary
                 requirements, food allergies, intolerances and nutritional
                 preferences where feasible.
               </p>
-              <p className={body}>
+              <p className="mt-2 text-sm leading-relaxed text-text-light sm:text-base">
                 Please{' '}
                 <Link
                   href="/contact"
@@ -255,10 +260,10 @@ export default function AboutPage() {
         </section>
 
         {/* Discover Malta Through Food */}
-        <section className="bg-soft-beige px-6 py-16 text-center md:py-20 -mx-6">
-          <div className="mx-auto max-w-3xl">
+        <section className={`bg-soft-beige px-6 py-14 text-center md:py-16 -mx-6 ${fade}`} style={delay(600)}>
+          <div className="mx-auto max-w-4xl">
             <h2 className={h2}>Discover Malta Through Food</h2>
-            <ul className="mt-6 space-y-1 text-xl font-semibold text-lunar-green">
+            <ul className="mt-6 space-y-1 text-lg font-semibold text-lunar-green sm:text-xl">
               {DISCOVER_POINTS.map((point) => (
                 <li key={point}>{point}</li>
               ))}
