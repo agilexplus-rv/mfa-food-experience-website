@@ -188,26 +188,36 @@ export async function POST(req: NextRequest) {
 
   // ── Create booking (status: pending) ──
   const reference = generateBookingReference()
-  const booking = await p.create({
-    collection: 'bookings',
-    data: {
-      reference,
-      event: eventId,
-      leadAttendeeName,
-      email,
-      phone: phone ?? '',
-      persons,
-      status: 'pending',
-      language: language ?? 'en',
-      totalAmount: totalAmountEuros,
-      paymentMethod: 'viva',
-      dietaryNotes: dietaryNotes ?? '',
-      dietaryConsent: dietaryConsent ?? false,
-      termsAccepted: termsAccepted ?? false,
-      ...(couponId ? { coupon: couponId } : {}),
-    },
-    overrideAccess: true,
-  })
+  let booking: { id: string | number }
+  try {
+    booking = await p.create({
+      collection: 'bookings',
+      data: {
+        reference,
+        event: eventId,
+        leadAttendeeName,
+        email,
+        phone: phone ?? '',
+        persons,
+        status: 'pending',
+        language: language ?? 'en',
+        totalAmount: totalAmountEuros,
+        paymentMethod: 'viva',
+        dietaryNotes: dietaryNotes ?? '',
+        dietaryConsent: dietaryConsent ?? false,
+        termsAccepted: termsAccepted ?? false,
+        ...(couponId ? { coupon: couponId } : {}),
+      },
+      overrideAccess: true,
+    })
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err)
+    const stack = err instanceof Error ? err.stack : ''
+    console.error('[checkout] Booking creation failed:', message, stack)
+    // Release the hold so seats aren't stuck
+    await releaseSeatHold(hold.id).catch(() => undefined)
+    return NextResponse.json({ error: 'booking_creation_failed', message }, { status: 500 })
+  }
 
   const bookingId = booking.id
 
