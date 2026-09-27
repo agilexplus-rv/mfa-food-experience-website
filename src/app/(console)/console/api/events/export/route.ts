@@ -5,7 +5,7 @@ import config from '@payload-config'
 
 import { verifySession } from '@/lib/rbac/verify-session'
 import { auditLog, clientMeta } from '@/lib/audit/helper'
-import { csvDate, csvDateTime, csvMoney, csvTime, toCsv } from '@/lib/csv'
+import { csvDate, csvDateTime, csvEventTime, csvMoney, toCsv } from '@/lib/csv'
 
 let _payload: Payload | null = null
 async function payload(): Promise<Payload> {
@@ -17,7 +17,8 @@ async function payload(): Promise<Payload> {
  * GET /console/api/events/export
  *
  * Admin-only. CSV of ALL events (experience dates) with schedule, pricing,
- * capacity and booking statistics. Money in EUR; dates/times in Malta time.
+ * capacity and booking statistics. Money in EUR; dates/times in Malta time
+ * (event start/end are stored as Malta wall clock, so they are exported as-is).
  */
 export async function GET(req: NextRequest) {
   const p = await payload()
@@ -99,8 +100,8 @@ export async function GET(req: NextRequest) {
       ev.title,
       serviceName,
       csvDate(ev.date),
-      csvTime(ev.startTime),
-      csvTime(ev.endTime),
+      csvEventTime(ev.startTime),
+      csvEventTime(ev.endTime),
       ev.locationRef,
       ev.status,
       ev.capacity,

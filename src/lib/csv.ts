@@ -41,6 +41,19 @@ export function csvTime(iso: unknown): string {
   return new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Malta', hour: '2-digit', minute: '2-digit', hour12: false }).format(d)
 }
 
+/**
+ * Event time of day (HH:MM, 24h). Event start/end times are stored as the
+ * Malta wall-clock time written as literal UTC, so slice the UTC time --
+ * converting to Malta would add the UTC offset a second time. Use csvTime
+ * for real instants (createdAt, checkedInAt).
+ */
+export function csvEventTime(iso: unknown): string {
+  if (!iso) return ''
+  const d = new Date(String(iso))
+  if (Number.isNaN(d.getTime())) return ''
+  return d.toISOString().slice(11, 16)
+}
+
 /** Date + time (YYYY-MM-DD HH:MM) in Malta time. */
 export function csvDateTime(iso: unknown): string {
   const date = csvDate(iso)

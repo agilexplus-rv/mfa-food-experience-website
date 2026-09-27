@@ -29,7 +29,8 @@ function isDeniedCode(code: string): boolean {
 /**
  * beforeValidate hook: auto-generate a high-entropy coupon code when the
  * admin leaves the field blank; enforce minimum complexity when the admin
- * supplies a manual code.
+ * supplies a manual code. Also re-enforced on update when the code is
+ * actually being changed.
  *
  * DESIGN CHOICE: auto-generate on blank (the most secure default). When
  * the admin types their own code we enforce length >= 6 and reject
@@ -37,25 +38,34 @@ function isDeniedCode(code: string): boolean {
  * The admin always sees the generated code in the form after creation so
  * they can communicate it to their marketing channels.
  */
-function enforceCouponCodeEntropy({ data, operation }: {
+function enforceCouponCodeEntropy({ data, operation, originalDoc }: {
   data?: Record<string, unknown>
   operation: 'create' | 'update'
+  originalDoc?: Record<string, unknown> | null
 }): Record<string, unknown> | undefined {
-  // Only enforce on create; updates to other fields should not re-validate or re-generate
-  if (operation !== 'create') return data
   if (!data) return data
+  if (typeof data.code !== 'string') return data
 
-  const code = typeof data.code === 'string' ? data.code.trim() : ''
+  const trimmed = data.code.trim()
 
-  if (!code) {
-    // Auto-generate
+  if (operation === 'update') {
+    // Only re-validate when the code actually changed (keeps existing
+    // mixed-case auto codes and unrelated field edits untouched)
+    if (trimmed === String((originalDoc as { code?: unknown } | undefined)?.code ?? '').trim()) return data
+    if (!trimmed) throw new Error('Coupon code cannot be empty.')
+  } else if (!trimmed) {
+    // Create with blank code -> auto-generate
     data.code = generateCouponCode()
-  } else if (code.length < 6) {
-    throw new Error('Coupon code must be at least 6 characters. Leave the field blank to auto-generate a secure code.')
-  } else if (isDeniedCode(code)) {
-    throw new Error('Coupon code is too predictable (e.g. all same character, sequential). Use a less guessable code or leave blank to auto-generate.')
+    return data
   }
 
+  if (trimmed.length < 6) {
+    throw new Error('Coupon code must be at least 6 characters. Leave the field blank to auto-generate a secure code.')
+  }
+  if (isDeniedCode(trimmed)) {
+    throw new Error('Coupon code is too predictable (e.g. all same character, sequential). Use a less guessable code or leave blank to auto-generate.')
+  }
+  data.code = trimmed
   return data
 }
 

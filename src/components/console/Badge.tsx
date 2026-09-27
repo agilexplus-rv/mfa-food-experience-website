@@ -20,6 +20,7 @@ export const STATUS_COLORS: Record<string, string> = {
   exhausted: 'bg-terracotta/20 text-[#9C4E2F]',
   disabled: 'bg-gray-200 text-gray-600',
   expiring: 'bg-accent-text/20 text-accent-text',
+  coupon_scheduled: 'bg-accent-text/20 text-accent-text',
   // Payment methods
   viva: 'bg-lunar-green/20 text-lunar-green',
   stripe: 'bg-lunar-green/20 text-lunar-green',

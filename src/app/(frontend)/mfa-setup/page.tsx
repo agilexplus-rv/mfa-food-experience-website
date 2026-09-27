@@ -147,6 +147,7 @@ export default function MfaSetupPage() {
           <h1 className="mfa-title">Set Up Two-Factor Authentication</h1>
           <p className="mfa-subtitle">Generating your secure key…</p>
         </div>
+        <style>{mfaStyles}</style>
       </div>
     )
   }
@@ -161,6 +162,7 @@ export default function MfaSetupPage() {
             Try Again
           </button>
         </div>
+        <style>{mfaStyles}</style>
       </div>
     )
   }
@@ -260,7 +262,8 @@ export default function MfaSetupPage() {
 
 const mfaStyles = `
   .mfa-container {
-    min-height: 100vh;
+    min-height: calc(100vh - var(--site-header-h, 0px));
+    min-height: calc(100svh - var(--site-header-h, 0px));
     display: flex;
     align-items: center;
     justify-content: center;

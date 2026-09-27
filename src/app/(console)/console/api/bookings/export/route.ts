@@ -5,7 +5,7 @@ import config from '@payload-config'
 
 import { verifySession } from '@/lib/rbac/verify-session'
 import { auditLog, clientMeta } from '@/lib/audit/helper'
-import { csvDate, csvDateTime, csvMoney, csvTime, toCsv } from '@/lib/csv'
+import { csvDate, csvDateTime, csvEventTime, csvMoney, toCsv } from '@/lib/csv'
 
 let _payload: Payload | null = null
 async function payload(): Promise<Payload> {
@@ -90,7 +90,7 @@ export async function GET(req: NextRequest) {
       evId ?? '',
       ev?.title ?? '',
       csvDate(ev?.date),
-      csvTime(ev?.startTime),
+      csvEventTime(ev?.startTime),
       ev?.locationRef ?? '',
       booking.leadAttendeeName,
       booking.email,

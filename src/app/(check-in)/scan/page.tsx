@@ -73,10 +73,13 @@ interface UserInfo {
 
 // --- Helpers ---
 
+// Event date/start are stored as the Malta wall-clock time written as
+// literal UTC, so read them in UTC (never the device timezone).
 function eventLabel(e: StaffEvent): string {
   const d = new Date(e.date)
-  const dateStr = d.toLocaleDateString('en-MT', { day: 'numeric', month: 'short' })
-  const t = e.startTime ? new Date(e.startTime).toLocaleTimeString('en-MT', { hour: '2-digit', minute: '2-digit' }) : ''
+  const dateStr = d.toLocaleDateString('en-MT', { day: 'numeric', month: 'short', timeZone: 'UTC' })
+  const st = e.startTime ? new Date(e.startTime) : null
+  const t = st && !Number.isNaN(st.getTime()) ? st.toISOString().slice(11, 16) : ''
   return `${dateStr} ${t ? t + ', ' : ''}${e.title}`
 }
 

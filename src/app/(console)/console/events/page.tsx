@@ -42,19 +42,28 @@ interface SearchResult {
   totalPages: number
 }
 
-function toLocalDate(iso: string): string {
-  const m = new Date(iso)
-  return `${m.getFullYear()}-${String(m.getMonth()+1).padStart(2,'0')}-${String(m.getDate()).padStart(2,'0')}`
+// Event times are stored as the wall-clock time the admin entered,
+// written as literal UTC ("19:00" -> "…T19:00:00.000Z"). Read them back
+// with UTC slicing -- never the browser timezone -- so the console shows
+// exactly what was entered and matches the public (server-rendered) site.
+function isoOf(v: string | null): string | null {
+  if (!v) return null
+  const d = new Date(v)
+  return Number.isNaN(d.getTime()) ? null : d.toISOString()
 }
 
-function formatDate(iso: string | null): string {
-  if (!iso) return ''
-  return new Date(iso).toLocaleDateString('en-MT', { day: 'numeric', month: 'short', year: 'numeric' })
+function dayOf(v: string | null): string {
+  return isoOf(v)?.slice(0, 10) ?? ''
 }
 
-function formatTime(iso: string | null): string {
-  if (!iso) return ''
-  return new Date(iso).toLocaleTimeString('en-MT', { hour: '2-digit', minute: '2-digit' })
+function hhmm(v: string | null): string {
+  return isoOf(v)?.slice(11, 16) ?? ''
+}
+
+function formatDate(v: string | null): string {
+  const day = dayOf(v)
+  if (!day) return ''
+  return new Date(`${day}T00:00:00Z`).toLocaleDateString('en-MT', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' })
 }
 
 export default function ConsoleEventsPage() {
@@ -76,7 +85,7 @@ export default function ConsoleEventsPage() {
     capacity: '', pricePerPerson: '', locationRef: '', status: 'scheduled' as string,
     fullyBookedOverride: false, autoCloseHoursAfter: '',
   })
-  // Recurrence (create only): 'none' | 'weekly' | 'biweekly' | 'monthly' + until date
+  // Recurrence (create, or edit of a NON-series event): 'none' | 'weekly' | 'biweekly' | 'monthly' + until date
   const [repeatFreq, setRepeatFreq] = useState('none')
   const [repeatUntil, setRepeatUntil] = useState('')
   // Series edit scope (edit only, when the event belongs to a series):
@@ -133,12 +142,14 @@ export default function ConsoleEventsPage() {
     setEditingId(ev.id)
     setEditingSeriesId(ev.seriesId || null)
     setApplyTo('single')
+    setRepeatFreq('none')
+    setRepeatUntil('')
     setForm({
       title: ev.title,
       serviceId: String(ev.serviceId || ''),
-      date: toLocalDate(ev.date),
-      startTime: ev.startTime ? new Date(ev.startTime).toISOString().slice(0,16) : '',
-      endTime: ev.endTime ? new Date(ev.endTime).toISOString().slice(0,16) : '',
+      date: dayOf(ev.date),
+      startTime: hhmm(ev.startTime),
+      endTime: hhmm(ev.endTime),
       capacity: String(ev.capacity),
       pricePerPerson: String(ev.pricePerPerson),
       locationRef: ev.locationRef,
@@ -150,16 +161,6 @@ export default function ConsoleEventsPage() {
     setModalOpen(true)
   }
 
-  // Repeat-mode helpers: when a recurrence is selected in CREATE mode,
-  // Start/End render as plain time inputs. timePart extracts HH:MM from
-  // either a datetime-local value or an already-bare HH:MM value.
-  const isRepeating = !editingId && repeatFreq !== 'none'
-  const timePart = (v: string): string => {
-    if (!v) return ''
-    if (v.includes('T')) return v.slice(v.indexOf('T') + 1, v.indexOf('T') + 6)
-    return v.slice(0, 5)
-  }
-
   const handleSave = async () => {
     if (!form.title.trim() || !form.serviceId || !form.date || !form.locationRef.trim()) {
       setFormError('Title, service, date, and location are required.')
@@ -167,6 +168,11 @@ export default function ConsoleEventsPage() {
     }
     if (!form.startTime.trim() || !form.endTime.trim()) {
       setFormError('Start time and end time are required.')
+      return
+    }
+    // End earlier than start is allowed: the event runs past midnight.
+    if (!/^\d{2}:\d{2}$/.test(form.startTime) || !/^\d{2}:\d{2}$/.test(form.endTime)) {
+      setFormError('Enter start and end times as HH:MM.')
       return
     }
     const capacityNum = parseInt(form.capacity, 10)
@@ -188,11 +194,11 @@ export default function ConsoleEventsPage() {
         // POST expects serviceId; PATCH allowlists 'service'. Send both.
         serviceId: form.serviceId,
         date: form.date,
-        // When repeating, the pickers give bare HH:MM -- compose them
-        // onto the first-occurrence date; the POST handler then shifts
-        // the time-of-day onto every generated occurrence.
-        startTime: form.startTime.includes('T') ? form.startTime : `${form.date}T${form.startTime}`,
-        endTime: form.endTime.includes('T') ? form.endTime : `${form.date}T${form.endTime}`,
+        // Date is the single source of the day; Start/End are time-of-day
+        // only and are composed onto it -- the API re-composes onto each
+        // occurrence's own date.
+        startTime: `${form.date}T${form.startTime}`,
+        endTime: `${form.date}T${form.endTime}`,
         capacity: capacityNum,
         pricePerPerson: priceNum,
         locationRef: form.locationRef,
@@ -200,7 +206,7 @@ export default function ConsoleEventsPage() {
         fullyBookedOverride: form.fullyBookedOverride,
         autoCloseHoursAfter: form.autoCloseHoursAfter === '' ? null : Number(form.autoCloseHoursAfter),
       }
-      if (!editingId && repeatFreq !== 'none') {
+      if (repeatFreq !== 'none' && !editingSeriesId) {
         if (!repeatUntil) {
           setFormError('Choose a "repeat until" date for the recurring series.')
           setSaveLoading(false)
@@ -215,7 +221,12 @@ export default function ConsoleEventsPage() {
       const method = editingId ? 'PATCH' : 'POST'
       const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
       const data = await res.json().catch(() => null)
-      if (!res.ok) throw new Error(data?.error || 'Save failed')
+      if (!res.ok) {
+        // The event itself was saved (now carrying the seriesId): refresh
+        // the list so the series glyph shows even though some copies failed.
+        if (data?.error === 'series_partial') void fetchData()
+        throw new Error(data?.message || data?.error || 'Save failed')
+      }
       setModalOpen(false)
       resetForm()
       void fetchData()
@@ -306,7 +317,12 @@ export default function ConsoleEventsPage() {
                         <span title="Part of a recurring series" aria-label="Recurring series" className="ml-1 text-accent-text">&#8635;</span>
                       )}
                       <br />
-                      {formatTime(ev.startTime)} - {formatTime(ev.endTime)}
+                      {hhmm(ev.startTime)} &ndash; {hhmm(ev.endTime)}
+                      {ev.autoCloseHoursAfter != null && ev.autoCloseHoursAfter > 0 && (
+                        <span title="Bookings close this long before the start" className="ml-1 inline-block rounded-full bg-accent-text/10 px-1.5 py-0.5 text-[10px] font-semibold text-accent-text">
+                          closes {ev.autoCloseHoursAfter}h before
+                        </span>
+                      )}
                     </td>
                     <td className="px-4 py-3 text-center text-lunar-green">{ev.capacity}</td>
                     <td className="px-4 py-3 text-center text-lunar-green">{ev.booked}</td>
@@ -367,10 +383,11 @@ export default function ConsoleEventsPage() {
               style={{ boxSizing: 'border-box' }} />
           </div>
 
-          {/* Recurrence -- create only. Generates independent event rows
-              sharing a seriesId; each occurrence is editable/cancellable
-              on its own afterwards. */}
-          {!editingId && (
+          {/* Recurrence -- create, or edit of a NON-series event (the edited
+              event becomes the first of the series; only future dates are
+              added). Generates independent event rows sharing a seriesId;
+              each occurrence is editable/cancellable on its own afterwards. */}
+          {!editingSeriesId && (
             <div className="rounded-lg border border-border bg-soft-beige/40 p-3">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
@@ -396,10 +413,20 @@ export default function ConsoleEventsPage() {
               </div>
               {repeatFreq !== 'none' && (
                 <p className="mt-2 text-xs text-text-light">
-                  Creates one independent event per occurrence (max 52). Each can be
-                  edited or cancelled individually afterwards. Only the <strong>time of day</strong>{' '}
-                  from Start/End Time is applied to each occurrence &mdash;
-                  every event in the series runs at the same time on its own date.
+                  {editingId ? (
+                    <>
+                      This event keeps its date and bookings and becomes the first event of the
+                      series. New dates are added from the next matching date that is today or
+                      later &mdash; never in the past &mdash; up to the repeat-until date (max 52
+                      events including this one). New dates start with no bookings.
+                    </>
+                  ) : (
+                    <>
+                      Creates one independent event per date (max 52), each at the same
+                      start/end time on its own date. Each can be edited or cancelled
+                      individually afterwards.
+                    </>
+                  )}
                 </p>
               )}
             </div>
@@ -434,35 +461,21 @@ export default function ConsoleEventsPage() {
             </div>
           )}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {/* For recurring series only the TIME portion propagates:
-                each generated occurrence gets its own date from the
-                repeat rule + this time-of-day (see the POST handler's
-                shiftToDate). When Repeat is on, show plain TIME pickers
-                (no misleading date part -- Rudie 2026-07-12); the form
-                value is composed back to <date>T<time> on save. */}
+            {/* Time of day only -- the Date field above is the single source
+                of the day (and, for a series, each occurrence's own date).
+                An end time earlier than the start means the event runs past
+                midnight. */}
             <div>
               <label className="block text-sm font-semibold text-lunar-green mb-1">Start Time *</label>
-              {isRepeating ? (
-                <input type="time" value={timePart(form.startTime)} onChange={(e) => setForm(p => ({ ...p, startTime: e.target.value }))}
-                  className="w-full rounded-lg border border-border px-4 py-2.5 text-sm text-lunar-green focus:outline-none focus:ring-2 focus:ring-lunar-green/30"
-                  style={{ boxSizing: 'border-box' }} />
-              ) : (
-                <input type="datetime-local" value={form.startTime} onChange={(e) => setForm(p => ({ ...p, startTime: e.target.value }))}
-                  className="w-full rounded-lg border border-border px-4 py-2.5 text-sm text-lunar-green focus:outline-none focus:ring-2 focus:ring-lunar-green/30"
-                  style={{ boxSizing: 'border-box' }} />
-              )}
+              <input type="time" value={form.startTime} onChange={(e) => setForm(p => ({ ...p, startTime: e.target.value }))}
+                className="w-full rounded-lg border border-border px-4 py-2.5 text-sm text-lunar-green focus:outline-none focus:ring-2 focus:ring-lunar-green/30"
+                style={{ boxSizing: 'border-box' }} />
             </div>
             <div>
               <label className="block text-sm font-semibold text-lunar-green mb-1">End Time *</label>
-              {isRepeating ? (
-                <input type="time" value={timePart(form.endTime)} onChange={(e) => setForm(p => ({ ...p, endTime: e.target.value }))}
-                  className="w-full rounded-lg border border-border px-4 py-2.5 text-sm text-lunar-green focus:outline-none focus:ring-2 focus:ring-lunar-green/30"
-                  style={{ boxSizing: 'border-box' }} />
-              ) : (
-                <input type="datetime-local" value={form.endTime} onChange={(e) => setForm(p => ({ ...p, endTime: e.target.value }))}
-                  className="w-full rounded-lg border border-border px-4 py-2.5 text-sm text-lunar-green focus:outline-none focus:ring-2 focus:ring-lunar-green/30"
-                  style={{ boxSizing: 'border-box' }} />
-              )}
+              <input type="time" value={form.endTime} onChange={(e) => setForm(p => ({ ...p, endTime: e.target.value }))}
+                className="w-full rounded-lg border border-border px-4 py-2.5 text-sm text-lunar-green focus:outline-none focus:ring-2 focus:ring-lunar-green/30"
+                style={{ boxSizing: 'border-box' }} />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">

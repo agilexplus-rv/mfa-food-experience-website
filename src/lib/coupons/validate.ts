@@ -84,11 +84,13 @@ export async function validateCoupon(
   if (!coupon) return { ok: false, error: 'not_found' }
   if (!coupon.active) return { ok: false, error: 'inactive' }
 
-  const now = new Date()
-  const validFrom = new Date(coupon.validFrom)
-  const validUntil = new Date(coupon.validUntil)
-  if (now < validFrom) return { ok: false, error: 'not_yet_valid' }
-  if (now > validUntil) return { ok: false, error: 'expired' }
+  // Validity is by Malta calendar day, inclusive on both ends: a coupon
+  // valid from today works from local midnight; one valid until today
+  // works until the end of today. Dates are stored day-only (console:
+  // 00:00Z, Payload admin: 12:00Z) -> the UTC day slice is the admin's day.
+  const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Malta' }).format(new Date())
+  if (today < String(coupon.validFrom).slice(0, 10)) return { ok: false, error: 'not_yet_valid' }
+  if (today > String(coupon.validUntil).slice(0, 10)) return { ok: false, error: 'expired' }
 
   if (coupon.maxTotalUses != null && coupon.useCount >= coupon.maxTotalUses) {
     return { ok: false, error: 'exhausted' }

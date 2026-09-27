@@ -55,9 +55,6 @@ export default async function ServicePage({ params }: PageProps) {
     endTime: e.endTime,
     pricePerPerson: e.pricePerPerson,
     locationRef: e.locationRef,
-    imageUrl: imageryUrl,
-    imageAlt: imageryAlt,
-    descriptionHtml,
   }))
 
   return (

@@ -193,7 +193,8 @@ export default function MfaVerifyPage() {
 
 const mfaStyles = `
   .mfa-container {
-    min-height: 100vh;
+    min-height: calc(100vh - var(--site-header-h, 0px));
+    min-height: calc(100svh - var(--site-header-h, 0px));
     display: flex;
     align-items: center;
     justify-content: center;

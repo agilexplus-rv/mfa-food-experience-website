@@ -6,6 +6,7 @@ import config from '@payload-config'
 import { verifySession } from '@/lib/rbac/verify-session'
 import { actingAs } from '@/lib/audit/helper'
 import { payloadErrorMessage } from '@/lib/api-errors'
+import { MAX_SERIES_EVENTS, composeOnDay, dayStart, isDay, occurrenceDates, timeOfDay } from '@/lib/events/recurrence'
 
 /** Empty / invalid / non-positive -> null (auto-close disabled). */
 function toAutoCloseHours(v: unknown): number | null {
@@ -156,62 +157,54 @@ export async function POST(req: NextRequest) {
     )
   }
 
+  // Date is the single source of the day; Start/End contribute only their
+  // time-of-day (HH:MM), composed onto each occurrence's own day as
+  // literal UTC (see src/lib/events/recurrence.ts). An end time earlier
+  // than the start means the event runs past midnight.
+  const day = String(body.date).slice(0, 10)
+  if (!isDay(day)) return NextResponse.json({ error: 'invalid_date' }, { status: 400 })
+  const startT = timeOfDay(body.startTime)
+  const endT = timeOfDay(body.endTime)
+  if (!startT || !endT) {
+    return NextResponse.json({ error: 'startTime and endTime must be HH:MM' }, { status: 400 })
+  }
+
   // --- Recurrence (Rudie 2026-07-12) ---
   // body.recurrence = { frequency: 'weekly'|'biweekly'|'monthly', until: 'YYYY-MM-DD' }
   // Generates one concrete event row per occurrence, all sharing a
-  // seriesId (UUID). Bounded at 52 occurrences as a safety valve
-  // (weekly for a year); until is inclusive. Times shift with the
-  // date: startTime/endTime keep their time-of-day on each new date.
+  // seriesId (UUID). Bounded at MAX_SERIES_EVENTS (52, incl. the first)
+  // as a safety valve (weekly for a year); until is inclusive. Day math
+  // lives in occurrenceDates(); every occurrence keeps the same
+  // time-of-day on its own date.
   const recurrence = body.recurrence as
     | { frequency?: string; until?: string }
     | undefined
 
-  const occurrenceDates: string[] = [body.date]
+  const occurrenceDatesList: string[] = [day]
   if (recurrence?.frequency && recurrence?.until) {
-    const stepDays =
-      recurrence.frequency === 'weekly' ? 7 :
-      recurrence.frequency === 'biweekly' ? 14 :
-      recurrence.frequency === 'monthly' ? 0 : -1
-    if (stepDays === -1) {
-      return NextResponse.json({ error: 'invalid_frequency' }, { status: 400 })
-    }
-    const until = new Date(`${recurrence.until}T23:59:59Z`)
-    if (Number.isNaN(until.getTime())) {
-      return NextResponse.json({ error: 'invalid_until_date' }, { status: 400 })
-    }
-    const cursor = new Date(`${body.date}T00:00:00Z`)
-    for (let i = 0; i < 51; i++) {
-      if (stepDays > 0) {
-        cursor.setUTCDate(cursor.getUTCDate() + stepDays)
-      } else {
-        cursor.setUTCMonth(cursor.getUTCMonth() + 1)
-      }
-      if (cursor > until) break
-      occurrenceDates.push(cursor.toISOString().slice(0, 10))
-    }
+    const r = occurrenceDates({
+      anchor: day,
+      frequency: recurrence.frequency,
+      until: recurrence.until,
+      max: MAX_SERIES_EVENTS - 1,
+    })
+    if ('error' in r) return NextResponse.json({ error: r.error }, { status: 400 })
+    occurrenceDatesList.push(...r.dates)
   }
 
-  /** Shift an ISO/naive datetime's DATE to a new day, keeping time-of-day. */
-  const shiftToDate = (dateTime: string, newDate: string): string => {
-    const timePart = dateTime.includes('T') ? dateTime.slice(dateTime.indexOf('T')) : 'T00:00:00.000Z'
-    return `${newDate}${timePart}`
-  }
-
-  const seriesId = occurrenceDates.length > 1 ? crypto.randomUUID() : undefined
-  const baseStart = body.startTime || body.date
-  const baseEnd = body.endTime || body.date
+  const seriesId = occurrenceDatesList.length > 1 ? crypto.randomUUID() : undefined
 
   try {
     const createdIds: string[] = []
-    for (const date of occurrenceDates) {
+    for (const d of occurrenceDatesList) {
       const event = await p.create({
         collection: 'events',
         data: {
           title: body.title.trim(),
           service: Number(body.serviceId),
-          date,
-          startTime: shiftToDate(baseStart, date),
-          endTime: shiftToDate(baseEnd, date),
+          date: dayStart(d),
+          startTime: composeOnDay(d, startT),
+          endTime: composeOnDay(d, endT),
           capacity: body.capacity,
           pricePerPerson: body.pricePerPerson,
           locationRef: body.locationRef || '',

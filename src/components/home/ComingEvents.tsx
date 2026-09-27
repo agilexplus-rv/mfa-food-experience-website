@@ -4,15 +4,12 @@ import Link from 'next/link'
 import { MtText } from '@/components/i18n/MtText'
 import { formatPrice, getAvailabilityForEvents } from '@/lib/availability'
 import { formatDay, formatTimeRange } from '@/lib/format-date'
-import { getMediaUrl } from '@/lib/payload'
-import { richTextToHtml } from '@/lib/richtext'
-import { ReadMoreButton } from '@/components/services/ReadMoreButton'
 import type { EventDoc } from '@/lib/availability-types'
 
 /**
  * Upcoming Experiences section (FR-7.1).
  * Shows upcoming experiences across VISIBLE services, with availability,
- * a "Read more" dialog (experience picture + description) and Book Now.
+ * a "Read more" link (to the event's own page) and Book Now.
  */
 
 /** The event's service relation is an id or (at depth >= 1) the populated doc. */
@@ -42,22 +39,16 @@ export async function ComingEvents() {
 
   const candidates = docs as unknown as EventDoc[]
 
-  // Resolve each event's service (image, description, visibility). This
-  // previously did String(event.service) on a populated object, producing
-  // "[object Object]", so every lookup failed and cards had no image or
-  // read-more at all.
-  const serviceInfo = new Map<string, { visible: boolean; url?: string; alt?: string; descriptionHtml?: string }>()
+  // Resolve each event's service visibility. This previously did
+  // String(event.service) on a populated object, producing "[object
+  // Object]", so every lookup failed and cards were dropped entirely.
+  const serviceInfo = new Map<string, { visible: boolean }>()
   await Promise.all(
     [...new Set(candidates.map(serviceIdOf).filter(Boolean))].map(async (sid) => {
       try {
-        const svc = await payload.findByID({ collection: 'services', id: sid, depth: 1, overrideAccess: true })
-        const s = svc as unknown as { visible?: boolean; imagery?: unknown; description?: unknown }
-        serviceInfo.set(sid, {
-          visible: Boolean(s.visible),
-          url: getMediaUrl(s.imagery as Parameters<typeof getMediaUrl>[0]) ?? undefined,
-          alt: (typeof s.imagery === 'object' && (s.imagery as Record<string, unknown>)?.alt as string) || undefined,
-          descriptionHtml: richTextToHtml(s.description) || undefined,
-        })
+        const svc = await payload.findByID({ collection: 'services', id: sid, depth: 0, overrideAccess: true })
+        const s = svc as unknown as { visible?: boolean }
+        serviceInfo.set(sid, { visible: Boolean(s.visible) })
       } catch {
         serviceInfo.set(sid, { visible: false })
       }
@@ -90,7 +81,6 @@ export async function ComingEvents() {
             const avail = availability.get(String(event.id))
             const remaining = avail?.remaining ?? event.capacity ?? 0
             const fullyBooked = avail?.status === 'fully_booked'
-            const info = serviceInfo.get(serviceIdOf(event))
             const bookHref = `/book/${event.id}`
             return (
               <article
@@ -110,18 +100,16 @@ export async function ComingEvents() {
                   {/* Spacer pushes the action row to the bottom for equal-height alignment */}
                   <div className="flex-1" />
 
-                  {/* Read more — dialog with the experience picture + description */}
+                  {/* Read more — links to the event's own page */}
                   <div className="mt-2">
-                    <ReadMoreButton
-                      content={{
-                        title: event.title,
-                        subtitle: `${formatDay(event.date)} · ${formatTimeRange(event.startTime, event.endTime)} · ${formatPrice(event.pricePerPerson ?? 0)} per person, inc. VAT`,
-                        descriptionHtml: info?.descriptionHtml,
-                        imageUrl: info?.url,
-                        imageAlt: info?.alt,
-                        bookHref: fullyBooked ? undefined : bookHref,
-                      }}
-                    />
+                    <Link
+                      href={`/events/${event.id}`}
+                      className="inline-flex items-center gap-1 text-sm font-semibold text-accent-text transition-colors hover:text-lunar-green focus:outline-2 focus:outline-offset-2 focus:outline-lunar-green"
+                    >
+                      <MtText en="Read more" mt="Aqra iktar" />
+                      <span className="sr-only">about {event.title}</span>
+                      <span aria-hidden="true">&rarr;</span>
+                    </Link>
                   </div>
 
                   {/* Compact action row: seats pill + smaller Book button */}

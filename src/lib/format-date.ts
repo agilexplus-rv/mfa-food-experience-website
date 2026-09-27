@@ -51,6 +51,17 @@ export function formatTimeRange(startIso: string, endIso: string): string {
     hour: 'numeric',
     minute: '2-digit',
     hour12: false,
+    timeZone: 'UTC',
   })
-  return `${fmt.format(s)} - ${fmt.format(e)}`
+  const range = `${fmt.format(s)} - ${fmt.format(e)}`
+
+  // The stored wall-clock time-of-day (UTC slice) tells us whether the
+  // event crosses midnight; endTime's date part is unreliable (editors'
+  // datetime pickers leave stray dates) so only HH:MM is compared.
+  const startTod = s.toISOString().slice(11, 16)
+  const endTod = e.toISOString().slice(11, 16)
+  if (endTod <= startTod) {
+    return `${range} (ends next day)`
+  }
+  return range
 }
