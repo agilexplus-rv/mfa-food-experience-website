@@ -212,11 +212,13 @@ export async function POST(req: NextRequest) {
     })
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)
-    const stack = err instanceof Error ? err.stack : ''
-    console.error('[checkout] Booking creation failed:', message, stack)
+    const cause = (err as any)?.cause
+    const causeMsg = cause instanceof Error ? cause.message : (cause ? String(cause) : '')
+    const full = causeMsg ? `${message} | cause: ${causeMsg}` : message
+    console.error('[checkout] Booking creation failed:', full)
     // Release the hold so seats aren't stuck
     await releaseSeatHold(hold.id).catch(() => undefined)
-    return NextResponse.json({ error: 'booking_creation_failed', message }, { status: 500 })
+    return NextResponse.json({ error: 'booking_creation_failed', message: full }, { status: 500 })
   }
 
   const bookingId = booking.id
