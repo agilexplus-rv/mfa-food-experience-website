@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { StatusIcon } from '@/components/booking/StatusIcon'
 import { findBookingByPaymentRef, parseVivaOrderCode, type BookingLookupResult } from '@/lib/bookings/lookup'
 import { formatDay, formatTimeRange } from '@/lib/format-date'
+import { checkoutRedirectUrl } from '@/lib/viva/client'
 
 export const metadata: Metadata = {
   title: 'Payment not completed | Malta Food Experience',
@@ -118,17 +119,20 @@ export default async function BookingCancelPage({ searchParams }: PageProps) {
 
       <p className="mx-auto mt-8 max-w-lg text-sm text-text-light">
         {canRetry
-          ? 'Your held seats will be released shortly. Seats are not guaranteed until payment is complete, so try again soon if you still want to join us.'
+          ? 'Your seats are still held — you can retry the same payment below. No new booking is needed.'
           : 'Any seats held for you will be released shortly so others can book them.'}
       </p>
 
       <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-        {canRetry && event ? (
+        {canRetry && orderCode ? (
           <>
-            <Link href={`/booking/pay?eventId=${encodeURIComponent(String(event.id))}`} className={primaryCta}>
-              Try again
+            <a
+              href={`${checkoutRedirectUrl()}?ref=${encodeURIComponent(orderCode)}`}
+              className={primaryCta}
+            >
+              Retry payment
               <span aria-hidden="true">&rarr;</span>
-            </Link>
+            </a>
             <Link href="/services" className={secondaryCta}>
               Browse experiences
             </Link>
