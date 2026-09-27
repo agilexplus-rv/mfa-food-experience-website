@@ -28,7 +28,13 @@ async function payload(): Promise<Payload> {
  * - We ALWAYS verify the transaction via the VIVA API as defence-in-depth
  *
  * Idempotent: returns 200 for already-processed transactions.
+ *
+ * GET requests are used by Viva's URL verification when creating a webhook.
  */
+export async function GET() {
+  return NextResponse.json({ ok: true }, { status: 200 })
+}
+
 export async function POST(req: NextRequest) {
   // ── Auth check ──
   if (!isVivaDemo()) {
