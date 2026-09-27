@@ -120,6 +120,10 @@ export function BookingForm({
   const [termsAccepted, setTermsAccepted] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
+  // Set once /api/checkout returns the VIVA URL; keeps "Pay now" disabled
+  // while the browser navigates away so a second click can't start a
+  // second booking + VIVA order.
+  const [redirecting, setRedirecting] = useState(false)
 
   // Turnstile
   const turnstileRef = useRef<HTMLDivElement>(null)
@@ -221,6 +225,16 @@ export function BookingForm({
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Coming back from VIVA via the browser's back button can restore this
+  // page from the bfcache with `redirecting` still set; re-enable the form.
+  useEffect(() => {
+    const onPageShow = (e: PageTransitionEvent) => {
+      if (e.persisted) setRedirecting(false)
+    }
+    window.addEventListener('pageshow', onPageShow)
+    return () => window.removeEventListener('pageshow', onPageShow)
   }, [])
 
   // Live countdown tick.
@@ -346,6 +360,7 @@ export function BookingForm({
           return
         }
         if (data.url) {
+          setRedirecting(true)
           window.location.href = data.url
           return
         }
@@ -356,7 +371,7 @@ export function BookingForm({
         setSubmitting(false)
       }
     },
-    [couponCode, couponStatus.state, dietaryConsent, dietaryNotes, email, eventId, hold, holdExpired, leadAttendeeName, phone, seats, policyAccepted],
+    [couponCode, couponStatus.state, dietaryConsent, dietaryNotes, email, eventId, hold, holdExpired, leadAttendeeName, phone, seats, policyAccepted, termsAccepted, termsAndConditionsUrl],
   )
 
   const baseTotal = pricePerPerson * seats
@@ -626,10 +641,10 @@ export function BookingForm({
 
         <button
           type="submit"
-          disabled={submitting || !hold || holdExpired}
+          disabled={submitting || redirecting || !hold || holdExpired}
           className="mt-5 w-full rounded-lg bg-terracotta px-6 py-3.5 text-base font-bold text-soft-beige transition-colors hover:bg-terracotta/85 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {submitting ? 'Processing…' : 'Pay now'}
+          {redirecting ? 'Redirecting to secure payment…' : submitting ? 'Processing…' : 'Pay now'}
         </button>
       </div>
     </form>
