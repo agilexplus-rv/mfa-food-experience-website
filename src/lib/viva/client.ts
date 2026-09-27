@@ -13,8 +13,10 @@
 
 const DEMO_API = 'https://demo-api.vivapayments.com'
 const DEMO_ACCOUNTS = 'https://demo-accounts.vivapayments.com'
+const DEMO_CHECKOUT = 'https://demo.vivapayments.com/web/checkout'
 const PROD_API = 'https://api.vivapayments.com'
 const PROD_ACCOUNTS = 'https://accounts.vivapayments.com'
+const PROD_CHECKOUT = 'https://www.vivapayments.com/web/checkout'
 
 function apiBase(): string {
   return process.env.VIVA_DEMO_MODE === 'true' ? DEMO_API : PROD_API
@@ -25,7 +27,7 @@ function accountsBase(): string {
 }
 
 export function checkoutRedirectUrl(): string {
-  return 'https://www.vivapayments.com/web/checkout'
+  return process.env.VIVA_DEMO_MODE === 'true' ? DEMO_CHECKOUT : PROD_CHECKOUT
 }
 
 // ── OAuth2 token cache ────────────────────────────────────────────
