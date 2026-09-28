@@ -40,7 +40,14 @@ type State =
   | { phase: 'cancelled'; booking: ViewBooking }
 
 const POLL_INTERVAL_MS = 2000
-const MAX_POLL_ATTEMPTS = 60 // ~2 minutes, generous for webhook delivery latency
+const MAX_POLL_ATTEMPTS = 30 // ~60 s, then show "Check again" instead of spinning forever
+/**
+ * Every Nth poll (and on "Check again") ask the server to verify the
+ * payment with the VIVA API, in case the webhook never arrives (VIVA demo
+ * mode does not deliver webhooks). ~10 s apart keeps us well inside the
+ * verify endpoint's rate limit.
+ */
+const VERIFY_EVERY_N_POLLS = 5
 
 function isConfirmed(status: string) {
   return status === 'confirmed' || status === 'checked_in'
@@ -63,6 +70,8 @@ interface ConfirmationStatusProps {
    * or the Stripe Checkout Session id for legacy bookings.
    */
   sessionId: string
+  /** VIVA OrderCode (?s=); with transactionId, enables the VIVA API verify fallback. */
+  vivaOrderCode?: string
   /** VIVA TransactionId (?t=), shown on the card as the payment reference. */
   transactionId?: string
   /**
@@ -73,7 +82,12 @@ interface ConfirmationStatusProps {
   initialBooking?: BookingSummary | null
 }
 
-export function ConfirmationStatus({ sessionId, transactionId, initialBooking }: ConfirmationStatusProps) {
+export function ConfirmationStatus({
+  sessionId,
+  vivaOrderCode,
+  transactionId,
+  initialBooking,
+}: ConfirmationStatusProps) {
   const [state, setState] = useState<State>(() => initialState(initialBooking))
   // Bumped by "Check again" to restart polling after a timeout / error.
   const [pollRun, setPollRun] = useState(0)
@@ -121,9 +135,30 @@ export function ConfirmationStatus({ sessionId, transactionId, initialBooking }:
       }
     }
 
+    /** Best-effort: failures just fall through to the normal status poll. */
+    async function verifyWithViva() {
+      if (!vivaOrderCode || !transactionId) return
+      try {
+        await fetch('/api/bookings/verify-viva', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ orderCode: vivaOrderCode, transactionId }),
+          cache: 'no-store',
+        })
+      } catch {
+        // ignore
+      }
+    }
+
     async function pollStatus() {
       if (cancelled || bookingId === null) return
       attempts += 1
+
+      // "Check again" verifies immediately; otherwise every Nth poll.
+      if ((pollRun > 0 && attempts === 1) || attempts % VERIFY_EVERY_N_POLLS === 0) {
+        await verifyWithViva()
+        if (cancelled) return
+      }
 
       try {
         const res = await fetch(`/api/bookings/${bookingId}/status`, { cache: 'no-store' })
@@ -161,7 +196,7 @@ export function ConfirmationStatus({ sessionId, transactionId, initialBooking }:
       cancelled = true
       clearTimeout(timer)
     }
-  }, [sessionId, pollRun])
+  }, [sessionId, vivaOrderCode, transactionId, pollRun])
 
   function checkAgain() {
     setState((s) => ('booking' in s ? { phase: 'polling', booking: s.booking } : { phase: 'resolving' }))
@@ -236,7 +271,7 @@ export function ConfirmationStatus({ sessionId, transactionId, initialBooking }:
           title={timedOut ? 'Still confirming your payment' : 'Confirming your payment…'}
           body={
             timedOut
-              ? "VIVA is taking longer than usual to confirm your payment. You don't need to pay again: we'll email you as soon as it's confirmed."
+              ? "We're still confirming your payment with VIVA. You don't need to pay again: we'll email you as soon as it's confirmed, or you can check again now."
               : 'Your payment was received by VIVA and we are confirming your booking. This usually takes a few seconds.'
           }
           live

@@ -10,6 +10,7 @@ import {
   parseVivaTransactionId,
   type BookingLookupResult,
 } from '@/lib/bookings/lookup'
+import { reconcileVivaPayment } from '@/lib/bookings/reconcile-viva'
 
 export const metadata: Metadata = {
   title: 'Booking confirmation | Malta Food Experience',
@@ -25,6 +26,9 @@ interface PageProps {
     t?: string    // VIVA TransactionId
     s?: string    // VIVA OrderCode
     session_id?: string  // legacy Stripe
+    // VIVA also appends lang, eventId and eci. eventId is VIVA's result
+    // event code (0 = no error), NOT one of our event ids, and eci is the
+    // 3-D Secure indicator; neither is used here.
   }>
 }
 
@@ -37,9 +41,15 @@ interface PageProps {
  * server-side, so the ticket card can show the lead guest, email and
  * event details that the unauthenticated status endpoint deliberately
  * omits, then ConfirmationStatus polls /api/bookings/[id]/status until
- * the webhook flips it to 'confirmed'. The TransactionId is displayed
- * as the payment reference only; confirmation always comes from the
- * webhook, never from the redirect.
+ * it flips to 'confirmed'.
+ *
+ * The webhook is the primary confirmation path, but VIVA's demo
+ * environment does not deliver webhooks (and production deliveries can
+ * lag). So if the booking is still pending we reconcile it here against
+ * the VIVA API using the TransactionId from ?t= (reconcile-viva.ts), and
+ * ConfirmationStatus keeps retrying that via /api/bookings/verify-viva.
+ * The redirect params are only hints: a booking is confirmed solely on
+ * an API-verified, completed transaction for this order and amount.
  *
  * Legacy Stripe: ?session_id={CHECKOUT_SESSION_ID} falls through to the
  * old lookup path.
@@ -64,11 +74,18 @@ export default async function BookingConfirmationPage({ searchParams }: PageProp
   if (orderCode) lookup = await findBookingByPaymentRef({ vivaOrderCode: orderCode })
   else if (stripeSessionId) lookup = await findBookingByPaymentRef({ stripeSessionId })
 
+  // Webhook fallback: confirm straight from the VIVA API if still pending.
+  if (orderCode && transactionId && lookup?.kind === 'found' && lookup.booking.status === 'pending') {
+    const outcome = await reconcileVivaPayment({ orderCode, transactionId })
+    if (outcome === 'confirmed') lookup = await findBookingByPaymentRef({ vivaOrderCode: orderCode })
+  }
+
   return (
     <section className="notranslate mx-auto max-w-2xl px-6 py-20 text-center">
       {lookupKey ? (
         <ConfirmationStatus
           sessionId={lookupKey}
+          vivaOrderCode={orderCode}
           transactionId={transactionId}
           initialBooking={lookup?.kind === 'found' ? lookup.booking : null}
         />
