@@ -36,6 +36,8 @@ export default function ConsoleShell({ children }: { children: React.ReactNode }
   const [user, setUser] = useState<UserInfo | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  // Desktop-only rail mode; mobile slide-over always renders full width.
+  const [collapsed, setCollapsed] = useState(false)
   const pathname = usePathname()
   const router = useRouter()
 
@@ -109,7 +111,7 @@ export default function ConsoleShell({ children }: { children: React.ReactNode }
   }
 
   return (
-    <div className="flex min-h-screen bg-soft-beige">
+    <div className="flex h-screen overflow-hidden bg-soft-beige supports-[height:100dvh]:h-dvh">
       {/* Mobile overlay */}
       {sidebarOpen && (
         <div
@@ -121,43 +123,54 @@ export default function ConsoleShell({ children }: { children: React.ReactNode }
       {/* Sidebar */}
       <aside
         className={[
-          'fixed inset-y-0 left-0 z-50 flex w-64 flex-col bg-lunar-green shadow-xl',
-          'transition-transform duration-300 ease-in-out lg:static lg:translate-x-0',
+          'fixed inset-y-0 left-0 z-50 flex h-full w-64 shrink-0 flex-col overflow-hidden bg-lunar-green shadow-xl',
+          'transition-[transform,width] duration-300 ease-in-out lg:static lg:translate-x-0',
           sidebarOpen ? 'translate-x-0' : '-translate-x-full',
+          collapsed ? 'lg:w-16' : 'lg:w-64',
         ].join(' ')}
         style={{ boxSizing: 'border-box' }}
       >
         {/* Logo area -- Malta Food Agency brand mark (inverted variant,
             matching the public site's header/footer usage on the same
             bg-lunar-green background), not a text-abbreviation placeholder. */}
-        <div className="flex h-16 items-center gap-3 border-b border-white/10 px-5">
+        <div className={[
+          'flex h-16 shrink-0 items-center gap-3 border-b border-white/10 px-5',
+          collapsed ? 'lg:justify-center lg:px-2' : '',
+        ].join(' ')}>
           <Logo variant="inverted" size="sm" className="!p-0 h-9 w-auto" />
-          <div>
-            <div className="text-sm font-bold text-soft-beige">Operator Console</div>
+          <div className={collapsed ? 'lg:hidden' : ''}>
+            <div className="whitespace-nowrap text-sm font-bold text-soft-beige">Operator Console</div>
           </div>
         </div>
 
         {/* Nav items */}
-        <nav className="flex-1 overflow-y-auto px-3 py-4">
+        <nav className={['flex-1 overflow-y-auto py-4', collapsed ? 'px-3 lg:px-2' : 'px-3'].join(' ')}>
           {NAV_ITEMS.map((item) => {
             const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
             return (
               <Link
                 key={item.href}
                 href={item.href}
+                title={collapsed ? item.label : undefined}
+                aria-current={isActive ? 'page' : undefined}
                 className={[
                   'mb-1 flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold transition-colors',
+                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-matte-gold',
+                  collapsed ? 'lg:justify-center lg:px-0' : '',
                   isActive
                     ? 'bg-matte-gold/20 text-soft-beige'
                     : 'text-soft-beige/70 hover:bg-white/10 hover:text-soft-beige',
                 ].join(' ')}
               >
-                <span className="flex h-6 w-6 items-center justify-center rounded text-[10px] font-bold opacity-70">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded text-[10px] font-bold opacity-70">
                   {item.icon}
                 </span>
-                <span className="flex-1">{item.label}</span>
+                <span className={['flex-1 whitespace-nowrap', collapsed ? 'lg:hidden' : ''].join(' ')}>{item.label}</span>
                 {item.badge && (
-                  <span className="rounded-full bg-matte-gold/30 px-1.5 py-0.5 text-[9px] font-bold text-soft-beige">
+                  <span className={[
+                    'rounded-full bg-matte-gold/30 px-1.5 py-0.5 text-[9px] font-bold text-soft-beige',
+                    collapsed ? 'lg:hidden' : '',
+                  ].join(' ')}>
                     {item.badge}
                   </span>
                 )}
@@ -167,20 +180,26 @@ export default function ConsoleShell({ children }: { children: React.ReactNode }
         </nav>
 
         {/* Bottom: Public site link */}
-        <div className="border-t border-white/10 px-3 py-3">
+        <div className={['shrink-0 border-t border-white/10 py-3', collapsed ? 'px-3 lg:px-2' : 'px-3'].join(' ')}>
           <a
             href="/"
             target="_blank"
             rel="noopener noreferrer"
-            className="block rounded-lg px-3 py-2 text-xs font-semibold text-soft-beige/70 hover:bg-white/10 hover:text-soft-beige/80 transition-colors"
+            title={collapsed ? 'View Public Site' : undefined}
+            aria-label="View Public Site"
+            className={[
+              'block whitespace-nowrap rounded-lg px-3 py-2 text-xs font-semibold text-soft-beige/70 hover:bg-white/10 hover:text-soft-beige/80 transition-colors',
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-matte-gold',
+              collapsed ? 'lg:px-0 lg:text-center' : '',
+            ].join(' ')}
           >
-            View Public Site &rarr;
+            <span className={collapsed ? 'lg:hidden' : ''}>View Public Site </span>&rarr;
           </a>
         </div>
       </aside>
 
       {/* Main content */}
-      <div className="flex min-w-0 flex-1 flex-col" style={{ boxSizing: 'border-box' }}>
+      <div className="flex h-full min-w-0 flex-1 flex-col overflow-hidden" style={{ boxSizing: 'border-box' }}>
         {/* Top bar */}
         <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-soft-beige/95 px-4 backdrop-blur-sm lg:px-6"
           style={{ boxSizing: 'border-box' }}>
@@ -196,6 +215,23 @@ export default function ConsoleShell({ children }: { children: React.ReactNode }
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                 ) : (
                   <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                )}
+              </svg>
+            </button>
+
+            {/* Desktop collapse toggle */}
+            <button
+              onClick={() => setCollapsed((c) => !c)}
+              className="hidden rounded-lg p-2 text-lunar-green hover:bg-surface transition-colors lg:flex focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lunar-green"
+              aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              aria-expanded={!collapsed}
+              title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            >
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                {collapsed ? (
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+                ) : (
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M11 19l-7-7 7-7M19 19l-7-7 7-7" />
                 )}
               </svg>
             </button>
@@ -241,7 +277,7 @@ export default function ConsoleShell({ children }: { children: React.ReactNode }
         </header>
 
         {/* Page content */}
-        <main className="flex-1 p-4 lg:p-6" style={{ boxSizing: 'border-box' }}>
+        <main className="flex-1 overflow-y-auto p-4 lg:p-6" style={{ boxSizing: 'border-box' }}>
           {children}
         </main>
       </div>

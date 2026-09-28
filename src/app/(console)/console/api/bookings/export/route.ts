@@ -14,10 +14,12 @@ async function payload(): Promise<Payload> {
 }
 
 /**
- * GET /console/api/bookings/export?eventId=... (optional)
+ * GET /console/api/bookings/export?eventId=...&q=...&status=... (all optional)
  *
- * Admin-only. CSV of bookings -- all bookings, or one event's when
- * `eventId` is given. Money in EUR; dates/times in Malta time. Dietary
+ * Admin-only. CSV of bookings -- all bookings, or the full set matching
+ * the given filters (same semantics as the console search endpoint:
+ * `q` likes reference/name/email, `status` exact, `eventId` exact),
+ * never paginated. Money in EUR; dates/times in Malta time. Dietary
  * notes are only included where the attendee consented (GDPR Art. 9).
  */
 export async function GET(req: NextRequest) {
@@ -36,6 +38,22 @@ export async function GET(req: NextRequest) {
   if (rawEventId && !Number.isFinite(eventId)) {
     return NextResponse.json({ error: 'invalid_event_id' }, { status: 400 })
   }
+  const q = req.nextUrl.searchParams.get('q')?.trim() || undefined
+  const status = req.nextUrl.searchParams.get('status') || undefined
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const and: any[] = []
+  if (q) {
+    and.push({
+      or: [
+        { reference: { like: q } },
+        { leadAttendeeName: { like: q } },
+        { email: { like: q } },
+      ],
+    })
+  }
+  if (status) and.push({ status: { equals: status } })
+  if (eventId !== null) and.push({ event: { equals: eventId } })
 
   const result = await p.find({
     collection: 'bookings',
@@ -44,7 +62,7 @@ export async function GET(req: NextRequest) {
     sort: 'createdAt',
     depth: 1, // populate event, coupon, check-in staff
     overrideAccess: true,
-    ...(eventId !== null ? { where: { event: { equals: eventId } } } : {}),
+    ...(and.length > 0 ? { where: { and } } : {}),
   })
 
   const header = [
@@ -115,12 +133,14 @@ export async function GET(req: NextRequest) {
     actor: user.id,
     collection: 'bookings',
     documentId: eventId !== null ? String(eventId) : 'all',
-    detail: `Exported ${rows.length} booking(s) to CSV${eventId !== null ? ` for event ${eventId}` : ''}`,
+    detail: `Exported ${rows.length} booking(s) to CSV${eventId !== null ? ` for event ${eventId}` : ''}`
+      + (status ? `, status=${status}` : '')
+      + (q ? `, q=${q}` : ''),
     ...clientMeta(req),
   })
 
   const stamp = new Date().toISOString().slice(0, 10)
-  const suffix = eventId !== null ? `_event_${eventId}` : '_all'
+  const suffix = eventId !== null ? `_event_${eventId}` : (q || status ? '_filtered' : '_all')
   return new NextResponse(toCsv(header, rows), {
     headers: {
       'Content-Type': 'text/csv; charset=utf-8',

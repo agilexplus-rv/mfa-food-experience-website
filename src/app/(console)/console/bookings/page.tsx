@@ -162,6 +162,15 @@ export default function ConsoleBookingsPage() {
     window.open(`/console/api/bookings/export?eventId=${encodeURIComponent(exportEventId)}`, '_blank')
   }, [exportEventId])
 
+  const hasActiveFilters = q.trim() !== '' || statusFilter !== ''
+  const handleExportFiltered = useCallback(() => {
+    const params = new URLSearchParams()
+    if (q.trim()) params.set('q', q.trim())
+    if (statusFilter) params.set('status', statusFilter)
+    const qs = params.toString()
+    window.open(`/console/api/bookings/export${qs ? `?${qs}` : ''}`, '_blank')
+  }, [q, statusFilter])
+
   const handleCreateBooking = async () => {
     if (!createForm.eventId.trim() || !createForm.leadAttendeeName.trim() || !createForm.email.trim()) {
       setCreateError('Event, name, and email are required.')
@@ -240,9 +249,9 @@ export default function ConsoleBookingsPage() {
             <div className="ml-auto flex items-end gap-2 border-l border-border pl-3">
               <Button
                 variant="secondary"
-                onClick={() => window.open('/console/api/bookings/export', '_blank')}
+                onClick={handleExportFiltered}
               >
-                Export All
+                {hasActiveFilters ? 'Export Filtered' : 'Export All'}
               </Button>
               <FilterSelect
                 value={exportEventId}
