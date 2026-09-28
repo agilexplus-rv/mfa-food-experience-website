@@ -9,6 +9,7 @@ import type { NextRequest } from 'next/server'
  *   - Unauthenticated -> redirect to /admin/login
  *   - Door-staff on /admin/bookings -> blocked (403)
  *   - Door-staff on /admin/* -> allowed (they can use check-in features)
+ *   - Door-staff on /console/* -> blocked, except /console/help
  *   - MFA-enabled users without mfa-verified cookie -> redirect to /mfa-verify
  *
  * Uses Payload's HTTP-only cookie (`payload-token`) for session detection.
@@ -39,12 +40,15 @@ const PUBLIC_PATHS = [
 ]
 // Routes that door_staff must NOT access (admin-only)
 const ADMIN_ONLY_PREFIXES = ['/admin/collections/bookings', '/console']
+// Console pages door_staff may still open (staff help is shared by both roles)
+const DOOR_STAFF_CONSOLE_PATHS = ['/console/help']
 
 function isPublicPath(pathname: string): boolean {
   return PUBLIC_PATHS.some((p) => pathname.startsWith(p))
 }
 
 function isAdminOnlyPath(pathname: string): boolean {
+  if (DOOR_STAFF_CONSOLE_PATHS.some((p) => pathname === p || pathname.startsWith(p + '/'))) return false
   return ADMIN_ONLY_PREFIXES.some((p) => pathname.startsWith(p))
 }
 

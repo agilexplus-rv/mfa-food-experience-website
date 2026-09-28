@@ -17,6 +17,8 @@ interface NavItem {
   href: string
   icon: string
   badge?: string
+  /** Roles that see this item. Defaults to admin only. */
+  roles?: string[]
 }
 
 const NAV_ITEMS: NavItem[] = [
@@ -30,7 +32,20 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Staff', href: '/console/staff', icon: 'ST' },
   { label: 'Audit Log', href: '/console/audit-log', icon: 'AL' },
   { label: 'Settings', href: '/console/settings', icon: 'SG' },
+  // Door staff reach the console only for Help, so give them a way back
+  // to their own tools.
+  { label: 'Check-in Dashboard', href: '/dashboard', icon: 'DB', roles: ['door_staff'] },
+  { label: 'QR Scanner', href: '/scan', icon: 'QR', roles: ['door_staff'] },
+  { label: 'Help', href: '/console/help', icon: 'HL', roles: ['admin', 'door_staff'] },
 ]
+
+// Console pages door_staff may open (mirrors DOOR_STAFF_CONSOLE_PATHS in
+// src/middleware.ts); every other console path sends them to /scan.
+const DOOR_STAFF_PATHS = ['/console/help']
+
+function doorStaffAllowed(pathname: string): boolean {
+  return DOOR_STAFF_PATHS.some((p) => pathname === p || pathname.startsWith(p + '/'))
+}
 
 export default function ConsoleShell({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<UserInfo | null>(null)
@@ -55,10 +70,6 @@ export default function ConsoleShell({ children }: { children: React.ReactNode }
       }
       const data = await res.json()
       const u = data.user || data
-      if (u.role === 'door_staff') {
-        router.push('/scan')
-        return
-      }
       setUser(u)
     } catch {
       setError('Could not authenticate. Redirecting to login...')
@@ -69,6 +80,12 @@ export default function ConsoleShell({ children }: { children: React.ReactNode }
   useEffect(() => {
     void fetchUser()
   }, [fetchUser])
+
+  const blockedDoorStaff = user?.role === 'door_staff' && !doorStaffAllowed(pathname)
+
+  useEffect(() => {
+    if (blockedDoorStaff) router.push('/scan')
+  }, [blockedDoorStaff, router])
 
   // Close sidebar on route change (mobile)
   useEffect(() => {
@@ -99,7 +116,7 @@ export default function ConsoleShell({ children }: { children: React.ReactNode }
     )
   }
 
-  if (!user) {
+  if (!user || blockedDoorStaff) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-soft-beige">
         <div className="text-center text-text-light">
@@ -145,7 +162,7 @@ export default function ConsoleShell({ children }: { children: React.ReactNode }
 
         {/* Nav items */}
         <nav className={['flex-1 overflow-y-auto py-4', collapsed ? 'px-3 lg:px-2' : 'px-3'].join(' ')}>
-          {NAV_ITEMS.map((item) => {
+          {NAV_ITEMS.filter((item) => (item.roles ?? ['admin']).includes(user.role)).map((item) => {
             const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
             return (
               <Link
@@ -262,7 +279,7 @@ export default function ConsoleShell({ children }: { children: React.ReactNode }
               </span>
             </div>
             <Link
-              href="/console/account"
+              href={user.role === 'admin' ? '/console/account' : '/account'}
               className="rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-text-light hover:border-lunar-green hover:text-lunar-green transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lunar-green"
             >
               Change password

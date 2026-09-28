@@ -636,10 +636,11 @@ export default function ScanPage() {
   return (
     <div className="mx-auto max-w-md w-full px-4 py-8">
       {/* Header */}
-      <nav className="mb-4 flex justify-center gap-4 text-xs font-bold" aria-label="Staff navigation">
+      <nav className="mb-4 flex flex-wrap justify-center gap-x-4 gap-y-1 text-xs font-bold" aria-label="Staff navigation">
         <Link href="/" className="text-accent-text hover:text-lunar-green">Homepage</Link>
         <a href="/dashboard" className="text-accent-text hover:text-lunar-green">Bookings dashboard</a>
         <a href="/account" className="text-accent-text hover:text-lunar-green">Change password</a>
+        <a href="/console/help" className="text-accent-text hover:text-lunar-green">Need help?</a>
       </nav>
       <header className="mb-6 text-center">
         <h1 className="text-2xl font-black text-lunar-green tracking-tight">

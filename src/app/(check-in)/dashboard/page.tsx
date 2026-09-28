@@ -329,6 +329,12 @@ export default function DashboardPage() {
           >
             Change password
           </a>
+          <a
+            href="/console/help"
+            className="rounded-lg border-2 border-lunar-green/40 px-3 py-2 text-xs font-bold text-lunar-green hover:border-lunar-green transition-colors"
+          >
+            Need help?
+          </a>
           {/* live capacity */}
           {liveCapacity && (
             <span className="text-sm font-semibold text-lunar-green">
