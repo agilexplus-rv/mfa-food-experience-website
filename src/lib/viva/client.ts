@@ -43,7 +43,7 @@ let _cache: TokenCache | null = null
  * Obtain a Bearer token (OAuth2 client_credentials). Cached for 50 min
  * (token TTL is 60 min — 10 min safety margin).
  */
-export async function getAccessToken(): Promise<string> {
+export async function getAccessToken(signal?: AbortSignal): Promise<string> {
   const now = Date.now()
   if (_cache && _cache.expiresAt > now + 60_000) {
     return _cache.accessToken
@@ -57,13 +57,14 @@ export async function getAccessToken(): Promise<string> {
 
   const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString('base64')
 
-  const res = await fetch(`${accountsBase()}/connect/token`, {
+  const res = await vivaFetch(`${accountsBase()}/connect/token`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
       Authorization: `Basic ${credentials}`,
     },
     body: 'grant_type=client_credentials',
+    signal,
   })
 
   if (!res.ok) {
@@ -86,6 +87,26 @@ export async function getAccessToken(): Promise<string> {
 
 // ── API helpers ────────────────────────────────────────────────────
 
+/**
+ * fetch() that reports "VIVA is down" as a VivaUnreachableError: the
+ * request never got an answer (DNS, connection refused, TLS, timeout)
+ * or VIVA answered with a transient status (408, 429, 5xx). Every other
+ * response is returned for the caller to handle as before.
+ */
+async function vivaFetch(url: string, init: RequestInit): Promise<Response> {
+  let res: Response
+  try {
+    res = await fetch(url, init)
+  } catch (err) {
+    throw new VivaUnreachableError(new URL(url).pathname, err)
+  }
+  if (res.status >= 500 || res.status === 408 || res.status === 429) {
+    await res.body?.cancel().catch(() => undefined)
+    throw new VivaUnreachableError(`${new URL(url).pathname} (HTTP ${res.status})`)
+  }
+  return res
+}
+
 async function vivaPost<T = unknown>(path: string, body: unknown): Promise<T> {
   const token = await getAccessToken()
   const res = await fetch(`${apiBase()}${path}`, {
@@ -105,10 +126,11 @@ async function vivaPost<T = unknown>(path: string, body: unknown): Promise<T> {
   return data
 }
 
-async function vivaGet<T = unknown>(path: string): Promise<T> {
-  const token = await getAccessToken()
-  const res = await fetch(`${apiBase()}${path}`, {
+async function vivaGet<T = unknown>(path: string, signal?: AbortSignal): Promise<T> {
+  const token = await getAccessToken(signal)
+  const res = await vivaFetch(`${apiBase()}${path}`, {
     headers: { Authorization: `Bearer ${token}` },
+    signal,
   })
 
   const data = (await res.json()) as T & { code?: number; message?: string }
@@ -209,9 +231,25 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
 
 /**
  * Retrieve a transaction by ID (used for verification after webhook).
+ *
+ * `timeoutMs` bounds the whole lookup (token + transaction request) for
+ * callers that block a page render on it; hitting it throws
+ * VivaUnreachableError.
  */
-export async function getTransaction(transactionId: string): Promise<VivaTransaction> {
-  return vivaGet<VivaTransaction>(`/checkout/v2/transactions/${transactionId}`)
+export async function getTransaction(
+  transactionId: string,
+  opts: { timeoutMs?: number } = {},
+): Promise<VivaTransaction> {
+  const signal = opts.timeoutMs ? AbortSignal.timeout(opts.timeoutMs) : undefined
+  try {
+    return await vivaGet<VivaTransaction>(`/checkout/v2/transactions/${transactionId}`, signal)
+  } catch (err) {
+    // The timeout can also fire while a response body is being read.
+    if (signal?.aborted && !(err instanceof VivaUnreachableError)) {
+      throw new VivaUnreachableError('/checkout/v2/transactions (timeout)', err)
+    }
+    throw err
+  }
 }
 
 /**
@@ -238,6 +276,20 @@ export class VivaNotConfiguredError extends Error {
         'Online payment is not yet available.',
     )
     this.name = 'VivaNotConfiguredError'
+  }
+}
+
+/**
+ * VIVA's API could not be reached or is temporarily failing (network
+ * error, timeout, 408/429/5xx). Distinct from a definite answer such as
+ * "transaction not found" or bad credentials, so callers can tell the
+ * visitor to retry later rather than that something is wrong with
+ * their payment.
+ */
+export class VivaUnreachableError extends Error {
+  constructor(what: string, cause?: unknown) {
+    super(`VIVA API unreachable: ${what}`, { cause })
+    this.name = 'VivaUnreachableError'
   }
 }
 

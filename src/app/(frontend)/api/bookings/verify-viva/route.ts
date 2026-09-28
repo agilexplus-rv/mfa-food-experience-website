@@ -16,6 +16,10 @@ import { createRateLimiter, getClientIp, isSameOriginRequest } from '@/lib/rate-
  *
  * Returns only the booking status (no PII). Rate-limited tightly: every
  * call costs a VIVA API round trip, and the UI needs only a handful.
+ *
+ * If VIVA itself is down and the booking is still pending, responds 503
+ * { error: 'viva_unreachable' } so the page can show its "payment service
+ * temporarily unavailable" state instead of polling forever.
  */
 const rateLimiter = createRateLimiter({ windowMs: 60_000, max: 10 })
 
@@ -54,5 +58,11 @@ export async function POST(req: NextRequest) {
 
   const after = await findBookingByPaymentRef({ vivaOrderCode: orderCode })
   const status = after.kind === 'found' ? after.booking.status : before.booking.status
+  if (outcome === 'unreachable' && status === 'pending') {
+    return NextResponse.json(
+      { error: 'viva_unreachable', message: 'Payment service temporarily unavailable', status },
+      { status: 503, headers: { 'Retry-After': '30' } },
+    )
+  }
   return NextResponse.json({ status, outcome })
 }

@@ -1,5 +1,8 @@
 import { finalizeBookingFromVivaTransaction } from '@/lib/bookings/finalize'
-import { getTransaction } from '@/lib/viva/client'
+import { getTransaction, VivaUnreachableError } from '@/lib/viva/client'
+
+/** Upper bound on the VIVA lookup; the confirmation page render waits on it. */
+const LOOKUP_TIMEOUT_MS = 8000
 
 /**
  * Pull-based fallback for the VIVA "Transaction Payment Created" webhook.
@@ -22,6 +25,9 @@ import { getTransaction } from '@/lib/viva/client'
  * So confirming a booking this way still requires a real, fully-paid
  * transaction for that exact order. Idempotent with the webhook: the
  * atomic pending -> confirmed claim picks exactly one winner.
+ *
+ * 'unreachable' means VIVA itself is down (network error, timeout, 5xx),
+ * so the pages can say "try again shortly" instead of spinning forever.
  */
 
 export type VivaReconcileOutcome =
@@ -29,7 +35,8 @@ export type VivaReconcileOutcome =
   | 'not_completed' // VIVA reports the transaction as not (yet) completed
   | 'mismatch' // transaction does not belong to this order
   | 'rejected' // finalize refused (amount mismatch, paid after cancel, ...)
-  | 'unavailable' // VIVA API unreachable / not configured / tx not found yet
+  | 'unreachable' // VIVA API down / timed out / 5xx: worth retrying later
+  | 'unavailable' // not configured / tx not found yet / finalisation threw
 
 export async function reconcileVivaPayment(input: {
   orderCode: string
@@ -37,8 +44,12 @@ export async function reconcileVivaPayment(input: {
 }): Promise<VivaReconcileOutcome> {
   let tx: Awaited<ReturnType<typeof getTransaction>>
   try {
-    tx = await getTransaction(input.transactionId)
+    tx = await getTransaction(input.transactionId, { timeoutMs: LOOKUP_TIMEOUT_MS })
   } catch (err) {
+    if (err instanceof VivaUnreachableError) {
+      console.warn('[bookings/reconcile-viva] VIVA API unreachable:', err.message)
+      return 'unreachable'
+    }
     console.warn('[bookings/reconcile-viva] Transaction lookup failed:', err)
     return 'unavailable'
   }

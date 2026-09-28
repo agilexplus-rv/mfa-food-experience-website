@@ -3,13 +3,15 @@
  * (/booking/confirmation, /booking/cancel, /booking/pay).
  */
 
-type Variant = 'success' | 'pending' | 'failed' | 'info'
+type Variant = 'success' | 'pending' | 'failed' | 'info' | 'clock'
 
 const RING: Record<Variant, string> = {
   success: 'bg-lunar-green text-white ring-lunar-green/15',
   pending: 'bg-matte-gold/15 text-accent-text ring-matte-gold/30',
   failed: 'bg-terracotta/10 text-terracotta-dark ring-terracotta/25',
   info: 'bg-lunar-green/5 text-text-light ring-border',
+  // Temporary outage (e.g. VIVA unreachable): waiting, not failed.
+  clock: 'bg-matte-gold/15 text-accent-text ring-matte-gold/30',
 }
 
 export function StatusIcon({ variant }: { variant: Variant }) {
@@ -39,6 +41,12 @@ export function StatusIcon({ variant }: { variant: Variant }) {
             <>
               <circle cx="12" cy="12" r="9" />
               <path d="M12 11v5M12 7.5v.01" />
+            </>
+          )}
+          {variant === 'clock' && (
+            <>
+              <circle cx="12" cy="12" r="9" />
+              <path d="M12 7v5l3 2" />
             </>
           )}
         </svg>

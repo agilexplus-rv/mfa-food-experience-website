@@ -3,6 +3,7 @@ import Link from 'next/link'
 
 import { ConfirmationStatus } from '@/components/booking/ConfirmationStatus'
 import { StatusIcon } from '@/components/booking/StatusIcon'
+import { VivaUnreachable } from '@/components/booking/VivaUnreachable'
 import {
   findBookingByPaymentRef,
   parseStripeSessionId,
@@ -48,6 +49,8 @@ interface PageProps {
  * lag). So if the booking is still pending we reconcile it here against
  * the VIVA API using the TransactionId from ?t= (reconcile-viva.ts), and
  * ConfirmationStatus keeps retrying that via /api/bookings/verify-viva.
+ * If the VIVA API is down we show VivaUnreachable instead of a spinner
+ * that can never resolve; its "Try again now" reloads this URL.
  * The redirect params are only hints: a booking is confirmed solely on
  * an API-verified, completed transaction for this order and amount.
  *
@@ -75,14 +78,23 @@ export default async function BookingConfirmationPage({ searchParams }: PageProp
   else if (stripeSessionId) lookup = await findBookingByPaymentRef({ stripeSessionId })
 
   // Webhook fallback: confirm straight from the VIVA API if still pending.
+  let vivaUnreachable = false
   if (orderCode && transactionId && lookup?.kind === 'found' && lookup.booking.status === 'pending') {
     const outcome = await reconcileVivaPayment({ orderCode, transactionId })
     if (outcome === 'confirmed') lookup = await findBookingByPaymentRef({ vivaOrderCode: orderCode })
+    vivaUnreachable = outcome === 'unreachable'
   }
 
   return (
     <section className="notranslate mx-auto max-w-2xl px-6 py-20 text-center">
-      {lookupKey ? (
+      {vivaUnreachable && orderCode && transactionId && lookup?.kind === 'found' ? (
+        <VivaUnreachable
+          reference={lookup.booking.reference}
+          event={lookup.booking.event}
+          transactionId={transactionId}
+          retryHref={`/booking/confirmation?t=${encodeURIComponent(transactionId)}&s=${encodeURIComponent(orderCode)}`}
+        />
+      ) : lookupKey ? (
         <ConfirmationStatus
           sessionId={lookupKey}
           vivaOrderCode={orderCode}

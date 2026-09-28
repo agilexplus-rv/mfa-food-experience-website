@@ -8,6 +8,7 @@ import { formatPrice } from '@/lib/availability-types'
 import { formatDay, formatTimeRange } from '@/lib/format-date'
 import { CalendarAndShare } from './CalendarAndShare'
 import { StatusIcon } from './StatusIcon'
+import { VivaUnreachable } from './VivaUnreachable'
 
 /** Shape returned by /api/bookings/[id]/status (no PII by design). */
 interface BookingStatus {
@@ -38,6 +39,8 @@ type State =
   | { phase: 'timeout'; booking: ViewBooking }
   | { phase: 'confirmed'; booking: ViewBooking }
   | { phase: 'cancelled'; booking: ViewBooking }
+  // VIVA's API is down: polling stops until the visitor retries.
+  | { phase: 'viva_unreachable'; booking: ViewBooking; retrying?: boolean }
 
 const POLL_INTERVAL_MS = 2000
 const MAX_POLL_ATTEMPTS = 30 // ~60 s, then show "Check again" instead of spinning forever
@@ -135,18 +138,24 @@ export function ConfirmationStatus({
       }
     }
 
-    /** Best-effort: failures just fall through to the normal status poll. */
-    async function verifyWithViva() {
-      if (!vivaOrderCode || !transactionId) return
+    /**
+     * Best-effort: failures just fall through to the normal status poll.
+     * Returns true only when the server says VIVA itself is unreachable.
+     */
+    async function verifyWithViva(): Promise<boolean> {
+      if (!vivaOrderCode || !transactionId) return false
       try {
-        await fetch('/api/bookings/verify-viva', {
+        const res = await fetch('/api/bookings/verify-viva', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ orderCode: vivaOrderCode, transactionId }),
           cache: 'no-store',
         })
+        if (res.status !== 503) return false
+        const data: { error?: string } = await res.json().catch(() => ({}))
+        return data.error === 'viva_unreachable'
       } catch {
-        // ignore
+        return false
       }
     }
 
@@ -155,8 +164,9 @@ export function ConfirmationStatus({
       attempts += 1
 
       // "Check again" verifies immediately; otherwise every Nth poll.
+      let vivaDown = false
       if ((pollRun > 0 && attempts === 1) || attempts % VERIFY_EVERY_N_POLLS === 0) {
-        await verifyWithViva()
+        vivaDown = await verifyWithViva()
         if (cancelled) return
       }
 
@@ -168,7 +178,8 @@ export function ConfirmationStatus({
           return
         }
         if (!res.ok) {
-          scheduleOrGiveUp()
+          if (vivaDown && last) setState({ phase: 'viva_unreachable', booking: last })
+          else scheduleOrGiveUp()
           return
         }
         const status: BookingStatus = await res.json()
@@ -176,10 +187,16 @@ export function ConfirmationStatus({
 
         last = { ...extra, ...status, eventTitle: status.eventTitle ?? extra.event?.title }
         const next = phaseFor(last)
+        // Still pending and VIVA is down: nothing will change until it's back.
+        if (next.phase === 'polling' && vivaDown) {
+          setState({ phase: 'viva_unreachable', booking: last })
+          return
+        }
         setState(next)
         if (next.phase === 'polling') scheduleOrGiveUp()
       } catch {
-        scheduleOrGiveUp()
+        if (vivaDown && last) setState({ phase: 'viva_unreachable', booking: last })
+        else scheduleOrGiveUp()
       }
     }
 
@@ -199,7 +216,13 @@ export function ConfirmationStatus({
   }, [sessionId, vivaOrderCode, transactionId, pollRun])
 
   function checkAgain() {
-    setState((s) => ('booking' in s ? { phase: 'polling', booking: s.booking } : { phase: 'resolving' }))
+    setState((s) =>
+      s.phase === 'viva_unreachable'
+        ? { ...s, retrying: true }
+        : 'booking' in s
+          ? { phase: 'polling', booking: s.booking }
+          : { phase: 'resolving' },
+    )
     setPollRun((n) => n + 1)
   }
 
@@ -247,6 +270,19 @@ export function ConfirmationStatus({
   }
 
   const { booking } = state
+
+  if (state.phase === 'viva_unreachable') {
+    return (
+      <VivaUnreachable
+        reference={booking.reference}
+        event={booking.event}
+        eventTitle={booking.eventTitle}
+        transactionId={transactionId}
+        onRetry={checkAgain}
+        retrying={state.retrying}
+      />
+    )
+  }
 
   if (state.phase === 'cancelled') {
     return (
