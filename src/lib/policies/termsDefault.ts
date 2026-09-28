@@ -20,8 +20,8 @@ export const DEFAULT_TERMS_SECTIONS: TermsSection[] = [
   {
     heading: '1. Introduction',
     paragraphs: [
-      'These Terms and Conditions ("Terms") apply to all bookings for cooking classes, tastings and other experiences ("Experiences") offered under the Malta Food Experience by the Malta Food Agency ("the Agency", "we", "us" or "our"), Pitkali Road, Ta\' Qali, Attard, Malta.',
-      'By making a booking or using this website, you ("the Participant" or "you") confirm that you have read, understood and accepted these Terms, together with our Cancellation Policy, Customer Policy, Privacy Policy and Cookie Policy, which form part of these Terms. Where a booking is made on behalf of other participants, the person making the booking confirms that they are authorised to accept these Terms on their behalf.',
+      'These Terms and Conditions ("Terms") apply to all bookings for cooking classes, tastings and other experiences ("Experiences") offered under the Malta Food Experience by the Malta Food Agency ("the Agency", "we", "us" or "our"), Pitkali Road, Ta\u2019 Qali, Attard, Malta.',
+      'By making a booking or using this website, you ("the Participant" or "you") confirm that you have read, understood and accepted these Terms, together with our Cancellation Policy, Customer Policy, Data Protection Policy and Cookie Policy, which form part of these Terms. Where a booking is made on behalf of other participants, the person making the booking confirms that they are authorised to accept these Terms on their behalf.',
     ],
   },
   {
@@ -70,7 +70,7 @@ export const DEFAULT_TERMS_SECTIONS: TermsSection[] = [
     paragraphs: [
       'We will do our best to accommodate specific dietary requirements, food allergies, intolerances and nutritional preferences where feasible. Please contact us before booking so that our team can assess your requirements, and record them in your booking where requested.',
       'Our kitchen handles common allergens, including gluten, milk, eggs, fish, crustaceans, molluscs, nuts, peanuts, sesame, soya, celery, mustard, lupin and sulphites. While we take care to manage allergens, we cannot guarantee that any dish or ingredient is completely free from traces of allergens. Allergen information for each dish is available from the chef on request.',
-      'Participants with severe allergies should carry any prescribed medication with them. Information about dietary requirements and health is processed only for the purpose of providing a safe Experience, in accordance with our Privacy Policy.',
+      'Participants with severe allergies should carry any prescribed medication with them. Information about dietary requirements and health is processed only for the purpose of providing a safe Experience, in accordance with our Data Protection Policy.',
     ],
   },
   {
@@ -122,7 +122,7 @@ export const DEFAULT_TERMS_SECTIONS: TermsSection[] = [
       'For questions about these Terms, your booking or dietary requirements, please contact:',
     ],
     bullets: [
-      'Malta Food Agency, Pitkali Road, Ta\' Qali, Attard, Malta',
+      'Malta Food Agency, Pitkali Road, Ta\u2019 Qali, Attard, Malta',
       'Email: bookings@foodagency.mt',
       'Telephone: +356 2292 4000',
       'Data protection enquiries: dpo.mfa@gov.mt',

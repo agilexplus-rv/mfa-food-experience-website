@@ -27,6 +27,12 @@ interface CheckInArgs {
     event: string | number | { id: string | number; title?: string }
   }
   staffUser: { id: string | number; email: string; role: string }
+  /**
+   * The event selected at the scanning station. When given, a booking for
+   * any other event is rejected (`wrong_event`). Omit when the station has
+   * no event context.
+   */
+  eventId?: string | number
 }
 
 export async function performCheckIn(args: CheckInArgs): Promise<{
@@ -39,7 +45,30 @@ export async function performCheckIn(args: CheckInArgs): Promise<{
   checkedInAt: string
   dietaryNotes: string | null
 }> {
-  const { payload: p, booking, staffUser } = args
+  const { payload: p, booking, staffUser, eventId } = args
+
+  if (booking.status === 'cancelled') {
+    throw Object.assign(
+      new Error('already_cancelled'),
+      { code: 'already_cancelled', reference: booking.reference },
+    )
+  }
+
+  // `event` is populated (depth >= 1) by both callers, but may be a bare id.
+  const bookingEvent = typeof booking.event === 'object' && booking.event !== null ? booking.event : null
+  const bookingEventId = bookingEvent ? bookingEvent.id : booking.event
+  if (eventId != null && String(eventId) !== '' && String(bookingEventId) !== String(eventId)) {
+    throw Object.assign(
+      new Error('wrong_event'),
+      {
+        code: 'wrong_event',
+        reference: booking.reference,
+        actualEventId: bookingEventId ?? null,
+        actualEventTitle: bookingEvent?.title ?? null,
+        expectedEventId: eventId,
+      },
+    )
+  }
 
   if (booking.checkedInAt) {
     throw Object.assign(
@@ -73,8 +102,7 @@ export async function performCheckIn(args: CheckInArgs): Promise<{
     overrideAccess: true,
   })
 
-  const eventTitle =
-    typeof booking.event === 'object' ? booking.event.title : undefined
+  const eventTitle = bookingEvent?.title
 
   return {
     reference: booking.reference,
@@ -85,5 +113,31 @@ export async function performCheckIn(args: CheckInArgs): Promise<{
     totalAmount: booking.totalAmount,
     checkedInAt: now,
     dietaryNotes: consentedDietaryNotes(booking),
+  }
+}
+
+/**
+ * JSON body for a guard error thrown by performCheckIn -- every guard is a
+ * 409 on both check-in endpoints. Returns null for any other error, which
+ * the caller should re-throw.
+ */
+export function checkInConflict(err: unknown): Record<string, unknown> | null {
+  if (!(err instanceof Error)) return null
+  const e = err as Error & Record<string, unknown>
+  switch (e.code) {
+    case 'already_checked_in':
+      return { error: e.code, checkedInAt: e.checkedInAt, reference: e.reference }
+    case 'already_cancelled':
+      return { error: e.code, reference: e.reference }
+    case 'wrong_event':
+      return {
+        error: e.code,
+        reference: e.reference,
+        actualEventId: e.actualEventId,
+        actualEventTitle: e.actualEventTitle,
+        expectedEventId: e.expectedEventId,
+      }
+    default:
+      return null
   }
 }

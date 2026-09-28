@@ -75,9 +75,14 @@ export const Waitlist: CollectionConfig = {
     {
       name: 'status',
       type: 'select',
+      // converted: the person booked the event (auto, on confirmation).
+      // archived: set by an admin from the console waitlist page.
+      // expired: older than the Site Settings retention period.
       options: [
         { label: 'Waiting', value: 'waiting' },
         { label: 'Notified', value: 'notified' },
+        { label: 'Converted', value: 'converted' },
+        { label: 'Archived', value: 'archived' },
         { label: 'Expired', value: 'expired' },
       ],
       defaultValue: 'waiting',
@@ -93,6 +98,33 @@ export const Waitlist: CollectionConfig = {
         readOnly: true,
         position: 'sidebar',
         description: 'Timestamp when the waitlist notification email was sent.',
+      },
+    },
+    {
+      name: 'convertedAt',
+      type: 'date',
+      admin: {
+        readOnly: true,
+        position: 'sidebar',
+        description: 'Timestamp when this person booked the event (status set to Converted automatically).',
+      },
+    },
+    {
+      name: 'archivedAt',
+      type: 'date',
+      admin: {
+        readOnly: true,
+        position: 'sidebar',
+        description: 'Timestamp when an admin archived this entry.',
+      },
+    },
+    {
+      name: 'expiredAt',
+      type: 'date',
+      admin: {
+        readOnly: true,
+        position: 'sidebar',
+        description: 'Timestamp when this entry passed the waitlist retention period (Site Settings) and was expired.',
       },
     },
   ],

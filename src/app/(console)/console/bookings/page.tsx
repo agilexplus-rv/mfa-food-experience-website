@@ -198,7 +198,7 @@ export default function ConsoleBookingsPage() {
         }),
       })
       const data = await res.json().catch(() => null)
-      if (!res.ok) throw new Error(data?.error || 'Create failed')
+      if (!res.ok) throw new Error(data?.message || data?.error || 'Create failed')
       setCreateOpen(false)
       setCreateForm({ eventId: '', leadAttendeeName: '', email: '', phone: '', persons: '1', dietaryNotes: '', paymentMethod: 'cash', totalAmount: '' })
       void search()

@@ -56,16 +56,36 @@ async function payload(): Promise<Payload> {
   return _payload
 }
 
+/**
+ * Case-insensitive code lookup: guest input `summer25` matches a stored
+ * `SUMMER25`. Codes typed in the console are stored uppercase, but
+ * auto-generated codes are mixed-case (Coupons.ts), so uppercasing the input
+ * alone would break those.
+ */
 export async function findActiveCouponByCode(code: string): Promise<CouponDoc | null> {
+  const needle = code.trim()
+  if (!needle) return null
   const p = await payload()
-  const res = await p.find({
+
+  // Exact match first -- also the winner if two codes differ only by case.
+  const exact = await p.find({
     collection: 'coupons',
-    where: { code: { equals: code.trim() } },
+    where: { code: { equals: needle } },
     limit: 1,
     overrideAccess: true,
   })
-  if (res.docs.length === 0) return null
-  return res.docs[0] as unknown as CouponDoc
+  if (exact.docs.length > 0) return exact.docs[0] as unknown as CouponDoc
+
+  // `like` is case-insensitive on both adapters (ILIKE / SQLite LIKE) but
+  // matches substrings, so the exact comparison happens here.
+  const res = await p.find({
+    collection: 'coupons',
+    where: { code: { like: needle } },
+    limit: 500,
+    overrideAccess: true,
+  })
+  const lower = needle.toLowerCase()
+  return (res.docs as unknown as CouponDoc[]).find((c) => String(c.code).toLowerCase() === lower) ?? null
 }
 
 /**

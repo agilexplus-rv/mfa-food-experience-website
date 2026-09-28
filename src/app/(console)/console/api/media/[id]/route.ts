@@ -33,6 +33,19 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   const p = await payload()
 
   try {
+    // Block delete if media is the homepage hero (site-settings is a Global, not a collection)
+    const settings = (await p.findGlobal({ slug: 'site-settings', depth: 0, overrideAccess: true })) as {
+      heroBackgroundImage?: string | number | { id: string | number } | null
+    }
+    const hero = settings.heroBackgroundImage
+    const heroId = hero && typeof hero === 'object' ? hero.id : hero
+    if (heroId != null && String(heroId) === String(id)) {
+      return NextResponse.json({
+        error: 'referenced',
+        message: 'This image is currently set as the homepage hero background. Change the hero image in Site Settings first.',
+      }, { status: 409 })
+    }
+
     // Block delete if media is referenced by any service or news item
     const refChecks: { collection: string; field: string }[] = [
       { collection: 'services', field: 'imagery' },

@@ -38,7 +38,7 @@ export async function GET(req: NextRequest) {
 
   if (singleEventId) {
     const avail = await getAvailability(singleEventId)
-    // Count how many bookings are checked in for this event
+    // Count checked-in persons (not bookings) so it compares with capacity
     const checkIns = await p.find({
       collection: 'bookings',
       where: {
@@ -48,14 +48,16 @@ export async function GET(req: NextRequest) {
         ],
       },
       limit: 0,
+      depth: 0,
       overrideAccess: true,
     })
+    const checkedInPersons = (checkIns.docs as Array<{ persons?: number }>).reduce((s, b) => s + (b.persons ?? 0), 0)
     return NextResponse.json({
       eventId: singleEventId,
       capacity: avail.capacity,
       booked: avail.booked,
       remaining: avail.remaining,
-      checkedIn: checkIns.totalDocs,
+      checkedIn: checkedInPersons,
     })
   }
 
@@ -85,7 +87,7 @@ export async function GET(req: NextRequest) {
   }))
   const availMap = await getAvailabilityForEvents(eventList)
 
-  // Also batch-load checked-in counts
+  // Also batch-load checked-in persons (summed per event, not booking counts)
   const allEventIds = eventList.map((e) => e.id)
   const checkInDocs = await p.find({
     collection: 'bookings',
@@ -98,10 +100,10 @@ export async function GET(req: NextRequest) {
     limit: 0,
     overrideAccess: true,
   })
-  const checkedInByEvent = new Map<string | number, number>()
-  for (const b of checkInDocs.docs as Array<{ event?: string | number | { id: string | number } }>) {
+  const checkedInPersonsByEvent = new Map<string | number, number>()
+  for (const b of checkInDocs.docs as Array<{ event?: string | number | { id: string | number }; persons?: number }>) {
     const key = typeof b.event === 'object' ? b.event.id : b.event
-    if (key !== undefined) checkedInByEvent.set(key, (checkedInByEvent.get(key) ?? 0) + 1)
+    if (key !== undefined) checkedInPersonsByEvent.set(key, (checkedInPersonsByEvent.get(key) ?? 0) + (b.persons ?? 0))
   }
 
   const list = (events.docs as Array<{
@@ -116,7 +118,7 @@ export async function GET(req: NextRequest) {
       capacity: avail?.capacity ?? 0,
       booked: avail?.booked ?? 0,
       remaining: avail?.remaining ?? 0,
-      checkedIn: checkedInByEvent.get(e.id) ?? 0,
+      checkedIn: checkedInPersonsByEvent.get(e.id) ?? 0,
     }
   })
 

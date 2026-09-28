@@ -64,6 +64,15 @@ const STATUS_COLORS: Record<string, string> = {
   checked_in: 'bg-lunar-green/20 text-lunar-green',
 }
 
+// Error codes from POST /api/check-in/by-booking-id
+const CHECK_IN_ERRORS: Record<string, string> = {
+  already_checked_in: 'Already checked in',
+  already_cancelled: 'Booking is cancelled',
+  invalid_booking_id: 'Booking not found',
+  rate_limited: 'Too many check-ins in a short time. Wait a moment and try again.',
+  forbidden: 'You do not have permission to check in bookings.',
+}
+
 function formatCurrency(euros: number): string {
   return `\u20AC${euros.toFixed(2)}`
 }
@@ -110,12 +119,15 @@ export default function DashboardPage() {
   // Filters
   const [q, setQ] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
+  const [eventFilter, setEventFilter] = useState('')
   const [page, setPage] = useState(1)
 
   // Action states
   const [cancellingId, setCancellingId] = useState<string | number | null>(null)
   const [resendingId, setResendingId] = useState<string | number | null>(null)
   const [noShowId, setNoShowId] = useState<string | number | null>(null)
+  const [checkingInId, setCheckingInId] = useState<string | number | null>(null)
+  const [justCheckedInId, setJustCheckedInId] = useState<string | number | null>(null)
   const [cancelResults, setCancelResults] = useState<Record<string, { refundId?: string; refundStatus?: string }>>({})
   const [exportEventId, setExportEventId] = useState('')
 
@@ -151,6 +163,7 @@ export default function DashboardPage() {
       const params = new URLSearchParams()
       if (q.trim()) params.set('q', q.trim())
       if (statusFilter) params.set('status', statusFilter)
+      if (eventFilter) params.set('event', eventFilter)
       params.set('page', String(page))
       params.set('limit', '25')
 
@@ -170,7 +183,7 @@ export default function DashboardPage() {
     } finally {
       setLoading(false)
     }
-  }, [q, statusFilter, page])
+  }, [q, statusFilter, eventFilter, page])
 
   // Load events for export dropdown
   const fetchEvents = useCallback(async () => {
@@ -278,10 +291,43 @@ export default function DashboardPage() {
     }
   }, [search])
 
+  // Door check-in straight from the list (admin + door staff). No eventId:
+  // the list spans all events, so there is no station event to enforce.
+  const handleCheckIn = useCallback(async (b: BookingRow) => {
+    setCheckingInId(b.id)
+    try {
+      const res = await fetch('/api/check-in/by-booking-id', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bookingId: b.id }),
+      })
+      if (res.status === 401) {
+        window.location.href = '/admin/login'
+        return
+      }
+      const data = await res.json().catch(() => null)
+      if (!res.ok) {
+        // The row is stale (e.g. checked in at another device): refresh it too.
+        if (res.status === 409) void search()
+        throw new Error(CHECK_IN_ERRORS[data?.error] || data?.error || 'Check-in failed')
+      }
+      setJustCheckedInId(b.id)
+      setTimeout(() => setJustCheckedInId((cur) => (cur === b.id ? null : cur)), 4000)
+      void search()
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Check-in failed')
+    } finally {
+      setCheckingInId(null)
+    }
+  }, [search])
+
   const handleExportCSV = useCallback(() => {
     if (!exportEventId) return
     window.open(`/api/bookings/export?eventId=${exportEventId}`, '_blank')
   }, [exportEventId])
+
+  // Door staff can check guests in; cancel/resend/no-show stay admin-only.
+  const canCheckIn = user?.role === 'admin' || user?.role === 'door_staff'
 
   function renderRefundStatus(b: BookingRow): string {
     const result = cancelResults[String(b.id)]
@@ -390,6 +436,26 @@ export default function DashboardPage() {
             ))}
           </select>
 
+          {/* Event filter: the full guest list for one event at the door */}
+          {events.length > 0 && (
+            <select
+              value={eventFilter}
+              onChange={(e) => {
+                setEventFilter(e.target.value)
+                setPage(1)
+              }}
+              aria-label="Filter by event"
+              className="rounded-lg border border-border px-4 py-2.5 text-sm text-lunar-green bg-surface focus:outline-none focus:ring-2 focus:ring-lunar-green/30"
+            >
+              <option value="">All Events</option>
+              {events.map((ev) => (
+                <option key={String(ev.id)} value={String(ev.id)}>
+                  {ev.title} ({formatDate(ev.date)})
+                </option>
+              ))}
+            </select>
+          )}
+
           {/* Search button */}
           <button
             onClick={() => { setPage(1); void search() }}
@@ -464,7 +530,7 @@ export default function DashboardPage() {
                   )}
                   <th className="px-4 py-3 font-semibold text-text-light">Checked In</th>
                   <th className="px-4 py-3 font-semibold text-text-light">Checked In By</th>
-                  {user?.role === 'admin' && (
+                  {canCheckIn && (
                     <th className="px-4 py-3 font-semibold text-text-light text-center">Actions</th>
                   )}
                 </tr>
@@ -538,10 +604,24 @@ export default function DashboardPage() {
                       <td className="px-4 py-3 text-xs text-text-light">
                         {b.checkInStaffName || '-'}
                       </td>
-                      {user?.role === 'admin' && (
+                      {canCheckIn && (
                         <td className="px-4 py-3 text-center">
                           <div className="flex items-center justify-center gap-1 flex-wrap">
-                            {b.status !== 'cancelled' && (
+                            {justCheckedInId === b.id && b.status === 'checked_in' && (
+                              <span className="text-[10px] font-bold text-lunar-green" role="status">
+                                {'\u2713'} Checked in
+                              </span>
+                            )}
+                            {b.status !== 'checked_in' && b.status !== 'cancelled' && (
+                              <button
+                                onClick={() => handleCheckIn(b)}
+                                disabled={checkingInId === b.id}
+                                className="rounded-md bg-lunar-green px-2 py-0.5 text-[10px] font-semibold text-white hover:bg-primary-light disabled:opacity-40 transition-colors"
+                              >
+                                {checkingInId === b.id ? '...' : 'Check In'}
+                              </button>
+                            )}
+                            {user?.role === 'admin' && b.status !== 'cancelled' && (
                               <button
                                 onClick={() => handleCancel(b)}
                                 disabled={cancellingId === b.id}
@@ -550,7 +630,7 @@ export default function DashboardPage() {
                                 {cancellingId === b.id ? '...' : 'Cancel'}
                               </button>
                             )}
-                            {b.status === 'confirmed' && (
+                            {user?.role === 'admin' && b.status === 'confirmed' && (
                               <button
                                 onClick={() => handleResendConfirmation(b.id)}
                                 disabled={resendingId === b.id}

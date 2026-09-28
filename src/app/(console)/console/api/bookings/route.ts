@@ -4,7 +4,11 @@ import type { Payload } from 'payload'
 import config from '@payload-config'
 
 import { verifySession } from '@/lib/rbac/verify-session'
-import { actingAs } from '@/lib/audit/helper'
+import { clientMeta } from '@/lib/audit/helper'
+import { getAvailability } from '@/lib/availability'
+import { convertWaitlistEntries } from '@/lib/bookings/waitlist'
+import { sendConfirmationEmail } from '@/lib/email/send-confirmation'
+import { generateQrToken, hashQrToken } from '@/lib/qr/token'
 
 let _payload: Payload | null = null
 async function payload(): Promise<Payload> {
@@ -244,6 +248,21 @@ export async function POST(req: NextRequest) {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const ev = event as any
+
+    // Seat availability: capacity − booked − active holds, 0 under the Fully Booked Override
+    const avail = await getAvailability(ev.id)
+    if (avail.remaining < Number(body.persons)) {
+      return NextResponse.json(
+        {
+          error: 'no_capacity',
+          message: avail.override
+            ? 'This event is marked as fully booked (Fully Booked Override is on).'
+            : `Not enough seats: ${avail.remaining} of ${avail.capacity} left, ${body.persons} requested.`,
+        },
+        { status: 409 },
+      )
+    }
+
     const pricePerPerson = ev.pricePerPerson || 0
     let totalAmount: number
     if (body.totalAmount != null && typeof body.totalAmount === 'number') {
@@ -258,25 +277,81 @@ export async function POST(req: NextRequest) {
     const ts = Date.now().toString(36).toUpperCase()
     const rand = Math.random().toString(36).substring(2, 6).toUpperCase()
     const reference = `MFA-MAN-${ts}-${rand}`
+    const email = body.email.toLowerCase().trim()
+    const language = body.language || 'en'
 
+    // QR token for door check-in (ADR-003: only the hash is stored). Set on
+    // create, so a failed follow-up write can't leave a booking without one.
+    const rawQrToken = generateQrToken()
+
+    // No actingAs(): the explicit audit entry below records this creation
+    // (staff actor, IP, UA). The collection hook would add a second,
+    // less specific "create" entry.
     const booking = await p.create({
       collection: 'bookings',
       data: {
         reference,
         event: Number(body.eventId),
         leadAttendeeName: body.leadAttendeeName,
-        email: body.email.toLowerCase().trim(),
+        email,
         phone: body.phone || undefined,
         persons: body.persons,
         status: 'confirmed',
-        language: body.language || 'en',
+        language,
         totalAmount,
         paymentMethod,
         dietaryNotes: body.dietaryNotes || undefined,
+        qrTokenHash: hashQrToken(rawQrToken),
       },
       overrideAccess: true,
-      ...actingAs(currentUser, req),
     })
+
+    // The guest is off the waitlist for this event (best-effort).
+    await convertWaitlistEntries(p, ev.id, email)
+
+    // Send confirmation email. Best-effort: the booking exists either way
+    // (sendConfirmationEmail already logs SMTP failures without throwing).
+    let emailFailed = false
+    try {
+      const dateStr = new Date(String(ev.date).slice(0, 10) + 'T00:00:00').toLocaleDateString('en-MT', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+      })
+      const fmt = new Intl.DateTimeFormat('en-MT', { hour: 'numeric', minute: '2-digit', hour12: false })
+      const timeRange = `${fmt.format(new Date(ev.startTime))} - ${fmt.format(new Date(ev.endTime))}`
+
+      await sendConfirmationEmail({
+        toEmail: email,
+        reference,
+        eventTitle: ev.title,
+        eventDate: dateStr,
+        eventTimeRange: timeRange,
+        locationRef: ev.locationRef,
+        persons: body.persons,
+        totalAmount,
+        language,
+        rawQrToken,
+      })
+    } catch (emailErr) {
+      emailFailed = true
+      console.error('[console/api/bookings] Confirmation email failed for manual booking', reference, emailErr)
+    }
+
+    // --- Audit log --- (a failure here must not report the created booking as failed)
+    await p.create({
+      collection: 'audit_logs',
+      data: {
+        action: 'create',
+        actor: currentUser.id as string,
+        collection: 'bookings',
+        documentId: String(booking.id),
+        detail: `Manual booking ${reference} created (${body.persons} person${Number(body.persons) === 1 ? '' : 's'}, ${paymentMethod}, €${Number(totalAmount).toFixed(2)}); ${emailFailed ? 'confirmation email failed (see server logs)' : 'confirmation email sent'}`,
+        ...clientMeta(req),
+      },
+      overrideAccess: true,
+    }).catch((err) => console.error('[console/api/bookings] Audit log failed:', err))
 
     return NextResponse.json({ ok: true, id: String(booking.id), reference }, { status: 201 })
   } catch (err) {

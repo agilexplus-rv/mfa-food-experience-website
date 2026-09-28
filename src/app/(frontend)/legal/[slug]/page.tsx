@@ -12,6 +12,7 @@ import {
   formatDaysBeforeLabel,
 } from "@/lib/policies/cancellation"
 import { getTermsAndConditions } from "@/lib/policies/terms"
+import { getDataProtectionPolicy } from "@/lib/policies/dataProtection"
 
 export const revalidate = 60
 export const dynamic = "force-dynamic"
@@ -24,6 +25,7 @@ const KNOWN_SLUGS = [
   "privacy-notice",
   "cookie-policy",
   "accessibility-statement",
+  "data-protection-policy",
 ] as const
 
 export function generateStaticParams() {
@@ -136,6 +138,13 @@ export default async function LegalPolicyPage({ params }: PageProps) {
     // "being prepared" message instead of a 404.
     policy = { id: "terms-and-conditions", slug, title: terms?.title || "Terms & Conditions", body: null }
     bodyHtml = terms?.html || ""
+  }
+
+  // ── Data Protection Policy: render from the DataProtectionPolicy Global ──
+  if (slug === "data-protection-policy") {
+    const dpp = await getDataProtectionPolicy().catch(() => null)
+    policy = { id: "data-protection-policy", slug, title: dpp?.title || "Data Protection Policy", body: null }
+    bodyHtml = dpp?.html || ""
   }
 
   // ── Other known slugs: render from the Policies collection ──

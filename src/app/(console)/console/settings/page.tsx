@@ -28,6 +28,12 @@ const SECTIONS: SettingsSection[] = [
     href: '/console/settings/cancellation-policy',
     icon: 'CP',
   },
+  {
+    title: 'Data Protection Policy',
+    description: 'Edit what personal data is collected and why, retention periods, who it is shared with, and people\'s rights',
+    href: '/console/settings/data-protection-policy',
+    icon: 'DP',
+  },
 ]
 
 export default function SettingsLandingPage() {

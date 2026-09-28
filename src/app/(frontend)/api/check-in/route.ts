@@ -6,7 +6,7 @@ import config from '@payload-config'
 import { hashQrToken } from '@/lib/qr/token'
 import { verifySession } from '@/lib/rbac/verify-session'
 import { createRateLimiter, getClientIp } from '@/lib/rate-limit'
-import { performCheckIn } from '@/lib/check-in/perform-check-in'
+import { checkInConflict, performCheckIn } from '@/lib/check-in/perform-check-in'
 
 let _payload: Payload | null = null
 async function payload(): Promise<Payload> {
@@ -75,6 +75,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'missing_token' }, { status: 400 })
   }
 
+  // The event selected at the scanning station, if any (wrong-event guard).
+  const rawEventId = (body as Record<string, unknown>)?.eventId
+  const eventId = typeof rawEventId === 'string' || typeof rawEventId === 'number' ? rawEventId : undefined
+
   const tokenHash = hashQrToken(token)
 
   const result = await p.find({
@@ -96,6 +100,7 @@ export async function POST(req: NextRequest) {
       payload: p,
       booking,
       staffUser: currentUser,
+      eventId,
     })
 
     // Include staff name for accountability display (Phase 6 scope 5)
@@ -107,19 +112,9 @@ export async function POST(req: NextRequest) {
       { status: 200 },
     )
   } catch (err: unknown) {
-    if (
-      err instanceof Error &&
-      (err as Error & { code?: string }).code === 'already_checked_in'
-    ) {
-      return NextResponse.json(
-        {
-          error: 'already_checked_in',
-          checkedInAt: (err as Error & { checkedInAt?: string }).checkedInAt,
-          reference: (err as Error & { reference?: string }).reference,
-        },
-        { status: 409 },
-      )
-    }
+    // already_checked_in / already_cancelled / wrong_event
+    const conflict = checkInConflict(err)
+    if (conflict) return NextResponse.json(conflict, { status: 409 })
     throw err
   }
 }

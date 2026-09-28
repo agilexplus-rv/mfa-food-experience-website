@@ -1,5 +1,128 @@
-import type { CollectionConfig } from 'payload'
+import type { CollectionAfterChangeHook, CollectionConfig, Payload, Where } from 'payload'
 import { auditLog, diffChanges, requestMeta } from '@/lib/audit/helper'
+
+type CancelledEvent = { id: string | number; title?: string; date?: string | null; status?: string }
+
+/**
+ * Event cancellation cascade: when an event moves TO 'cancelled', cancel
+ * every live booking for it and refund each one in full -- the organiser
+ * cancelled, so the cancellation-policy tiers don't apply.
+ *
+ * An afterChange hook rather than beforeChange: Payload runs collection
+ * beforeChange hooks before field validation, so an update rejected there
+ * would already have issued (irreversible) VIVA refunds.
+ *
+ * The cascade is fire-and-forget, like auditLog(): it runs outside the
+ * event update's DB transaction instead of holding it open across one
+ * payment-API call per booking (see the Azure Postgres note in Users.ts).
+ * So the save returns first and the bookings flip a moment later.
+ */
+const cascadeEventCancellation: CollectionAfterChangeHook = ({ operation, doc, previousDoc, req }) => {
+  if (operation !== 'update') return doc
+  const ev = doc as CancelledEvent
+  const previousStatus = (previousDoc as { status?: string } | undefined)?.status
+  if (ev.status !== 'cancelled' || previousStatus === 'cancelled') return doc
+
+  const actor = (req.user as { id?: string | number } | null)?.id
+  void cancelEventBookings(req.payload, { id: ev.id, title: ev.title, date: ev.date }, actor, requestMeta(req))
+  return doc
+}
+
+/**
+ * Best-effort per booking; never rejects. A booking whose refund fails is
+ * still cancelled, with refundStatus 'failed', so staff can refund it by hand.
+ */
+async function cancelEventBookings(
+  p: Payload,
+  ev: CancelledEvent,
+  actor: string | number | undefined,
+  meta: { ipAddress?: string; userAgent?: string },
+): Promise<void> {
+  const liveBookings: Where = { and: [{ event: { equals: ev.id } }, { status: { not_equals: 'cancelled' } }] }
+  let cancelled = 0
+  let refunded = 0
+  const refundFailed: string[] = []
+  const writeFailed: string[] = []
+
+  try {
+    // Imported on use: refund.ts imports @payload-config, and a static
+    // import here would make the config import itself (config -> Events -> refund -> config).
+    const { processCancellationRefund } = await import('@/lib/bookings/refund')
+
+    const bookings = await p.find({ collection: 'bookings', where: liveBookings, limit: 0, depth: 0, overrideAccess: true })
+
+    for (const raw of bookings.docs) {
+      const b = raw as {
+        id: string | number
+        reference: string
+        status: string
+        totalAmount?: number | null
+        vivaTransactionId?: string | null
+        vivaRefundId?: string | null
+        createdAt?: string | null
+      }
+      const update: Record<string, unknown> = { status: 'cancelled' }
+      let refundNote: string
+      try {
+        const refund = await processCancellationRefund({
+          bookingId: b.id,
+          reference: b.reference,
+          status: b.status,
+          totalAmount: b.totalAmount || 0,
+          vivaTransactionId: b.vivaTransactionId,
+          vivaRefundId: b.vivaRefundId,
+          eventDate: ev.date ?? null,
+          bookedAt: b.createdAt ?? null,
+          overrideTier: true,
+        })
+        if (refund.refundId) {
+          update.vivaRefundId = refund.refundId
+          update.refundStatus = refund.refundStatus
+          refunded++
+          refundNote = `refund: ${refund.refundId}, status: ${refund.refundStatus}`
+        } else {
+          update.refundStatus = 'none'
+          refundNote = 'no refund issued'
+        }
+      } catch (err) {
+        console.error('[events/cancel-cascade] Refund failed for booking', b.reference, err)
+        update.refundStatus = 'failed'
+        refundFailed.push(b.reference)
+        refundNote = 'refund FAILED, refund manually'
+      }
+
+      try {
+        await p.update({ collection: 'bookings', id: b.id, data: update, overrideAccess: true })
+        cancelled++
+        auditLog(p, {
+          action: 'update',
+          actor,
+          collection: 'bookings',
+          documentId: b.id,
+          detail: `Cancelled ${b.reference}: experience "${ev.title}" was cancelled (full refund; ${refundNote})`,
+          ...meta,
+        })
+      } catch (err) {
+        console.error('[events/cancel-cascade] Failed to cancel booking', b.reference, `(${refundNote})`, err)
+        writeFailed.push(b.reference)
+      }
+    }
+
+    // Safety net: bookings the loop could not write, or created mid-cascade.
+    const rest = await p.update({ collection: 'bookings', where: liveBookings, data: { status: 'cancelled' }, overrideAccess: true })
+    cancelled += rest.docs.length
+  } catch (err) {
+    console.error('[events/cancel-cascade] Cascade failed for event', ev.id, err)
+  }
+
+  const summary = [
+    `Experience "${ev.title}" cancelled: ${cancelled} booking${cancelled === 1 ? '' : 's'} cancelled, ${refunded} refunded`,
+    refundFailed.length ? `refund FAILED for ${refundFailed.join(', ')}` : '',
+    writeFailed.length ? `could not update ${writeFailed.join(', ')}` : '',
+  ].filter(Boolean).join('; ')
+  console.info('[events/cancel-cascade]', summary)
+  auditLog(p, { action: 'update', actor, collection: 'events', documentId: ev.id, detail: summary, ...meta })
+}
 
 export const Events: CollectionConfig = {
   slug: 'events',
@@ -54,6 +177,7 @@ export const Events: CollectionConfig = {
           // audit failure must not block the primary operation
         }
       },
+      cascadeEventCancellation,
     ],
     afterDelete: [
       async ({ doc, req }) => {

@@ -4,8 +4,7 @@ import type { Payload } from 'payload'
 import config from '@payload-config'
 
 import { verifySession } from '@/lib/rbac/verify-session'
-import { refundTransaction, VivaNotConfiguredError } from '@/lib/viva/client'
-import { isVivaConfigured } from '@/lib/env'
+import { processCancellationRefund } from '@/lib/bookings/refund'
 
 let _payload: Payload | null = null
 async function payload(): Promise<Payload> {
@@ -49,8 +48,10 @@ export async function POST(
     id: string | number
     reference: string
     status: string
-    event: string | number | { id: string | number }
+    event: string | number | { id: string | number; date?: string | null }
     persons: number
+    totalAmount?: number | null
+    createdAt?: string | null
     vivaTransactionId?: string | null
     vivaRefundId?: string | null
     stripePaymentIntentId?: string | null
@@ -64,30 +65,27 @@ export async function POST(
     )
   }
 
-  // --- VIVA refund ---
-  let refundResult: { refundId?: string; refundStatus?: string } = {}
-
-  if (b.vivaTransactionId && isVivaConfigured()) {
-    try {
-      const refund = await refundTransaction({
-        transactionId: b.vivaTransactionId,
-        amount: 0, // full refund, VIVA's fastrefund defaults to full amount when 0
-        merchantTrns: b.reference,
-      })
-      refundResult = { refundId: refund.transactionId, refundStatus: 'succeeded' }
-    } catch (err) {
-      if (err instanceof VivaNotConfiguredError) {
-        console.warn('[cancel] VIVA not configured, skipping refund for booking', b.reference)
-      } else {
-        console.error('[cancel] VIVA refund failed for booking', b.reference, err)
-        return NextResponse.json(
-          { error: 'refund_failed', message: 'Cancellation aborted: refund could not be processed.' },
-          { status: 500 },
-        )
-      }
-    }
-  } else if (isVivaConfigured() && !b.vivaTransactionId) {
-    console.info('[cancel] No vivaTransactionId on booking', b.reference, 'skipping refund, cancelling directly')
+  // --- VIVA refund, per the cancellation-policy tiers (same as the console Cancel) ---
+  let refundResult: { refundId?: string; refundStatus?: string; tierLabel?: string } = {}
+  try {
+    const result = await processCancellationRefund({
+      bookingId: b.id,
+      reference: b.reference,
+      status: b.status,
+      totalAmount: b.totalAmount || 0,
+      vivaTransactionId: b.vivaTransactionId,
+      vivaRefundId: b.vivaRefundId,
+      eventDate: typeof b.event === 'object' ? b.event.date ?? null : null,
+      bookedAt: b.createdAt ?? null,
+      overrideTier: false,
+    })
+    refundResult = { refundId: result.refundId, refundStatus: result.refundStatus, tierLabel: result.tierLabel }
+  } catch (err) {
+    console.error('[cancel] VIVA refund failed for booking', b.reference, err)
+    return NextResponse.json(
+      { error: 'refund_failed', message: 'Cancellation aborted: refund could not be processed.' },
+      { status: 500 },
+    )
   }
 
   // Mark booking as cancelled
@@ -192,7 +190,7 @@ export async function POST(
       actor: currentUser.id as string,
       collection: 'bookings',
       documentId: String(id),
-      detail: `Cancelled ${b.reference}${reason ? `: ${reason}` : ''}${refundResult.refundId ? ` (refund: ${refundResult.refundId}, status: ${refundResult.refundStatus})` : ''}`,
+      detail: `Cancelled ${b.reference}${reason ? `: ${reason}` : ''} (refund tier: ${refundResult.tierLabel})${refundResult.refundId ? ` (refund: ${refundResult.refundId}, status: ${refundResult.refundStatus})` : ''}`,
     },
     overrideAccess: true,
   })

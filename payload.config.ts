@@ -20,6 +20,7 @@ import { Policies } from './src/payload/collections/Policies.ts'
 import { AuditLog } from './src/payload/collections/AuditLog.ts'
 import { Waitlist } from './src/payload/collections/Waitlist.ts'
 import { CancellationPolicy } from './src/payload/globals/CancellationPolicy.ts'
+import { DataProtectionPolicy } from './src/payload/globals/DataProtectionPolicy.ts'
 import { SiteSettings } from './src/payload/globals/SiteSettings.ts'
 import { SocialMediaSettings } from './src/payload/globals/SocialMediaSettings.ts'
 import { TermsAndConditions } from './src/payload/globals/TermsAndConditions.ts'
@@ -159,6 +160,7 @@ export default buildConfig({
   ].map((c) => withMfa(c, requireMfaCollection)),
   globals: [
     CancellationPolicy,
+    DataProtectionPolicy,
     SiteSettings,
     SocialMediaSettings,
     TermsAndConditions,
