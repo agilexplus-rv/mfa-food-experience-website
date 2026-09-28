@@ -64,6 +64,7 @@ interface SearchResult {
   status: string
   checkedInAt: string | null
   createdAt: string
+  dietaryNotes: string | null
 }
 
 interface UserInfo {
@@ -870,6 +871,11 @@ export default function ScanPage() {
                         <p className="text-xs text-text-light">
                           {b.reference} &middot; {b.eventTitle || '-'} &middot; {b.persons} person{b.persons !== 1 ? 's' : ''}
                         </p>
+                        {b.dietaryNotes && (
+                          <p className="text-xs text-text-light notranslate truncate max-w-[300px]" title={b.dietaryNotes}>
+                            Dietary: {b.dietaryNotes}
+                          </p>
+                        )}
                         <p className="text-xs">
                           <span
                             className={`inline-block rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${
