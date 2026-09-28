@@ -1,0 +1,38 @@
+# sca-scan.yml — Trivy software composition analysis.
+#
+# Scans package-lock.json for known CVEs in dependencies. Note: the repo
+# uses npm (package-lock.json, npm ci in ci.yml), not pnpm — there is no
+# pnpm-lock.yaml here, so that is what's scanned.
+name: SCA scan
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  trivy:
+    name: Trivy (dependency CVEs)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: fs
+          scan-ref: package-lock.json
+          format: sarif
+          output: trivy-results.sarif
+          severity: CRITICAL,HIGH
+
+      - name: Upload Trivy results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: trivy-results.sarif
