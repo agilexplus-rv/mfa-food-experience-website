@@ -33,6 +33,8 @@ interface CheckInResult {
   alreadyCheckedInAt?: string
   checkInStaffName?: string
   dietaryNotes?: string | null
+  /** wrong_event: the event the booking actually belongs to. */
+  actualEventTitle?: string | null
 }
 
 interface StaffEvent {
@@ -242,6 +244,12 @@ export default function ScanPage() {
               error: 'invalid_token',
               leadAttendeeName: '', persons: 0, totalAmount: 0,
             })
+          } else if (data.error === 'already_cancelled') {
+            setResult({
+              ok: false, reference: data.reference,
+              error: 'already_cancelled',
+              leadAttendeeName: '', persons: 0, totalAmount: 0,
+            })
           }
           // Small delay so user can see progress
           await new Promise((r) => setTimeout(r, 800))
@@ -295,7 +303,8 @@ export default function ScanPage() {
         const res = await fetch('/api/check-in', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ token: trimmed }),
+          // The selected event lets the server reject a guest at the wrong door.
+          body: JSON.stringify({ token: trimmed, eventId: selectedEventId || undefined }),
         })
         const data = await res.json()
         if (res.ok) {
@@ -317,8 +326,9 @@ export default function ScanPage() {
         } else {
           setResult({
             ok: false,
-            reference: '',
+            reference: data.reference || '',
             error: data.error || 'unknown_error',
+            actualEventTitle: data.actualEventTitle ?? null,
             leadAttendeeName: '',
             persons: 0,
             totalAmount: 0,
@@ -365,7 +375,7 @@ export default function ScanPage() {
         const res = await fetch('/api/check-in/by-booking-id', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ bookingId }),
+          body: JSON.stringify({ bookingId, eventId: selectedEventId || undefined }),
         })
         const data = await res.json()
         if (res.ok) {
@@ -386,8 +396,9 @@ export default function ScanPage() {
         } else {
           setResult({
             ok: false,
-            reference: '',
+            reference: data.reference || '',
             error: data.error || 'unknown_error',
+            actualEventTitle: data.actualEventTitle ?? null,
             leadAttendeeName: '',
             persons: 0,
             totalAmount: 0,
@@ -604,11 +615,15 @@ export default function ScanPage() {
               ? 'Already Checked In'
               : result.error === 'invalid_token'
                 ? 'Invalid Token'
-                : result.error === 'rate_limited'
-                  ? 'Rate Limited'
-                  : result.error === 'network_error'
-                    ? 'Network Error'
-                    : 'Error'}
+                : result.error === 'already_cancelled'
+                  ? 'Booking Cancelled'
+                  : result.error === 'wrong_event'
+                    ? 'Wrong Event'
+                    : result.error === 'rate_limited'
+                      ? 'Rate Limited'
+                      : result.error === 'network_error'
+                        ? 'Network Error'
+                        : 'Error'}
           </h2>
         </div>
         <p className="text-sm text-text">
@@ -616,6 +631,10 @@ export default function ScanPage() {
             ? `This booking (${result.reference}) was already checked in at ${result.alreadyCheckedInAt ? new Date(result.alreadyCheckedInAt).toLocaleTimeString('en-MT', { hour: '2-digit', minute: '2-digit' }) : 'an earlier time'}. No action needed.`
             : result.error === 'invalid_token'
               ? 'This token does not match any booking. Check the code and try again.'
+              : result.error === 'already_cancelled'
+                ? `This booking (${result.reference}) has been cancelled and cannot be checked in.`
+              : result.error === 'wrong_event'
+                ? `This booking (${result.reference}) is for ${result.actualEventTitle || 'a different event'}, not the event selected above. If the guest is at the right door, switch the event and try again.`
               : result.error === 'rate_limited'
                 ? 'Too many attempts. Please wait a moment and try again.'
               : result.error === 'network_error'

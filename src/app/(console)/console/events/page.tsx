@@ -185,6 +185,14 @@ export default function ConsoleEventsPage() {
       setFormError('Price per person must be a number of 0 or more.')
       return
     }
+    // Cancelling an event cancels and fully refunds its bookings (Events.ts cascade).
+    const original = editingId ? results?.docs.find((e) => String(e.id) === String(editingId)) : undefined
+    if (original && original.status !== 'cancelled' && form.status === 'cancelled') {
+      const series = editingSeriesId && applyTo === 'future'
+        ? ' The same happens for every later event in the series.'
+        : ''
+      if (!confirm(`Cancel "${original.title}"? Its ${original.booked} active booking${original.booked === 1 ? '' : 's'} will be cancelled and fully refunded. This cannot be undone.${series}`)) return
+    }
     setSaveLoading(true)
     setFormError(null)
     try {

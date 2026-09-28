@@ -12,6 +12,8 @@ export const STATUS_COLORS: Record<string, string> = {
   failed: 'bg-terracotta/20 text-[#9C4E2F]',
   waiting: 'bg-accent-text/20 text-accent-text',
   notified: 'bg-lunar-green/20 text-lunar-green',
+  converted: 'bg-lunar-green/20 text-lunar-green',
+  archived: 'bg-gray-100 text-gray-600',
   expired: 'bg-gray-100 text-gray-600',
   admin: 'bg-terracotta/20 text-[#9C4E2F]',
   door_staff: 'bg-lunar-green/20 text-lunar-green',

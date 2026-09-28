@@ -4,6 +4,8 @@ import * as migration_20260926_001_client_changes from './20260926_001_client_ch
 import * as migration_20260926_002_audit_actions from './20260926_002_audit_actions';
 import * as migration_20260927_001_add_viva_payment_method_enum from './20260927_001_add_viva_payment_method_enum';
 import * as migration_20260928_001_add_payment_deadline from './20260928_001_add_payment_deadline';
+import * as migration_20260928_002_waitlist_lifecycle from './20260928_002_waitlist_lifecycle';
+import * as migration_20260928_003_data_protection_policy from './20260928_003_data_protection_policy';
 
 export const migrations = [
   {
@@ -35,5 +37,15 @@ export const migrations = [
     up: migration_20260928_001_add_payment_deadline.up,
     down: migration_20260928_001_add_payment_deadline.down,
     name: '20260928_001_add_payment_deadline'
+  },
+  {
+    up: migration_20260928_002_waitlist_lifecycle.up,
+    down: migration_20260928_002_waitlist_lifecycle.down,
+    name: '20260928_002_waitlist_lifecycle'
+  },
+  {
+    up: migration_20260928_003_data_protection_policy.up,
+    down: migration_20260928_003_data_protection_policy.down,
+    name: '20260928_003_data_protection_policy'
   },
 ];

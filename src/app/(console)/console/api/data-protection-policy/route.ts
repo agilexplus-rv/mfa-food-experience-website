@@ -30,13 +30,14 @@ export async function GET(req: NextRequest) {
 
   const p = await payload()
   try {
-    const settings = await p.findGlobal({
-      slug: 'site-settings',
+    // Until the policy is first saved, Payload fills in the drafted default body.
+    const policy = await p.findGlobal({
+      slug: 'data-protection-policy',
       overrideAccess: true,
     })
-    return NextResponse.json({ settings })
+    return NextResponse.json({ policy })
   } catch (err) {
-    console.error('[console/api/site-settings] Fetch failed:', err)
+    console.error('[console/api/data-protection-policy] Fetch failed:', err)
     return NextResponse.json({ error: 'fetch_failed' }, { status: 500 })
   }
 }
@@ -52,54 +53,32 @@ export async function POST(req: NextRequest) {
 
   const p = await payload()
 
-  let body: Record<string, unknown>
+  let body: Record<string, unknown> | null
   try {
     body = await req.json()
   } catch {
     return NextResponse.json({ error: 'invalid JSON body' }, { status: 400 })
   }
 
-  // Allowlist + coerce: the console posts the media id as a string, which
-  // the integer relationship column rejects ("The following field is
-  // invalid: Hero background image").
-  const data: Record<string, unknown> = {}
-  if ('heroBackgroundImage' in body) {
-    const raw = body.heroBackgroundImage
-    if (raw === null || raw === '' || raw === undefined) {
-      data.heroBackgroundImage = null
-    } else {
-      const id = Number(typeof raw === 'object' ? (raw as { id?: unknown }).id : raw)
-      if (!Number.isFinite(id)) {
-        return NextResponse.json({ error: 'Invalid hero background image.' }, { status: 400 })
-      }
-      data.heroBackgroundImage = id
-    }
-  }
-  if ('contactFormRecipients' in body) {
-    data.contactFormRecipients = typeof body.contactFormRecipients === 'string' ? body.contactFormRecipients.trim() : null
-  }
-  if ('waitlistRetentionMonths' in body) {
-    const months = Number(body.waitlistRetentionMonths)
-    if (!Number.isInteger(months) || months < 1 || months > 36) {
-      return NextResponse.json(
-        { error: 'Waitlist data retention must be a whole number of months between 1 and 36.' },
-        { status: 400 },
-      )
-    }
-    data.waitlistRetentionMonths = months
+  // Only the rich-text body is edited from the console, and it must be a
+  // Lexical editor state. Payload's `required` check rejects an empty one.
+  const content = body?.body
+  const root = (content as { root?: { children?: unknown } } | null | undefined)?.root
+  if (!root || !Array.isArray(root.children)) {
+    return NextResponse.json({ error: 'Policy content is missing or invalid.' }, { status: 400 })
   }
 
   try {
     const updated = await p.updateGlobal({
-      slug: 'site-settings',
-      data,
+      slug: 'data-protection-policy',
+      data: { body: content },
       overrideAccess: true,
       ...actingAs(currentUser, req),
     })
-    return NextResponse.json({ ok: true, settings: updated })
+    return NextResponse.json({ ok: true, policy: updated })
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'update_failed'
-    console.error('[console/api/site-settings] Update failed:', err)
+    console.error('[console/api/data-protection-policy] Update failed:', err)
     return NextResponse.json({ error: msg }, { status: 400 })
   }
 }

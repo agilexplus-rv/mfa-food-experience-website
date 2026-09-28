@@ -16,19 +16,29 @@ interface MediaItem {
 interface SiteSettingsData {
   heroBackgroundImage?: string | MediaItem | null
   contactFormRecipients?: string | null
+  waitlistRetentionMonths?: number | null
 }
 
 interface SiteSettingsForm {
   heroBackgroundImageId: string | null
   contactFormRecipients: string
+  /** Kept as the raw input string; validated as 1-36 on save. */
+  waitlistRetentionMonths: string
 }
+
+/** Matches the waitlistRetentionMonths field default in SiteSettings.ts. */
+const DEFAULT_WAITLIST_RETENTION_MONTHS = 6
 
 export default function SiteSettingsPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
-  const [form, setForm] = useState<SiteSettingsForm>({ heroBackgroundImageId: null, contactFormRecipients: '' })
+  const [form, setForm] = useState<SiteSettingsForm>({
+    heroBackgroundImageId: null,
+    contactFormRecipients: '',
+    waitlistRetentionMonths: String(DEFAULT_WAITLIST_RETENTION_MONTHS),
+  })
   const [currentImage, setCurrentImage] = useState<MediaItem | null>(null)
 
   // Media picker state
@@ -47,16 +57,17 @@ export default function SiteSettingsPage() {
       const s = data.settings as SiteSettingsData
       const img = s.heroBackgroundImage
       const contactFormRecipients = s.contactFormRecipients || ''
+      const waitlistRetentionMonths = String(s.waitlistRetentionMonths ?? DEFAULT_WAITLIST_RETENTION_MONTHS)
       if (img && typeof img === 'object' && 'id' in img) {
         const m = img as MediaItem
         setCurrentImage(m)
-        setForm({ heroBackgroundImageId: String(m.id), contactFormRecipients })
+        setForm({ heroBackgroundImageId: String(m.id), contactFormRecipients, waitlistRetentionMonths })
       } else if (img && typeof img === 'string') {
         setCurrentImage({ id: img })
-        setForm({ heroBackgroundImageId: img, contactFormRecipients })
+        setForm({ heroBackgroundImageId: img, contactFormRecipients, waitlistRetentionMonths })
       } else {
         setCurrentImage(null)
-        setForm({ heroBackgroundImageId: null, contactFormRecipients })
+        setForm({ heroBackgroundImageId: null, contactFormRecipients, waitlistRetentionMonths })
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load')
@@ -135,6 +146,11 @@ export default function SiteSettingsPage() {
       setError(recipientsError)
       return
     }
+    const retentionMonths = Number(form.waitlistRetentionMonths)
+    if (!Number.isInteger(retentionMonths) || retentionMonths < 1 || retentionMonths > 36) {
+      setError('Waitlist data retention must be a whole number of months between 1 and 36.')
+      return
+    }
     setSaving(true)
     setError(null)
     setSuccess(false)
@@ -145,6 +161,7 @@ export default function SiteSettingsPage() {
         body: JSON.stringify({
           heroBackgroundImage: form.heroBackgroundImageId || null,
           contactFormRecipients: form.contactFormRecipients.trim() || null,
+          waitlistRetentionMonths: retentionMonths,
         }),
       })
       if (!res.ok) {
@@ -257,6 +274,29 @@ export default function SiteSettingsPage() {
             placeholder="info@foodagency.mt; bookings@foodagency.mt"
             className="w-full rounded-lg border border-border bg-soft-beige/40 px-4 py-2.5 text-sm text-lunar-green placeholder:text-text-light/60 focus:border-lunar-green focus:outline-2 focus:outline-offset-1 focus:outline-lunar-green"
           />
+        </Card>
+
+        <Card padding>
+          <h2 className="text-sm font-bold text-lunar-green mb-2">
+            <label htmlFor="waitlist-retention-months">Waitlist Data Retention (months)</label>
+          </h2>
+          <p className="text-xs text-text-light mb-4">
+            Waitlist entries older than this (counted from when the person joined) are expired automatically when the Waitlist page is opened, or with its &ldquo;Clean up expired&rdquo; button. Minimum 1 month, maximum 36 months. Default: 6 months.
+          </p>
+          <div className="flex items-center gap-2">
+            <input
+              id="waitlist-retention-months"
+              type="number"
+              inputMode="numeric"
+              min={1}
+              max={36}
+              step={1}
+              value={form.waitlistRetentionMonths}
+              onChange={(e) => setForm((f) => ({ ...f, waitlistRetentionMonths: e.target.value }))}
+              className="w-24 rounded-lg border border-border bg-soft-beige/40 px-4 py-2.5 text-sm text-lunar-green focus:border-lunar-green focus:outline-2 focus:outline-offset-1 focus:outline-lunar-green"
+            />
+            <span className="text-sm text-text-light">months</span>
+          </div>
         </Card>
 
         <div className="flex gap-3">

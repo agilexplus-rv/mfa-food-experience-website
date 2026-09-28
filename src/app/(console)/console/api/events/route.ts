@@ -88,7 +88,8 @@ export async function GET(req: NextRequest) {
           checkedIn = ciResult.totalDocs
         } catch { /* best-effort */ }
 
-        const remaining = e.capacity ? Math.max(0, e.capacity - booked) : 0
+        // Fully Booked Override (FR-2.5) forces 0 remaining, matching the public pages.
+        const remaining = e.fullyBookedOverride ? 0 : (e.capacity ? Math.max(0, e.capacity - booked) : 0)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const service = e.service as any
 

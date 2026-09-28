@@ -36,7 +36,7 @@ const LEGAL_LINKS = [
   { label: "Cancellation Policy", href: "/legal/cancellation-policy" },
   { label: "Customer Policy", href: "/legal/customer-policy" },
   { label: "Cookie Policy", href: "/legal/cookie-policy" },
-  { label: "Privacy Notice", href: "/legal/privacy-notice" },
+  { label: "Data Protection Policy", href: "/legal/data-protection-policy" },
   { label: "Accessibility", href: "/legal/accessibility-statement" },
   { label: "Provider Info", href: "/legal/provider-info" },
 ]

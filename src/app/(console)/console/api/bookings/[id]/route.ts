@@ -6,6 +6,8 @@ import config from '@payload-config'
 import { verifySession } from '@/lib/rbac/verify-session'
 import { processCancellationRefund } from '@/lib/bookings/refund'
 import { actingAs, clientMeta } from '@/lib/audit/helper'
+import { sendConfirmationEmail } from '@/lib/email/send-confirmation'
+import { generateQrToken, hashQrToken } from '@/lib/qr/token'
 
 let _payload: Payload | null = null
 async function payload(): Promise<Payload> {
@@ -253,15 +255,83 @@ export async function POST(
   }
 
   if (action === 'resend') {
+    // Same flow as /api/bookings/[id]/resend-confirmation
+    if (b.status !== 'confirmed') {
+      return NextResponse.json(
+        { error: 'only_confirmed_bookings', message: 'Can only resend confirmation for confirmed bookings.' },
+        { status: 409 },
+      )
+    }
+
     try {
-      // Best-effort: call the existing resend-confirmation endpoint
+      // Look up event info
+      let eventInfo: { title: string; date: string; startTime: string; endTime: string; locationRef: string } | null = null
+      if (typeof b.event === 'object' && b.event?.title) {
+        eventInfo = b.event
+      } else {
+        const ev = await p.findByID({
+          collection: 'events',
+          id: typeof b.event === 'object' ? b.event?.id : b.event,
+          overrideAccess: true,
+        }).catch(() => null)
+        if (ev) {
+          eventInfo = ev as unknown as { title: string; date: string; startTime: string; endTime: string; locationRef: string }
+        }
+      }
+
+      if (!eventInfo) {
+        return NextResponse.json({ error: 'event_not_found' }, { status: 500 })
+      }
+
+      // Generate new QR token (only the hash is stored, so the old QR stops working)
+      const rawQrToken = generateQrToken()
+      const qrTokenHash = hashQrToken(rawQrToken)
+
       await p.update({
         collection: 'bookings',
         id: numericId,
-        data: { status: b.status },
+        data: { qrTokenHash },
         overrideAccess: true,
       })
-      return NextResponse.json({ ok: true, action: 'resend', note: 'Confirmation email queue triggered.' })
+
+      // Build and send email
+      const dateStr = new Date(eventInfo.date.slice(0, 10) + 'T00:00:00').toLocaleDateString('en-MT', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+      })
+      const fmt = new Intl.DateTimeFormat('en-MT', { hour: 'numeric', minute: '2-digit', hour12: false })
+      const timeRange = `${fmt.format(new Date(eventInfo.startTime))} - ${fmt.format(new Date(eventInfo.endTime))}`
+
+      await sendConfirmationEmail({
+        toEmail: b.email,
+        reference: b.reference,
+        eventTitle: eventInfo.title,
+        eventDate: dateStr,
+        eventTimeRange: timeRange,
+        locationRef: eventInfo.locationRef,
+        persons: b.persons,
+        totalAmount: b.totalAmount,
+        language: b.language ?? 'en',
+        rawQrToken,
+      })
+
+      // --- Audit log ---
+      await p.create({
+        collection: 'audit_logs',
+        data: {
+          action: 'update',
+          actor: currentUser.id as string,
+          collection: 'bookings',
+          documentId: String(id),
+          detail: `Resent confirmation email for ${b.reference}`,
+          ...clientMeta(req),
+        },
+        overrideAccess: true,
+      })
+
+      return NextResponse.json({ ok: true, action: 'resend', reference: b.reference })
     } catch (err) {
       console.error('[console/api/bookings] Resend failed:', err)
       return NextResponse.json({ error: 'resend_failed' }, { status: 500 })

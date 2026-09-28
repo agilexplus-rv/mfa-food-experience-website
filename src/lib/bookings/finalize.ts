@@ -6,6 +6,7 @@ import { getAvailability } from '@/lib/availability'
 import { generateQrToken, hashQrToken } from '@/lib/qr/token'
 import { sendConfirmationEmail } from '@/lib/email/send-confirmation'
 import { incrementCouponUseCount, transitionBookingStatus } from '@/lib/db/atomic'
+import { convertWaitlistEntries } from '@/lib/bookings/waitlist'
 
 /**
  * Webhook-driven booking finalisation per ADR-004 step 3, combined
@@ -360,6 +361,9 @@ async function finalizeCore(input: FinalizeCoreInput): Promise<FinalizeBookingRe
       await p.delete({ collection: 'seat_holds', id: h.id, overrideAccess: true }).catch(() => undefined)
     }
   }
+
+  // 5b. The booker is off the waitlist for this event (best-effort).
+  await convertWaitlistEntries(p, eventId, b.email)
 
   // 6. Confirmation email (best-effort).
   const eventInfo = eventDoc as {

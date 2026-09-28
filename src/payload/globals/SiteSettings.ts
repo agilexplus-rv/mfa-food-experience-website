@@ -52,5 +52,22 @@ export const SiteSettings: GlobalConfig = {
           'One or more email addresses to receive contact-form submissions, separated by semicolons (e.g. info@foodagency.mt; bookings@foodagency.mt). Leave empty to use the ADMIN_ALERT_EMAIL / FROM_EMAIL environment default.',
       },
     },
+    {
+      // Read by POST /console/api/waitlist/cleanup, which expires entries
+      // older than this. The DB column defaults to 6 (see the
+      // 20260928_002 migration), so rows saved before this field existed
+      // pass the required check.
+      name: 'waitlistRetentionMonths',
+      type: 'number',
+      label: 'Waitlist data retention (months)',
+      required: true,
+      defaultValue: 6,
+      min: 1,
+      max: 36,
+      admin: {
+        description:
+          'Waitlist entries older than this (based on createdAt) are eligible for auto-deletion. Minimum 1 month, maximum 36 months. Default: 6 months.',
+      },
+    },
   ],
 }

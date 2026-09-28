@@ -92,11 +92,11 @@ export const HELP_CATEGORIES: HelpCategory[] = [
           'Fill in **Lead Attendee Name**, **Email** and **Persons** (all required). **Phone** and **Dietary Notes** are optional.',
           'Choose the **Payment Method**: **Cash**, **Bank Transfer**, **Comped** or **Pending Payment**.',
           'Leave **Total Amount (EUR), leave empty to auto-calculate** blank to charge the event price × persons, or type an amount to override it. **Comped** bookings are always €0.',
-          'Click **Create Booking**. The booking is saved as **confirmed** and appears in the list.',
+          'Click **Create Booking**. The booking is saved as **confirmed**, appears in the list, and the guest is emailed a confirmation with their QR code.',
         ],
         notes: [
-          { kind: 'warning', text: 'The console does not check remaining seats. Look at the **Rem.** column on the **Events** page first, or you can overbook the event.' },
-          { kind: 'warning', text: 'Manual bookings get no confirmation email and no QR code. Tell the guest their reference; door staff check them in with **Look Up Booking** on the scanner.' },
+          { kind: 'warning', text: 'The console checks remaining seats. If the event has fewer seats left than **Persons**, or **Fully Booked Override** is ticked, an error explains why and nothing is saved.' },
+          { kind: 'tip', text: 'If the guest was on the event\'s waitlist, their entry changes to **Converted** automatically.' },
           { kind: 'tip', text: '**Pending Payment** only records how the guest will pay. The booking is still confirmed and holds its seats.' },
         ],
       },
@@ -115,7 +115,7 @@ export const HELP_CATEGORIES: HelpCategory[] = [
         ],
         notes: [
           { kind: 'warning', text: 'There is no "Are you sure?" prompt. **Cancel** acts immediately and cannot be undone from the console.' },
-          { kind: 'prereq', text: 'The refund amount comes from **Settings → Cancellation Policy** (the tier for how many days before the event, or a full refund inside the cooling-off period). Cancelling from the **Bookings Dashboard** (`/dashboard`) instead always refunds in full.' },
+          { kind: 'prereq', text: 'The refund amount comes from **Settings → Cancellation Policy** (the tier for how many days before the event, or a full refund inside the cooling-off period). **Cancel** on the **Bookings Dashboard** (`/dashboard`) uses the same policy.' },
           { kind: 'tip', text: 'Cancelling frees the seats and automatically emails the first **Waiting** person on that event\'s waitlist.' },
         ],
       },
@@ -151,7 +151,7 @@ export const HELP_CATEGORIES: HelpCategory[] = [
         ],
         notes: [
           { kind: 'warning', text: 'Resending issues a new QR code, and the QR in any earlier email stops working.' },
-          { kind: 'warning', text: 'Known issue: the **Resend** button in the console **Bookings** list does not currently send an email. Use the Bookings Dashboard button above.' },
+          { kind: 'tip', text: 'The **Resend** button on a confirmed booking\'s row in the console **Bookings** list does the same thing.' },
         ],
       },
       {
@@ -186,7 +186,7 @@ export const HELP_CATEGORIES: HelpCategory[] = [
         path: '/scan',
         steps: [
           'Open **Door Check-In** at `/scan`. From the Bookings Dashboard, click **← Scanner**.',
-          'If an **Event** box is shown, choose tonight\'s event so the **checked in** counter tracks the right one.',
+          'If an **Event** box is shown, choose tonight\'s event. The **checked in** counter tracks it, and guests booked for any other event are turned away.',
           'Make sure the **QR / Token** tab is selected.',
           'Tap **Start QR Scanner** and allow camera access if the browser asks.',
           'Hold the guest\'s QR code (on their phone or a printout) steady inside the frame.',
@@ -194,7 +194,8 @@ export const HELP_CATEGORIES: HelpCategory[] = [
           'Tap **Scan Another** for the next guest.',
         ],
         notes: [
-          { kind: 'warning', text: 'The scanner does not reject bookings for other events or cancelled bookings. Always check the **Experience** on the green card is tonight\'s event.' },
+          { kind: 'warning', text: 'A red **Wrong Event** card means the booking is for another event (the card names it), not the one selected in the **Event** box. If the guest is at the right door, switch the **Event** and scan again.' },
+          { kind: 'tip', text: 'A red **Booking Cancelled** card means the booking was cancelled and cannot be checked in.' },
           { kind: 'tip', text: 'An amber **Already Checked In** card shows when the code was first used. If the group is already inside, no action is needed; if someone else presents the code, check the name with the lead attendee.' },
           { kind: 'tip', text: 'A red **Invalid Token** card means the code matches no booking. Use **Look Up Booking** instead.' },
         ],
@@ -230,8 +231,8 @@ export const HELP_CATEGORIES: HelpCategory[] = [
           'Read the green **Checked In** card, then tap **Scan Another**.',
         ],
         notes: [
-          { kind: 'warning', text: 'Look-up searches every event, not only the one selected at the top. Make sure the event name matches tonight\'s event before tapping **Check In**.' },
-          { kind: 'tip', text: 'Use this for guests without a QR code, including manual bookings made by an admin (these never get a QR code).' },
+          { kind: 'warning', text: 'Look-up searches every event, but **Check In** only accepts bookings for the event selected at the top. A booking for another event shows a red **Wrong Event** card.' },
+          { kind: 'tip', text: 'Use this for guests who do not have their QR code with them.' },
           { kind: 'tip', text: 'If you see **No bookings found matching that query.**, try only the surname or the reference.' },
         ],
       },
@@ -267,24 +268,25 @@ export const HELP_CATEGORIES: HelpCategory[] = [
           'For a full seat count (booked vs remaining), an admin can check **Cap.**, **Booked** and **Rem.** on the **Events** page.',
         ],
         notes: [
-          { kind: 'tip', text: 'The first number counts bookings (groups) checked in, not individual guests. The second number is the event\'s seat capacity.' },
+          { kind: 'tip', text: 'The first number counts guests checked in (every person in each checked-in booking). The second number is the event\'s seat capacity.' },
         ],
       },
       {
         id: 'check-in-dashboard',
-        title: 'Search bookings on the Bookings Dashboard',
+        title: 'Search bookings and check guests in on the Bookings Dashboard',
         roles: BOTH,
         path: '/dashboard',
         steps: [
           'Open the **Bookings Dashboard** at `/dashboard`. Door staff land here after signing in; from the scanner, tap **Bookings dashboard**.',
           'Type a reference, name or email into **Search by reference, name, or email...**.',
-          'Optionally choose a status from **All Statuses**.',
+          'Optionally choose a status from **All Statuses**, and choose tonight\'s event from **All Events** to list only its guests.',
           'Click **Search**.',
           'Read the **Dietary**, **Status**, **Checked In** and **Checked In By** columns. Hover over a dietary note to see the full text.',
+          'To admit a guest, click **Check In** in the **Actions** column. The row changes to **checked in** and briefly shows **✓ Checked in**.',
           'Use **Previous** and **Next** under the table to move between pages.',
         ],
         notes: [
-          { kind: 'tip', text: 'The dashboard is for looking up and verifying bookings. To check a guest in, click **← Scanner** and use **Look Up Booking**.' },
+          { kind: 'tip', text: '**Check In** only appears on bookings that are not already checked in or cancelled. If it is refused, an alert explains why, for example **Already checked in** or **Booking is cancelled**.' },
           { kind: 'tip', text: 'Admins also see a **Total** column, **Cancel** / **Resend** / **No-show** buttons and an **Export CSV...** picker here.' },
         ],
       },
@@ -376,10 +378,12 @@ export const HELP_CATEGORIES: HelpCategory[] = [
           'To stop online sales but keep the event, tick **Fully Booked Override**. The public site shows it as fully booked and guests can join the waitlist.',
           'To cancel the event, set **Status** to **Cancelled**. After it has run, you can set **Completed**.',
           'For a series, choose **This event only** or **This and future events**.',
-          'Click **Save Changes**.',
+          'Click **Save Changes**. When cancelling, confirm the browser prompt, which shows how many active bookings will be cancelled and refunded.',
         ],
         notes: [
-          { kind: 'warning', text: 'Setting **Status** to **Cancelled** does NOT cancel, refund or email the guests who already booked. Cancel each booking on the **Attendees** roster or the **Bookings** page.' },
+          { kind: 'warning', text: 'Setting **Status** to **Cancelled** cancels EVERY booking for the event and refunds each one in full (the cancellation-policy tiers do not apply). It cannot be undone. With **This and future events**, this happens for each later event in the series too.' },
+          { kind: 'warning', text: 'Guests are NOT emailed that the event is cancelled. Contact them yourself (use the **Attendees** roster).' },
+          { kind: 'tip', text: 'The bookings are cancelled in the background right after you save: reload the **Attendees** roster after a few seconds to see them as cancelled. A refund that fails is marked `failed` on the booking: refund it in Viva by hand. The **Audit Log** entry `Experience "…" cancelled: …` summarises how many bookings were cancelled and refunded.' },
         ],
       },
       {
@@ -395,7 +399,7 @@ export const HELP_CATEGORIES: HelpCategory[] = [
           'On event night, door staff see live **checked in** counts on the scanner.',
         ],
         notes: [
-          { kind: 'tip', text: '**Rem.** is always capacity minus booked seats. It does not change when **Fully Booked Override** is ticked, even though the public site then shows the event as full.' },
+          { kind: 'tip', text: '**Rem.** shows 0 while **Fully Booked Override** is ticked, matching the public site, which then shows the event as full.' },
         ],
       },
       {
@@ -413,7 +417,7 @@ export const HELP_CATEGORIES: HelpCategory[] = [
           'Click **← Back to Events** when done.',
         ],
         notes: [
-          { kind: 'warning', text: 'The roster also lists cancelled bookings, and they count in "seats booked". Check the **Status** column, and use **Rem.** on the Events page for true free seats.' },
+          { kind: 'tip', text: 'Cancelled bookings stay on the roster, greyed out and struck through, but do not count toward "seats booked". The summary says how many were left out.' },
         ],
       },
       {
@@ -424,7 +428,7 @@ export const HELP_CATEGORIES: HelpCategory[] = [
         steps: [
           'Click **Events** in the sidebar.',
           'Click **Delete** on the event\'s row.',
-          'Read the **Delete Event** box. If the event has bookings, it cannot be deleted. Cancel them first, or set the event\'s **Status** to **Cancelled** instead.',
+          'Read the **Delete Event** box. If the event has bookings, it cannot be deleted. Cancel them first, or set the event\'s **Status** to **Cancelled** instead (this cancels and fully refunds all its bookings).',
           'If there are no bookings, click **Delete Event** to confirm.',
         ],
         notes: [
@@ -457,7 +461,7 @@ export const HELP_CATEGORIES: HelpCategory[] = [
   {
     id: 'waitlist',
     title: 'Waitlist',
-    summary: 'See who is waiting for a sold-out event and whether they have been notified.',
+    summary: 'See who is waiting for a sold-out event and whether they have been notified; archive and expire old entries.',
     procedures: [
       {
         id: 'waitlist-view',
@@ -467,12 +471,45 @@ export const HELP_CATEGORIES: HelpCategory[] = [
         steps: [
           'Click **Waitlist** in the sidebar.',
           'To see one event, choose it from the **Event** dropdown (default **All Events**).',
-          'To see one state, choose from **Status**: **Waiting**, **Notified** or **Expired**.',
-          'Read each row: **Event**, **Email**, **Name**, **Phone**, **Persons**, **Status**, **Notified** (when the email went out) and **Created** (when they joined).',
+          'To see one state, choose from **Status**: **Waiting**, **Notified**, **Converted**, **Archived** or **Expired**.',
+          'Read each row: **Event**, **Email**, **Name**, **Phone**, **Persons**, **Status**, **Notified** (when the email went out) and **Created** (when they joined). **Converted**, **Archived** and **Expired** entries also show the date under **Status**.',
           'Use **Previous** and **Next** under the table for more entries.',
         ],
         notes: [
+          { kind: 'tip', text: '**Converted** means the guest went on to book the event (set automatically when their booking is confirmed). **Archived** entries were archived by an admin; **Expired** entries passed the retention period. None of these are notified again.' },
           { kind: 'tip', text: 'The waitlist for a single event is also shown at the bottom of any of that event\'s **Booking Detail** pages.' },
+        ],
+      },
+      {
+        id: 'waitlist-archive',
+        title: 'Archive waitlist entries',
+        roles: ADMIN,
+        path: '/console/waitlist',
+        steps: [
+          'Click **Waitlist** in the sidebar.',
+          'Tick the box on each entry to archive, or tick the box in the table header to select every entry on the page. Archived entries cannot be ticked.',
+          'Click **Archive selected (N)**, where N is the number of ticked entries.',
+          'Confirm the browser prompt. A green message says how many entries were archived.',
+          'To archive a single entry, click **Archive** on its row instead.',
+        ],
+        notes: [
+          { kind: 'warning', text: 'Archived guests are no longer notified about free seats, and there is no un-archive button.' },
+        ],
+      },
+      {
+        id: 'waitlist-retention',
+        title: 'Expire old waitlist entries (data retention)',
+        roles: ADMIN,
+        path: '/console/waitlist',
+        steps: [
+          'Set how long to keep entries under **Settings → Site Settings → Waitlist Data Retention (months)** (1 to 36 months, default 6).',
+          'Open the **Waitlist** page. Entries older than that are expired automatically, and a green message says how many.',
+          'To run the check on demand, click **Clean up expired**.',
+          'To review them, choose **Expired** from **Status**.',
+        ],
+        notes: [
+          { kind: 'tip', text: 'Age is counted from when the guest joined (**Created**), whatever their status.' },
+          { kind: 'warning', text: 'Expiring or archiving an entry keeps the guest\'s name, email and phone on record. It only stops further notifications.' },
         ],
       },
       {
@@ -517,7 +554,7 @@ export const HELP_CATEGORIES: HelpCategory[] = [
           'Click **Create Coupon**.',
         ],
         notes: [
-          { kind: 'warning', text: 'Codes are saved in capitals, and guests must type them in capitals exactly as shown at checkout. `summer25` does not match `SUMMER25`.' },
+          { kind: 'tip', text: 'Codes you type are saved in capitals. Guests can enter a code in any case at checkout: `summer25` matches `SUMMER25`.' },
         ],
       },
       {
@@ -648,8 +685,7 @@ export const HELP_CATEGORIES: HelpCategory[] = [
           'To delete, click **Delete** and confirm the browser prompt. Otherwise click **Close**.',
         ],
         notes: [
-          { kind: 'warning', text: 'Deleted images cannot be recovered. Images used by a service or news article cannot be deleted until you remove them there first.' },
-          { kind: 'warning', text: 'The homepage hero image is NOT protected. Check **Settings → Site Settings** before deleting an image.' },
+          { kind: 'warning', text: 'Deleted images cannot be recovered. Images used by a service, a news article or as the homepage hero (**Settings → Site Settings**) cannot be deleted until you remove them there first.' },
         ],
       },
     ],
@@ -699,13 +735,14 @@ export const HELP_CATEGORIES: HelpCategory[] = [
       },
       {
         id: 'settings-site',
-        title: 'Change site settings (hero image, contact recipients)',
+        title: 'Change site settings (hero image, contact recipients, waitlist retention)',
         roles: ADMIN,
         path: '/console/settings/site-settings',
         steps: [
           'Click **Settings** in the sidebar, then **Site Settings**.',
           'Under **Homepage Hero Background Image**, click **Select from Media** to pick an image, or **Upload New**. Click **Clear** to go back to the text-only hero.',
           'Under **Contact Form Recipients**, enter the email address(es) that receive Contact-page messages, separated by semicolons (e.g. `info@foodagency.mt; bookings@foodagency.mt`).',
+          'Under **Waitlist Data Retention (months)**, enter how long to keep waitlist entries: a whole number from 1 to 36 (default 6).',
           'Click **Save Settings**.',
           'Open the public homepage to check the result.',
         ],
@@ -729,6 +766,20 @@ export const HELP_CATEGORIES: HelpCategory[] = [
         notes: [
           { kind: 'warning', text: 'Tiers take effect immediately: the next booking an admin cancels is refunded using the new percentages.' },
           { kind: 'warning', text: 'Only edit **Withdrawal Right Disclosure (Art. 16(l) / Art. 6(1)(k))** if legal advice confirms a change is needed.' },
+        ],
+      },
+      {
+        id: 'settings-data-protection',
+        title: 'Edit the Data Protection Policy',
+        roles: ADMIN,
+        path: '/console/settings/data-protection-policy',
+        steps: [
+          'Click **Settings** in the sidebar, then **Data Protection Policy**.',
+          'Edit the text under **Policy content**. Replace the placeholders in square brackets, such as `[COMPANY LEGAL NAME]` and `[DATE]`, with the real details.',
+          'Click **Save Policy** and wait for **Policy saved successfully.** next to the button.',
+        ],
+        notes: [
+          { kind: 'tip', text: 'Existing links are kept when you save. To add a link or change where one points, save first, then click **full admin editor** above the editor.' },
         ],
       },
       {
