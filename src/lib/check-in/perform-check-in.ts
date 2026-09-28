@@ -1,5 +1,7 @@
 import type { Payload } from 'payload'
 
+import { consentedDietaryNotes } from '@/lib/bookings/dietary'
+
 /**
  * Shared check-in business logic — used by both token-based
  * (POST /api/check-in) and booking-id-based
@@ -20,6 +22,8 @@ interface CheckInArgs {
     status: string
     totalAmount: number
     checkedInAt: string | null
+    dietaryNotes?: string | null
+    dietaryConsent?: boolean | null
     event: string | number | { id: string | number; title?: string }
   }
   staffUser: { id: string | number; email: string; role: string }
@@ -33,6 +37,7 @@ export async function performCheckIn(args: CheckInArgs): Promise<{
   status: string
   totalAmount: number
   checkedInAt: string
+  dietaryNotes: string | null
 }> {
   const { payload: p, booking, staffUser } = args
 
@@ -79,5 +84,6 @@ export async function performCheckIn(args: CheckInArgs): Promise<{
     status: 'checked_in',
     totalAmount: booking.totalAmount,
     checkedInAt: now,
+    dietaryNotes: consentedDietaryNotes(booking),
   }
 }

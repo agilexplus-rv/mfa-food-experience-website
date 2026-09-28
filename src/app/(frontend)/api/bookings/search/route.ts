@@ -4,6 +4,7 @@ import type { Payload } from 'payload'
 import config from '@payload-config'
 
 import { verifySession } from '@/lib/rbac/verify-session'
+import { consentedDietaryNotes } from '@/lib/bookings/dietary'
 
 let _payload: Payload | null = null
 async function payload(): Promise<Payload> {
@@ -90,6 +91,8 @@ export async function GET(req: NextRequest) {
         createdAt: booking.createdAt,
         // Phase 6 scope 5: staff accountability column
         checkInStaffName: staff?.email || null,
+        // Door staff need this too; null unless dietaryConsent was given
+        dietaryNotes: consentedDietaryNotes(booking),
       }
 
       if (isAdmin) {

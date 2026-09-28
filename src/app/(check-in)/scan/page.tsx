@@ -32,6 +32,7 @@ interface CheckInResult {
   error?: string
   alreadyCheckedInAt?: string
   checkInStaffName?: string
+  dietaryNotes?: string | null
 }
 
 interface StaffEvent {
@@ -566,6 +567,12 @@ export default function ScanPage() {
             </>
           )}
         </dl>
+        {/* Only present when the customer gave dietaryConsent */}
+        {result.dietaryNotes && (
+          <p className="notranslate mt-3 text-xs text-text-light">
+            Dietary: {result.dietaryNotes}
+          </p>
+        )}
         <button
           onClick={clearResult}
           className="mt-4 w-full rounded-lg bg-lunar-green px-4 py-3 text-sm font-semibold text-white hover:bg-primary-light transition-colors"

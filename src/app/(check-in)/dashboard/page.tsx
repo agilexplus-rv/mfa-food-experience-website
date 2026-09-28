@@ -16,6 +16,7 @@ interface BookingRow {
   totalAmount: number
   checkedInAt: string | null
   checkInStaffName: string | null
+  dietaryNotes: string | null
   noShow: boolean
   refundStatus: string | null
   createdAt: string
@@ -84,6 +85,10 @@ function formatDateTime(iso: string | null): string {
     hour: '2-digit',
     minute: '2-digit',
   })
+}
+
+function truncate(text: string, max: number): string {
+  return text.length > max ? `${text.slice(0, max - 1)}\u2026` : text
 }
 
 function isEventPast(eventDate: string | null): boolean {
@@ -446,6 +451,7 @@ export default function DashboardPage() {
                   <th className="px-4 py-3 font-semibold text-text-light">Experience</th>
                   <th className="px-4 py-3 font-semibold text-text-light">Attendee</th>
                   <th className="px-4 py-3 font-semibold text-text-light text-center">Persons</th>
+                  <th className="px-4 py-3 font-semibold text-text-light">Dietary</th>
                   <th className="px-4 py-3 font-semibold text-text-light">Status</th>
                   {user?.role === 'admin' && (
                     <th className="px-4 py-3 font-semibold text-text-light text-right">Total</th>
@@ -487,6 +493,15 @@ export default function DashboardPage() {
                       </td>
                       <td className="px-4 py-3 text-center text-lunar-green">
                         {b.persons}
+                      </td>
+                      <td className="px-4 py-3 text-xs">
+                        {b.dietaryNotes ? (
+                          <span className="notranslate text-lunar-green" title={b.dietaryNotes}>
+                            {truncate(b.dietaryNotes, 40)}
+                          </span>
+                        ) : (
+                          <span className="text-text-light/50">{'\u2014'}</span>
+                        )}
                       </td>
                       <td className="px-4 py-3">
                         <span
