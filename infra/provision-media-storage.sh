@@ -11,9 +11,16 @@
 # (staticDir is relative, resolved against process.cwd() = /app at runtime).
 #
 # STATUS: RUN BY OPERATOR ONCE (approved 2026-09-27). CI NEVER runs this file; the
-# deploy-guard only inspects deploy.yml. deploy.yml stays unchanged because
-# `az containerapp update --image … --set-env-vars …` preserves existing template
-# volumes/volumeMounts.
+# deploy-guard only inspects deploy.yml.
+#
+# STATUS UPDATE (2026-10-16): the MOUNT (old step 4 below) is no longer an
+# operator action. It was found missing on the live app -- uploads were being
+# wiped by every new revision, and an uploaded event image started returning
+# HTTP 500. The mount is now owned by infra/ensure-media-storage.sh, which
+# .github/workflows/deploy.yml runs before each image update; it is idempotent
+# and only PATCHes properties.template. Prefer that script for repairs.
+# Steps 1-3 (storage account, file share, env storage registration) remain the
+# one-time operator provisioning this file was written for.
 #
 # REQUIREMENTS: az CLI logged in with Contributor on the resource group (list storage
 # keys + register environment storage are needed). Run from anywhere; uses the same
