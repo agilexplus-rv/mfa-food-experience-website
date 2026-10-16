@@ -3,11 +3,15 @@
   This test is a CI job (ci.yml → deploy-guard) that fails the build if the
   deploy workflow ever regresses into insecure patterns:
 
-  1. References `secrets.*` — the OIDC flow uses `vars.*`, never `secrets.*`.
-     A federated credential exchanges a GitHub OIDC token for an Azure token;
-     there is no client secret to store.  A `secrets.*` reference means
-     someone dropped a secret (or a static password) into the deploy path,
-     which is the exact anti-pattern this guard exists to catch.
+  1. References `secrets.*` for anything other than VIVA_* payment
+     credentials — the OIDC flow uses `vars.*`, never `secrets.*`, for Azure
+     auth. A federated credential exchanges a GitHub OIDC token for an Azure
+     token; there is no client secret to store. A non-VIVA `secrets.*`
+     reference means someone dropped an auth secret (e.g. an
+     AZURE_CLIENT_SECRET) into the deploy path, which is the exact
+     anti-pattern this guard exists to catch. VIVA_* secrets (payment
+     gateway credentials such as VIVA_CLIENT_SECRET, VIVA_API_KEY,
+     VIVA_WEBHOOK_SECRET) are legitimately stored as secrets and are exempt.
 
   2. Contains a raw `az` deployment command (`az deployment group create`,
      `az containerapp create`) — the deploy workflow must only UPDATE an
@@ -36,12 +40,15 @@ try {
 
 let failures = 0
 
-// ── Rule 1: No secrets.* references ────────────────────────────
+// ── Rule 1: No secrets.* references, except VIVA_* payment creds ──
 const secretsRef = /\bsecrets\.\w+\b/g
-const secretsMatches = content.match(secretsRef)
-if (secretsMatches) {
+const secretsMatches = (content.match(secretsRef) || []).filter(
+  (s) => !s.startsWith('secrets.VIVA_')
+)
+if (secretsMatches.length > 0) {
   console.error(
-    `FAIL: deploy.yml references secrets.* — OIDC uses vars.*, never secrets:\n  ` +
+    `FAIL: deploy.yml references secrets.* — OIDC uses vars.*, never secrets ` +
+    `(VIVA_* payment credentials are exempt):\n  ` +
     secretsMatches.map((s) => `  ${s}`).join('\n  ')
   )
   failures++

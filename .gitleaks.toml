@@ -1,0 +1,20 @@
+# .gitleaks.toml — Gitleaks configuration for Malta Food Experience.
+#
+# Extends the default Gitleaks ruleset (secrets.gitleaks.io) rather than
+# defining rules from scratch.
+[extend]
+useDefault = true
+
+# No known hardcoded secrets exist in this repo (verified by grep across
+# src/, migrations/, and payload.config.ts). This allowlist starts empty.
+#
+# To suppress a verified false positive (e.g. a test fixture constant that
+# looks like a secret, or a placeholder value in docs/examples), add a regex
+# matching the specific string here — do not disable a whole rule. Example:
+#
+# [allowlist]
+# regexes = [
+#   '''ci-build-secret-not-for-production''',
+# ]
+[allowlist]
+regexes = []
