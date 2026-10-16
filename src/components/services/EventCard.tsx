@@ -91,6 +91,21 @@ export function EventCard({
 
   return (
     <article className="group relative flex h-full flex-col overflow-hidden rounded-xl border border-border bg-surface shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md focus-within:shadow-md">
+      {/* Event photo. When neither the event nor its service has one, the
+          same blank Lunar Green plate the services cards use (name in Soft
+          Beige) stands in -- never a broken/empty image slot. The
+          article's own overflow-hidden rounds the photo's top corners. */}
+      <div className="relative aspect-[16/9] w-full shrink-0 overflow-hidden bg-lunar-green">
+        {imageUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={imageUrl} alt={imageAlt || title} className="h-full w-full object-cover" />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center px-6 text-center">
+            <span className="text-sm font-semibold text-soft-beige">{title}</span>
+          </div>
+        )}
+      </div>
+
       <div className="flex flex-1 flex-col p-6">
         <div className="flex items-start justify-between gap-3">
           <h3 className="text-lg font-bold tracking-tight text-lunar-green">
