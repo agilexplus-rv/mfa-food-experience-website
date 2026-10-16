@@ -92,6 +92,8 @@ export async function GET(req: NextRequest) {
         const remaining = e.fullyBookedOverride ? 0 : (e.capacity ? Math.max(0, e.capacity - booked) : 0)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const service = e.service as any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const imagery = e.imagery as any
 
         return {
           id: e.id,
@@ -104,6 +106,9 @@ export async function GET(req: NextRequest) {
           capacity: e.capacity,
           pricePerPerson: e.pricePerPerson,
           locationRef: e.locationRef,
+          description: e.description ?? null,
+          imageryId: imagery?.id || null,
+          imageryUrl: imagery?.url || null,
           status: e.status,
           fullyBookedOverride: e.fullyBookedOverride ?? false,
           autoCloseHoursAfter: e.autoCloseHoursAfter ?? null,
@@ -195,6 +200,14 @@ export async function POST(req: NextRequest) {
 
   const seriesId = occurrenceDatesList.length > 1 ? crypto.randomUUID() : undefined
 
+  // Optional per-event image; coerce the form's string id to the integer FK.
+  const imageryRaw = body.imageryId ?? body.imagery
+  const imagery = imageryRaw != null && imageryRaw !== '' ? Number(imageryRaw) : undefined
+  if (imagery !== undefined && !Number.isFinite(imagery)) {
+    return NextResponse.json({ error: 'invalid_imagery' }, { status: 400 })
+  }
+  const description = body.description && typeof body.description === 'object' ? body.description : undefined
+
   try {
     const createdIds: string[] = []
     for (const d of occurrenceDatesList) {
@@ -212,6 +225,9 @@ export async function POST(req: NextRequest) {
           status: body.status || 'scheduled',
           fullyBookedOverride: body.fullyBookedOverride ?? false,
           autoCloseHoursAfter: toAutoCloseHours(body.autoCloseHoursAfter),
+          // Copied to every occurrence, like title/locationRef.
+          ...(description !== undefined ? { description } : {}),
+          ...(imagery !== undefined ? { imagery } : {}),
           ...(seriesId ? { seriesId } : {}),
         },
         overrideAccess: true,

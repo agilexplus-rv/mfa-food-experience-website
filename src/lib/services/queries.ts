@@ -43,8 +43,18 @@ export interface ServiceSummary {
 
 export type ServiceDetail = ServiceSummary
 
+/** An upcoming event plus its own "Read more" content (empty → use the service's). */
+export interface ServiceEvent extends EventDoc {
+  /** The event's own description rendered to HTML. */
+  descriptionHtml?: string
+  /** The event's own image URL. */
+  imageryUrl?: string
+  /** Alt text for the event's own image. */
+  imageryAlt?: string
+}
+
 export interface ServiceEvents {
-  events: EventDoc[]
+  events: ServiceEvent[]
   /** Availability map keyed by String(eventId). */
   availability: Map<string, EventAvailability>
   /** Service description (first 280 chars). */
@@ -152,12 +162,18 @@ export const getServiceEvents = cache(async function getServiceEvents(serviceId:
       },
       sort: 'date',
       limit: 100,
+      depth: 1, // populate each event's own imagery upload
       overrideAccess: true,
     }),
     p.findByID({ collection: 'services', id: serviceId, overrideAccess: true }),
   ])
 
-  const events = res.docs as unknown as EventDoc[]
+  const events: ServiceEvent[] = (res.docs as unknown as EventDoc[]).map((e) => ({
+    ...e,
+    descriptionHtml: richTextToHtml(e.description) || undefined,
+    imageryUrl: getMediaUrl(e.imagery ?? null) ?? undefined,
+    imageryAlt: (typeof e.imagery === 'object' && e.imagery?.alt) || undefined,
+  }))
   const availability = await getAvailabilityForEvents(
     events.map((e) => ({
       id: e.id,

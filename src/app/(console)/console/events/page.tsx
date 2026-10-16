@@ -8,6 +8,7 @@ import Badge from '@/components/console/Badge'
 import Card from '@/components/console/Card'
 import Modal from '@/components/console/Modal'
 import { Pagination } from '@/components/console/DataTable'
+import RichTextEditor from '@/components/console/editor/RichTextEditor'
 
 interface EventRow {
   id: string | number
@@ -21,6 +22,9 @@ interface EventRow {
   pricePerPerson: number
   autoCloseHoursAfter: number | null
   locationRef: string
+  description: unknown
+  imageryId: string | number | null
+  imageryUrl: string | null
   status: string
   fullyBookedOverride: boolean
   seriesId: string | null
@@ -33,6 +37,12 @@ interface EventRow {
 interface ServiceOption {
   id: string | number
   name: string
+}
+
+interface MediaOption {
+  id: string | number
+  filename: string
+  url: string
 }
 
 interface SearchResult {
@@ -75,6 +85,9 @@ export default function ConsoleEventsPage() {
   // Services for form dropdown
   const [services, setServices] = useState<ServiceOption[]>([])
 
+  // Media list for imagery picker
+  const [media, setMedia] = useState<MediaOption[]>([])
+
   // Modal state
   const [modalOpen, setModalOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | number | null>(null)
@@ -84,6 +97,7 @@ export default function ConsoleEventsPage() {
     title: '', serviceId: '', date: '', startTime: '', endTime: '',
     capacity: '', pricePerPerson: '', locationRef: '', status: 'scheduled' as string,
     fullyBookedOverride: false, autoCloseHoursAfter: '',
+    description: null as unknown, imageryId: '',
   })
   // Recurrence (create, or edit of a NON-series event): 'none' | 'weekly' | 'biweekly' | 'monthly' + until date
   const [repeatFreq, setRepeatFreq] = useState('none')
@@ -119,12 +133,27 @@ export default function ConsoleEventsPage() {
     } catch { /* ignore */ }
   }, [])
 
+  const fetchMedia = useCallback(async () => {
+    try {
+      const res = await fetch('/api/media?limit=500')
+      if (!res.ok) return
+      const data = await res.json()
+      if (data.docs) setMedia(data.docs.map((m: { id: string | number; filename: string; url?: string }) => ({
+        id: m.id,
+        filename: m.filename,
+        url: m.url || '',
+      })))
+    } catch { /* ignore */ }
+  }, [])
+
   useEffect(() => { void fetchData() }, [fetchData])
   useEffect(() => { void fetchServices() }, [fetchServices])
+  useEffect(() => { void fetchMedia() }, [fetchMedia])
 
   const resetForm = () => {
     setForm({ title: '', serviceId: '', date: '', startTime: '', endTime: '',
-      capacity: '', pricePerPerson: '', locationRef: '', status: 'scheduled', fullyBookedOverride: false, autoCloseHoursAfter: '' })
+      capacity: '', pricePerPerson: '', locationRef: '', status: 'scheduled', fullyBookedOverride: false, autoCloseHoursAfter: '',
+      description: null, imageryId: '' })
     setEditingId(null)
     setFormError(null)
     setRepeatFreq('none')
@@ -156,6 +185,8 @@ export default function ConsoleEventsPage() {
       status: ev.status,
       fullyBookedOverride: ev.fullyBookedOverride,
       autoCloseHoursAfter: ev.autoCloseHoursAfter != null ? String(ev.autoCloseHoursAfter) : '',
+      description: ev.description ?? null,
+      imageryId: String(ev.imageryId || ''),
     })
     setFormError(null)
     setModalOpen(true)
@@ -210,6 +241,9 @@ export default function ConsoleEventsPage() {
         capacity: capacityNum,
         pricePerPerson: priceNum,
         locationRef: form.locationRef,
+        description: form.description,
+        // null clears the image; the API coerces the id to a number.
+        imageryId: form.imageryId || null,
         status: form.status,
         fullyBookedOverride: form.fullyBookedOverride,
         autoCloseHoursAfter: form.autoCloseHoursAfter === '' ? null : Number(form.autoCloseHoursAfter),
@@ -461,9 +495,9 @@ export default function ConsoleEventsPage() {
               </div>
               {applyTo === 'future' && (
                 <p className="mt-2 text-xs text-text-light">
-                  Title, service, capacity, price, location, status and start/end
-                  times propagate to later occurrences. Each occurrence keeps its
-                  own date.
+                  Title, service, capacity, price, location, description, image,
+                  status and start/end times propagate to later occurrences. Each
+                  occurrence keeps its own date.
                 </p>
               )}
             </div>
@@ -505,6 +539,34 @@ export default function ConsoleEventsPage() {
             <input type="text" value={form.locationRef} onChange={(e) => setForm(p => ({ ...p, locationRef: e.target.value }))}
               className="w-full rounded-lg border border-border px-4 py-2.5 text-sm text-lunar-green focus:outline-none focus:ring-2 focus:ring-lunar-green/30"
               style={{ boxSizing: 'border-box' }} />
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-lunar-green mb-1">Description</label>
+            <RichTextEditor
+              value={form.description}
+              onChange={(v) => setForm(p => ({ ...p, description: v }))}
+              placeholder="Describe this event..."
+            />
+            <p className="mt-1 text-xs text-text-light">Optional. Shown in the event&apos;s &ldquo;Read more&rdquo; view and on its page. Leave empty to use the service&apos;s description.</p>
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-lunar-green mb-1">Image</label>
+            <select value={form.imageryId} onChange={(e) => setForm(p => ({ ...p, imageryId: e.target.value }))}
+              className="w-full rounded-lg border border-border px-4 py-2.5 text-sm text-lunar-green bg-surface focus:outline-none focus:ring-2 focus:ring-lunar-green/30"
+              style={{ boxSizing: 'border-box' }}>
+              <option value="">None</option>
+              {media.map(m => (
+                <option key={String(m.id)} value={String(m.id)}>{m.filename}</option>
+              ))}
+            </select>
+            {form.imageryId && (() => {
+              const selected = media.find(m => String(m.id) === form.imageryId)
+              return selected?.url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={selected.url} alt="" className="mt-2 h-24 w-auto rounded-md border border-border object-cover" />
+              ) : null
+            })()}
+            <p className="mt-1 text-xs text-text-light">Optional. Leave as None to use the service&apos;s image.</p>
           </div>
           <div className="flex items-center gap-4">
             <div>

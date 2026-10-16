@@ -6,6 +6,7 @@ import * as migration_20260927_001_add_viva_payment_method_enum from './20260927
 import * as migration_20260928_001_add_payment_deadline from './20260928_001_add_payment_deadline';
 import * as migration_20260928_002_waitlist_lifecycle from './20260928_002_waitlist_lifecycle';
 import * as migration_20260928_003_data_protection_policy from './20260928_003_data_protection_policy';
+import * as migration_20261013_001_event_description_imagery from './20261013_001_event_description_imagery';
 
 export const migrations = [
   {
@@ -47,5 +48,10 @@ export const migrations = [
     up: migration_20260928_003_data_protection_policy.up,
     down: migration_20260928_003_data_protection_policy.down,
     name: '20260928_003_data_protection_policy'
+  },
+  {
+    up: migration_20261013_001_event_description_imagery.up,
+    down: migration_20261013_001_event_description_imagery.down,
+    name: '20261013_001_event_description_imagery'
   },
 ];

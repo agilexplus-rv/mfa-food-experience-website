@@ -55,6 +55,10 @@ export default async function ServicePage({ params }: PageProps) {
     endTime: e.endTime,
     pricePerPerson: e.pricePerPerson,
     locationRef: e.locationRef,
+    // "Read more" shows the event's own text/photo, else the service's.
+    descriptionHtml: e.descriptionHtml ?? descriptionHtml,
+    imageUrl: e.imageryUrl ?? imageryUrl,
+    imageAlt: e.imageryUrl ? e.imageryAlt : imageryAlt,
   }))
 
   return (

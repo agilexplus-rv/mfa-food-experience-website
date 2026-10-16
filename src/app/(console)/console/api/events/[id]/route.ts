@@ -102,6 +102,23 @@ export async function PATCH(
   if (body.service !== undefined && body.service !== null && body.service !== '') {
     body.service = Number(typeof body.service === 'object' ? body.service.id : body.service)
   }
+  // Optional per-event description; anything but a Lexical object clears it.
+  if ('description' in body) {
+    body.description = body.description && typeof body.description === 'object' ? body.description : null
+  }
+  // Optional per-event image: the form sends imageryId (string id, or
+  // null/'' to clear); Payload's field is 'imagery' with an integer FK.
+  if ('imageryId' in body) {
+    const raw = body.imageryId
+    delete body.imageryId
+    if (raw === null || raw === '') {
+      body.imagery = null
+    } else {
+      const n = Number(raw)
+      if (!Number.isFinite(n)) return NextResponse.json({ error: 'invalid_imagery' }, { status: 400 })
+      body.imagery = n
+    }
+  }
   if ('autoCloseHoursAfter' in body) {
     const n = Number(body.autoCloseHoursAfter)
     body.autoCloseHoursAfter =
@@ -220,6 +237,8 @@ export async function PATCH(
               status: updated.status === 'completed' ? 'scheduled' : updated.status,
               fullyBookedOverride: updated.fullyBookedOverride ?? false,
               autoCloseHoursAfter: updated.autoCloseHoursAfter ?? null,
+              description: updated.description ?? null,
+              imagery: typeof updated.imagery === 'object' && updated.imagery ? updated.imagery.id : updated.imagery ?? null,
               seriesId: body.seriesId,
             },
             overrideAccess: true,
@@ -250,7 +269,7 @@ export async function PATCH(
       const timeOf = (dt: unknown): string | null =>
         typeof dt === 'string' && dt.includes('T') ? dt.slice(dt.indexOf('T')) : null
       const propagate: Record<string, unknown> = {}
-      for (const k of ['title', 'service', 'capacity', 'pricePerPerson', 'locationRef', 'status', 'fullyBookedOverride', 'autoCloseHoursAfter']) {
+      for (const k of ['title', 'service', 'capacity', 'pricePerPerson', 'locationRef', 'description', 'imagery', 'status', 'fullyBookedOverride', 'autoCloseHoursAfter']) {
         if (k in body) propagate[k] = body[k]
       }
       const startT = timeOf(body.startTime)

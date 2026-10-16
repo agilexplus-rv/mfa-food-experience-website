@@ -43,6 +43,8 @@ interface EventDetail {
   autoCloseHoursAfter?: number | null
   seriesId?: string | null
   service?: string | number | ServiceRelation | null
+  description?: unknown
+  imagery?: MediaRelation
 }
 
 const getEvent = cache(async function getEvent(id: string) {
@@ -73,10 +75,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 /**
  * /events/[id]: the event's own public page.
  *
- * The Events collection has no description/image of its own; both are
- * resolved from the populated `service` relation (depth 2). Replaces the
- * former "Read more" modal, clicking through from a card now lands here,
- * with the option to proceed to /book/[id].
+ * The event's own description/image are shown when set; otherwise both
+ * fall back to the populated `service` relation (depth 2). Links to
+ * /book/[id] to proceed.
  */
 export default async function EventPage({ params }: PageProps) {
   const { id } = await params
@@ -87,10 +88,18 @@ export default async function EventPage({ params }: PageProps) {
   // Events of hidden services must not resolve publicly.
   if (service && service.visible === false) notFound()
 
-  const imageUrl = service ? getMediaUrl(service.imagery ?? null) ?? undefined : undefined
+  // The event's own text/photo win; the service's are the fallback.
+  const eventImageUrl = getMediaUrl(event.imagery ?? null) ?? undefined
+  const eventDescriptionHtml = richTextToHtml(event.description) || undefined
+  const serviceImageUrl = service ? getMediaUrl(service.imagery ?? null) ?? undefined : undefined
+  const serviceDescriptionHtml = service ? richTextToHtml(service.description) || undefined : undefined
+
+  const imageUrl = eventImageUrl ?? serviceImageUrl
   const imageAlt =
-    (service && typeof service.imagery === 'object' && service.imagery?.alt) || event.title
-  const descriptionHtml = service ? richTextToHtml(service.description) || undefined : undefined
+    (eventImageUrl
+      ? typeof event.imagery === 'object' && event.imagery?.alt
+      : service && typeof service.imagery === 'object' && service.imagery?.alt) || event.title
+  const descriptionHtml = eventDescriptionHtml ?? serviceDescriptionHtml
 
   const availability = await getAvailability(event.id)
   const bookable = isEventBookable(event)
