@@ -374,6 +374,72 @@ export default function AdminThemeStyles() {
           text-align: right;
         }
 
+        /* Rudie 2026-10-17 (client report): both validation messages on
+           /admin/login were mis-placed.
+
+           (1) The FIELD error. Payload renders FieldError as an
+           absolutely-positioned Tooltip -- .field-error.tooltip is
+           position: absolute; right: 0; top: calc(var(--base) * -1.25)
+           with white-space: nowrap; max-width: 75%
+           (node_modules/@payloadcms/ui/dist/fields/FieldError/index.scss
+           + elements/Tooltip/index.scss). Over the login card that
+           overlaid the input itself and truncated the text
+           ("Please enter a valid email addre..."); worse, the base
+           .tooltip rule hides it entirely at <=1024px, so in a normal
+           laptop window the user saw NO field error at all. FieldError is
+           the FIRST child of .field-type__wrap, ahead of the input, so
+           making that wrap a column flexbox and giving the error
+           order: 1 drops it into normal flow BELOW the input, where it
+           wraps instead of truncating. The :has() guard scopes the
+           flexbox to when an error is actually showing, so the resting
+           layout and the password reveal button (absolute, injected by
+           AdminPasswordReveal.tsx) are untouched.
+
+           Reproduced and verified against the real page in CI
+           (login-visual-check.yml, Chromium, 900px): before, the error
+           box measured 0x0 with display: none; after, it sits at
+           535-562px directly under the input at 495-535px -- visible, no
+           overlap. That temporary diagnostic was deleted before merge.
+
+           (2) The form-level BANNER (AdminLoginError, afterLogin slot)
+           renders AFTER .login__form, so its own margin-bottom did not
+           separate it from the "Forgot password?" link above it --
+           measured gap 0px. The margin-top below gives it 24px. */
+        .login .field-type__wrap:has(> .field-error.tooltip),
+        .forgot-password .field-type__wrap:has(> .field-error.tooltip),
+        .reset-password .field-type__wrap:has(> .field-error.tooltip) {
+          display: flex;
+          flex-direction: column;
+        }
+        .login .field-type__wrap > .field-error.tooltip,
+        .forgot-password .field-type__wrap > .field-error.tooltip,
+        .reset-password .field-type__wrap > .field-error.tooltip {
+          order: 1;
+          position: static;
+          left: auto;
+          right: auto;
+          top: auto;
+          transform: none;
+          display: block;
+          visibility: visible;
+          opacity: 1;
+          max-width: 100%;
+          white-space: normal;
+          background: none;
+          color: #9C4E2F;
+          padding: 6px 0 0;
+          line-height: 1.35;
+        }
+        .login .field-error.tooltip::after,
+        .forgot-password .field-error.tooltip::after,
+        .reset-password .field-error.tooltip::after {
+          display: none;
+        }
+        .login .login__form + div,
+        .login .login__form + [role="alert"] {
+          margin-top: 24px;
+        }
+
         /* Safety net: ensure Payload/Sonner's toast notification region
            always renders fixed to the viewport, regardless of document
            flow/height changes introduced by the .template-minimal flex
