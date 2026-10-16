@@ -11,8 +11,10 @@ import { useEffect, useState } from 'react'
  * that overlay's load-time flash (see AdminSubmitOverlay.tsx), a wrong
  * password looked exactly like an instant page refresh with no visible
  * explanation. This component mirrors the error toast's message into a
- * persistent inline banner above the login form, styled to match the
- * toast (terracotta left border), so the failure is impossible to miss
+ * persistent inline banner BELOW the login form (Payload's afterLogin
+ * slot renders it after .login__form, and AdminThemeStyles.tsx supplies
+ * the 24px gap separating it from "Forgot password?"), styled to match
+ * the toast (terracotta left border), so the failure is impossible to miss
  * and doesn't depend on the user noticing a transient toast.
  *
  * Rendered in Payload's `afterLogin` slot (LoginView-only, like
