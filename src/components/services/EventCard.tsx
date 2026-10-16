@@ -1,6 +1,5 @@
 import Link from 'next/link'
 import { MtText } from '@/components/i18n/MtText'
-import { ReadMoreButton } from './ReadMoreButton'
 
 import type { EventAvailability } from '@/lib/availability-types'
 import { formatPrice } from '@/lib/availability-types'
@@ -10,10 +9,12 @@ import { formatDay, formatTimeRange } from '@/lib/format-date'
  * EventCard: single upcoming event in a service grid.
  *
  * Per FR-1.5: title, short description, next date, price per person,
- * availability status, a "Read more" button and a "Book Now" action.
+ * availability status, a "Read more" link and a booking action.
  *
- * "Read more" opens a dialog with the event's own description and photo
- * (the caller passes the service's when the event has none).
+ * "Read more" navigates to the event's own page (/events/[id]); it is
+ * deliberately NOT a dialog (client, 2026-10-17: the modal opened over the
+ * card itself, and the event page already carries the photo and the full
+ * description).
  *
  * The Events collection has no dedicated `shortDescription` field, so
  * the short description line is derived from location + time range
@@ -25,7 +26,10 @@ import { formatDay, formatTimeRange } from '@/lib/format-date'
  * border, rounded), the right affordance for a discrete bookable
  * event. Hover lifts slightly; focus-visible outlines the CTA; the
  * primary CTA is the explicit Terracotta button per the brand spec.
- * Fully-booked cards disable the CTA and dim it (no false affordance).
+ * A fully-booked card swaps its CTA for the secondary (Lunar Green,
+ * outlined) "Join waitlist" action rather than a dead grey button --
+ * the event page and /book/[id] both offer the waitlist, so the card
+ * should lead there instead of looking disabled.
  */
 export interface EventCardProps {
   /** Event id, used to build the booking link (Phase 2). */
@@ -43,9 +47,7 @@ export interface EventCardProps {
   shortDescription?: string
   /** Optional href for the card/CTA link. Defaults to the event booking route. */
   href?: string
-  /** Pre-rendered HTML shown in the "Read more" dialog. */
-  descriptionHtml?: string
-  /** Image shown in the "Read more" dialog. */
+  /** Event photo shown on the card; a green plate stands in when absent. */
   imageUrl?: string
   imageAlt?: string
 }
@@ -79,7 +81,6 @@ export function EventCard({
   availability,
   shortDescription,
   href,
-  descriptionHtml,
   imageUrl,
   imageAlt,
 }: EventCardProps) {
@@ -138,36 +139,40 @@ export function EventCard({
         {/* Spacer */}
         <div className="flex-1" />
 
-        {/* Read more, opens a dialog with the event's text + photo */}
+        {/* Read more, opens the event's own page (not a dialog) */}
         <div className="mt-3">
-          <ReadMoreButton
-            content={{
-              title,
-              subtitle: [formatDay(date), timeRange, `${formatPrice(pricePerPerson)} inc. VAT`].filter(Boolean).join(' · '),
-              descriptionHtml,
-              imageUrl,
-              imageAlt,
-              bookHref: fullyBooked ? undefined : linkHref,
-            }}
-          />
+          <Link
+            href={`/events/${id}`}
+            className="inline-flex items-center gap-1 text-sm font-semibold text-accent-text transition-colors hover:text-lunar-green focus:outline-2 focus:outline-offset-2 focus:outline-lunar-green"
+          >
+            <MtText en="Read more" mt="Aqra iktar" />
+            <span className="sr-only">about {title}</span>
+            <span aria-hidden="true">&rarr;</span>
+          </Link>
         </div>
 
         <div className="mt-4 pt-4 border-t border-border">
+          {/* Fully booked is not a dead end: swap the primary booking CTA for
+              the secondary (outlined Lunar Green) waitlist action -- /book/[id]
+              renders the waitlist form for a full event. py-2 plus the 2px
+              border keeps this the same height as the py-2.5 primary. */}
           <Link
             href={linkHref}
-            aria-label={fullyBooked ? `${title}, fully booked` : `Book ${title}`}
-            aria-disabled={fullyBooked}
-            tabIndex={fullyBooked ? -1 : 0}
+            aria-label={fullyBooked ? `Join the waitlist for ${title}` : `Book ${title}`}
             className={[
-              'flex w-full items-center justify-center gap-1.5 rounded-lg px-5 py-2.5 text-sm font-bold transition-colors',
-              'focus:outline-2 focus:outline-offset-2 focus:outline-terracotta',
+              'flex w-full items-center justify-center gap-1.5 rounded-lg px-5 text-sm font-bold transition-colors',
+              'focus:outline-2 focus:outline-offset-2 focus:outline-lunar-green',
               fullyBooked
-                ? 'cursor-not-allowed bg-lunar-green/10 text-lunar-green/50'
-                : 'bg-terracotta-dark text-white hover:bg-terracotta/85',
+                ? 'border-2 border-lunar-green py-2 text-lunar-green hover:bg-lunar-green hover:text-soft-beige'
+                : 'bg-terracotta-dark py-2.5 text-white hover:bg-terracotta/85',
             ].join(' ')}
           >
-            {fullyBooked ? <MtText en="Fully booked" mt="Kollox mibbukkjat" /> : <MtText en="Book Now" mt="Ibbukkja Issa" />}
-            {!fullyBooked && <span aria-hidden="true">&rarr;</span>}
+            {fullyBooked ? (
+              <MtText en="Join waitlist" mt="Ingħaqad mal-lista tal-istennija" />
+            ) : (
+              <MtText en="Book Now" mt="Ibbukkja Issa" />
+            )}
+            <span aria-hidden="true">&rarr;</span>
           </Link>
         </div>
       </div>

@@ -155,20 +155,26 @@ export async function ComingEvents() {
                         {remaining} {remaining === 1 ? 'seat' : 'seats'} left
                       </span>
                     )}
+                    {/* Fully booked is not a dead end: the CTA becomes the
+                        secondary (outlined Lunar Green) waitlist action, and
+                        /book/[id] renders the waitlist form for a full event.
+                        py-1 plus the 2px border matches the py-1.5 primary. */}
                     <Link
-                      href={fullyBooked ? '/services' : bookHref}
-                      aria-label={fullyBooked ? `${event.title}, fully booked` : `Book ${event.title}`}
-                      aria-disabled={fullyBooked}
-                      tabIndex={fullyBooked ? -1 : 0}
+                      href={bookHref}
+                      aria-label={fullyBooked ? `Join the waitlist for ${event.title}` : `Book ${event.title}`}
                       className={[
-                        'inline-flex shrink-0 items-center justify-center rounded-lg px-4 py-1.5 text-sm font-bold transition-colors',
-                        'focus:outline-2 focus:outline-offset-2 focus:outline-terracotta',
+                        'inline-flex shrink-0 items-center justify-center rounded-lg px-4 text-sm font-bold transition-colors',
+                        'focus:outline-2 focus:outline-offset-2 focus:outline-lunar-green',
                         fullyBooked
-                          ? 'cursor-not-allowed bg-lunar-green/10 text-lunar-green/50'
-                          : 'bg-terracotta-dark text-white hover:bg-terracotta-dark/85',
+                          ? 'border-2 border-lunar-green py-1 text-lunar-green hover:bg-lunar-green hover:text-soft-beige'
+                          : 'bg-terracotta-dark py-1.5 text-white hover:bg-terracotta-dark/85',
                       ].join(' ')}
                     >
-                      {fullyBooked ? <MtText en="Full" mt="Mimli" /> : <MtText en="Book Now" mt="Ibbukkja Issa" />}
+                      {fullyBooked ? (
+                        <MtText en="Join waitlist" mt="Ingħaqad mal-lista tal-istennija" />
+                      ) : (
+                        <MtText en="Book Now" mt="Ibbukkja Issa" />
+                      )}
                     </Link>
                   </div>
                 </div>
