@@ -25,8 +25,7 @@ export interface GridEvent {
   pricePerPerson: number
   locationRef: string
   shortDescription?: string
-  /** Pre-rendered HTML for the "Read more" dialog. */
-  descriptionHtml?: string
+  /** Event photo for the card; the card shows a green plate when absent. */
   imageUrl?: string
   imageAlt?: string
 }
@@ -111,7 +110,6 @@ export function EventGrid({ events, availability, eventHref }: EventGridProps) {
                 locationRef={e.locationRef}
                 availability={av}
                 shortDescription={e.shortDescription}
-                descriptionHtml={e.descriptionHtml}
                 imageUrl={e.imageUrl}
                 imageAlt={e.imageAlt}
                 href={eventHref?.(e.id)}

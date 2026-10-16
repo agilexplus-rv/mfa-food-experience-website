@@ -43,10 +43,8 @@ export interface ServiceSummary {
 
 export type ServiceDetail = ServiceSummary
 
-/** An upcoming event plus its own "Read more" content (empty → use the service's). */
+/** An upcoming event plus the card photo resolution (empty → use the service's). */
 export interface ServiceEvent extends EventDoc {
-  /** The event's own description rendered to HTML. */
-  descriptionHtml?: string
   /** The event's own image URL. */
   imageryUrl?: string
   /** Alt text for the event's own image. */
@@ -170,7 +168,6 @@ export const getServiceEvents = cache(async function getServiceEvents(serviceId:
 
   const events: ServiceEvent[] = (res.docs as unknown as EventDoc[]).map((e) => ({
     ...e,
-    descriptionHtml: richTextToHtml(e.description) || undefined,
     imageryUrl: getMediaUrl(e.imagery ?? null) ?? undefined,
     imageryAlt: (typeof e.imagery === 'object' && e.imagery?.alt) || undefined,
   }))
