@@ -4,12 +4,15 @@ import Link from 'next/link'
 import { MtText } from '@/components/i18n/MtText'
 import { formatPrice, getAvailabilityForEvents } from '@/lib/availability'
 import { formatDay, formatTimeRange } from '@/lib/format-date'
+import { getMediaUrl } from '@/lib/payload'
 import type { EventDoc } from '@/lib/availability-types'
+import type { MediaRelation } from '@/payload-types'
 
 /**
  * Upcoming Experiences section (FR-7.1).
  * Shows upcoming experiences across VISIBLE services, with availability,
- * a "Read more" link (to the event's own page) and Book Now.
+ * the event's photo, a "Read more" link (to the event's own page) and
+ * Book Now.
  */
 
 /** The event's service relation is an id or (at depth >= 1) the populated doc. */
@@ -17,6 +20,19 @@ function serviceIdOf(ev: EventDoc): string {
   const svc = (ev as unknown as { service?: string | number | { id?: string | number } | null }).service
   if (svc && typeof svc === 'object') return svc.id != null ? String(svc.id) : ''
   return svc != null ? String(svc) : ''
+}
+
+/**
+ * Card photo: the event's own image, else its service's -- the same
+ * fallback the event page and the "Read more" dialog already use. Only
+ * when neither exists does the green plate stand in (see the render).
+ */
+function cardImage(ev: EventDoc, serviceImagery: MediaRelation): { url?: string; alt: string } {
+  const img = (ev.imagery ?? serviceImagery) ?? null
+  return {
+    url: getMediaUrl(img) ?? undefined,
+    alt: (typeof img === 'object' && img?.alt) || ev.title,
+  }
 }
 export async function ComingEvents() {
   const payload = await getPayload({ config })
@@ -34,21 +50,23 @@ export async function ComingEvents() {
     },
     sort: 'date',
     limit: 18,
-    depth: 0,
+    // depth 1 populates each event's own `imagery` upload for the card photo.
+    depth: 1,
   })
 
   const candidates = docs as unknown as EventDoc[]
 
-  // Resolve each event's service visibility. This previously did
+  // Resolve each event's service visibility (and imagery, used as the
+  // card photo's fallback). This previously did
   // String(event.service) on a populated object, producing "[object
   // Object]", so every lookup failed and cards were dropped entirely.
-  const serviceInfo = new Map<string, { visible: boolean }>()
+  const serviceInfo = new Map<string, { visible: boolean; imagery?: MediaRelation }>()
   await Promise.all(
     [...new Set(candidates.map(serviceIdOf).filter(Boolean))].map(async (sid) => {
       try {
-        const svc = await payload.findByID({ collection: 'services', id: sid, depth: 0, overrideAccess: true })
-        const s = svc as unknown as { visible?: boolean }
-        serviceInfo.set(sid, { visible: Boolean(s.visible) })
+        const svc = await payload.findByID({ collection: 'services', id: sid, depth: 1, overrideAccess: true })
+        const s = svc as unknown as { visible?: boolean; imagery?: MediaRelation }
+        serviceInfo.set(sid, { visible: Boolean(s.visible), imagery: s.imagery })
       } catch {
         serviceInfo.set(sid, { visible: false })
       }
@@ -82,11 +100,25 @@ export async function ComingEvents() {
             const remaining = avail?.remaining ?? event.capacity ?? 0
             const fullyBooked = avail?.status === 'fully_booked'
             const bookHref = `/book/${event.id}`
+            const image = cardImage(event, serviceInfo.get(serviceIdOf(event))?.imagery)
             return (
               <article
                 key={String(event.id)}
                 className="flex h-full flex-col overflow-hidden rounded-lg border border-matte-gold/20 bg-white shadow-sm"
               >
+                {/* Event photo, else its service's; a blank Lunar Green
+                    plate (as on the services cards) when neither exists. */}
+                <div className="relative aspect-[16/9] w-full shrink-0 overflow-hidden bg-lunar-green">
+                  {image.url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={image.url} alt={image.alt} className="h-full w-full object-cover" />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center px-6 text-center">
+                      <span className="text-sm font-semibold text-soft-beige">{event.title}</span>
+                    </div>
+                  )}
+                </div>
+
                 <div className="flex flex-1 flex-col p-6">
                   <h3 className="font-bold text-xl text-lunar-green">{event.title}</h3>
                   <p className="mt-1 text-sm text-text-light">
