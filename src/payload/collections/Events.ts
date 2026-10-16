@@ -259,6 +259,18 @@ export const Events: CollectionConfig = {
       required: true,
     },
     {
+      // Optional per-event copy for "Read more" and /events/[id]; falls
+      // back to the parent service's description when empty.
+      name: 'description',
+      type: 'richText',
+    },
+    {
+      // Optional per-event hero photo; falls back to the service's imagery.
+      name: 'imagery',
+      type: 'upload',
+      relationTo: 'media',
+    },
+    {
       name: 'status',
       type: 'select',
       options: [

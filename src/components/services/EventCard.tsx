@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { MtText } from '@/components/i18n/MtText'
+import { ReadMoreButton } from './ReadMoreButton'
 
 import type { EventAvailability } from '@/lib/availability-types'
 import { formatPrice } from '@/lib/availability-types'
@@ -9,8 +10,10 @@ import { formatDay, formatTimeRange } from '@/lib/format-date'
  * EventCard: single upcoming event in a service grid.
  *
  * Per FR-1.5: title, short description, next date, price per person,
- * availability status, a "Read more" link (to the event's own page) and
- * a "Book Now" action.
+ * availability status, a "Read more" button and a "Book Now" action.
+ *
+ * "Read more" opens a dialog with the event's own description and photo
+ * (the caller passes the service's when the event has none).
  *
  * The Events collection has no dedicated `shortDescription` field, so
  * the short description line is derived from location + time range
@@ -40,6 +43,11 @@ export interface EventCardProps {
   shortDescription?: string
   /** Optional href for the card/CTA link. Defaults to the event booking route. */
   href?: string
+  /** Pre-rendered HTML shown in the "Read more" dialog. */
+  descriptionHtml?: string
+  /** Image shown in the "Read more" dialog. */
+  imageUrl?: string
+  imageAlt?: string
 }
 
 function AvailabilityBadge({ availability }: { availability: EventAvailability }) {
@@ -71,6 +79,9 @@ export function EventCard({
   availability,
   shortDescription,
   href,
+  descriptionHtml,
+  imageUrl,
+  imageAlt,
 }: EventCardProps) {
   const timeRange = formatTimeRange(startTime, endTime)
   const fallbackDesc = [locationRef, timeRange].filter(Boolean).join(' · ')
@@ -112,16 +123,18 @@ export function EventCard({
         {/* Spacer */}
         <div className="flex-1" />
 
-        {/* Read more, links to the event's own page */}
+        {/* Read more, opens a dialog with the event's text + photo */}
         <div className="mt-3">
-          <Link
-            href={`/events/${id}`}
-            className="inline-flex items-center gap-1 text-sm font-semibold text-accent-text transition-colors hover:text-lunar-green focus:outline-2 focus:outline-offset-2 focus:outline-lunar-green"
-          >
-            <MtText en="Read more" mt="Aqra iktar" />
-            <span className="sr-only">about {title}</span>
-            <span aria-hidden="true">&rarr;</span>
-          </Link>
+          <ReadMoreButton
+            content={{
+              title,
+              subtitle: [formatDay(date), timeRange, `${formatPrice(pricePerPerson)} inc. VAT`].filter(Boolean).join(' · '),
+              descriptionHtml,
+              imageUrl,
+              imageAlt,
+              bookHref: fullyBooked ? undefined : linkHref,
+            }}
+          />
         </div>
 
         <div className="mt-4 pt-4 border-t border-border">

@@ -46,10 +46,11 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
       }, { status: 409 })
     }
 
-    // Block delete if media is referenced by any service or news item
-    const refChecks: { collection: string; field: string }[] = [
-      { collection: 'services', field: 'imagery' },
-      { collection: 'news_items', field: 'image' },
+    // Block delete if media is referenced by any service, event or news item
+    const refChecks: { collection: string; field: string; label: string }[] = [
+      { collection: 'services', field: 'imagery', label: 'a service' },
+      { collection: 'events', field: 'imagery', label: 'an event' },
+      { collection: 'news_items', field: 'image', label: 'a news item' },
     ]
 
     for (const check of refChecks) {
@@ -64,7 +65,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
         const doc = refResult.docs[0] as any
         return NextResponse.json({
           error: 'referenced',
-          message: `This media is still referenced by a ${check.collection === 'services' ? 'service' : 'news item'} (${doc.title || doc.name || 'untitled'}). Remove the reference first.`,
+          message: `This media is still referenced by ${check.label} (${doc.title || doc.name || 'untitled'}). Remove the reference first.`,
         }, { status: 409 })
       }
     }

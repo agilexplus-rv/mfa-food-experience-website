@@ -7,6 +7,8 @@
  * FR-2.3 / FR-2.4 — remaining seats = capacity − booked − active holds.
  */
 
+import type { MediaRelation } from '@/payload-types'
+
 export type AvailabilityStatus = 'available' | 'limited' | 'fully_booked'
 
 export interface EventAvailability {
@@ -37,6 +39,10 @@ export interface EventDoc {
   status: 'scheduled' | 'cancelled' | 'completed'
   fullyBookedOverride?: boolean
   service?: string | number | { id: string | number }
+  /** Optional per-event Lexical description (falls back to the service's). */
+  description?: unknown
+  /** Optional per-event hero image (falls back to the service's). */
+  imagery?: MediaRelation
 }
 
 export function formatPrice(perPerson: number): string {

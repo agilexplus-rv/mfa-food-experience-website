@@ -311,11 +311,13 @@ export const HELP_CATEGORIES: HelpCategory[] = [
           'Leave **Repeat** set to **Does not repeat**.',
           'Set **Start Time** and **End Time**. An end time earlier than the start means the event runs past midnight.',
           'Enter **Capacity** (seats), **Price/person (EUR)** and **Location**.',
+          'Optionally write a **Description** and choose an **Image** for this event (see the tip below).',
           'Leave **Status** as **Scheduled**. Optionally set **Auto-close before (hours)** (see "Set a booking cutoff").',
           'Click **Create Event**.',
         ],
         notes: [
           { kind: 'prereq', text: 'The service must already exist. Create it on the **Services** page first.' },
+          { kind: 'tip', text: '**Description** and **Image** are optional. When set, the public site shows them in the event card\'s **Read more** window and on the event\'s own page. Leave them empty (or **Image** as **None**) to show the service\'s description and image instead. Upload the image on the **Media** page first.' },
         ],
       },
       {
@@ -349,7 +351,8 @@ export const HELP_CATEGORIES: HelpCategory[] = [
           'Click **Save Changes**.',
         ],
         notes: [
-          { kind: 'tip', text: '**This and future events** copies title, service, capacity, price, location, status and start/end times to later dates. Each occurrence keeps its own date.' },
+          { kind: 'tip', text: '**This and future events** copies title, service, capacity, price, location, description, image, status and start/end times to later dates. Each occurrence keeps its own date.' },
+          { kind: 'tip', text: 'To give an event its own text and photo, fill in **Description** and choose an **Image**. Clear the description and set **Image** to **None** to go back to the service\'s.' },
         ],
       },
       {
@@ -669,7 +672,7 @@ export const HELP_CATEGORIES: HelpCategory[] = [
           'Click **+ Upload**.',
           'Click **Click to select an image** and choose a PNG, JPG or WebP file up to 10MB.',
           'Describe the image in **Alt Text** (read aloud to visually impaired visitors), e.g. "Chef plating ftira at the Valletta market".',
-          'Click **Upload**. The image appears in the library and in the image pickers for services, news and site settings.',
+          'Click **Upload**. The image appears in the library and in the image pickers for services, events, news and site settings.',
         ],
       },
       {
@@ -685,7 +688,7 @@ export const HELP_CATEGORIES: HelpCategory[] = [
           'To delete, click **Delete** and confirm the browser prompt. Otherwise click **Close**.',
         ],
         notes: [
-          { kind: 'warning', text: 'Deleted images cannot be recovered. Images used by a service, a news article or as the homepage hero (**Settings → Site Settings**) cannot be deleted until you remove them there first.' },
+          { kind: 'warning', text: 'Deleted images cannot be recovered. Images used by a service, an event, a news article or as the homepage hero (**Settings → Site Settings**) cannot be deleted until you remove them there first.' },
         ],
       },
     ],
