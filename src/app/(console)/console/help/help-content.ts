@@ -77,7 +77,7 @@ export const HELP_CATEGORIES: HelpCategory[] = [
           'Click **← Back to Bookings** to return to the list.',
         ],
         notes: [
-          { kind: 'tip', text: 'Booking Detail is read-only. **Cancel**, **Resend** and **No-show** are buttons on the booking\'s row in the Bookings list.' },
+          { kind: 'tip', text: 'Booking Detail is read-only. **Cancel**, **Resend** and **No-show** are icon buttons in the **Actions** column of the booking\'s row in the Bookings list. Hover an icon to see its name.' },
         ],
       },
       {
@@ -108,7 +108,7 @@ export const HELP_CATEGORIES: HelpCategory[] = [
         steps: [
           'Click **Bookings** in the sidebar and search for the booking.',
           'Check the reference, event and attendee carefully. Open the row if you need to be sure, then click **← Back to Bookings**.',
-          'In the **Actions** column, click **Cancel**.',
+          'In the **Actions** column, click the **Cancel** icon (a circle with a slash, terracotta). Hover it first to confirm the tooltip reads **Cancel booking**.',
           'Wait for the list to refresh. The status changes to **cancelled**, and a **refund:** badge appears if a refund was issued.',
           'If an alert reading `refund_failed` appears, the booking was NOT cancelled. Try again later or check the payment in Viva.',
           'Open the booking and read **Refund Status** / **Refund ID** to confirm the refund.',
@@ -145,13 +145,13 @@ export const HELP_CATEGORIES: HelpCategory[] = [
           'Open the **Bookings Dashboard** by typing `/dashboard` after the site address in your browser.',
           'Search for the booking by reference, name or email and click **Search**.',
           'Check the **Status** is **confirmed**. **Resend** only appears on confirmed bookings.',
-          'In the **Actions** column, click **Resend**.',
+          'In the **Actions** column, click the **Resend** icon (a paper-plane, green). Hover it first to confirm the tooltip reads **Resend confirmation email**.',
           'Wait for the alert **Confirmation email resent.**',
           'Ask the guest to check their spam folder, and to use the NEW email: its QR code replaces the old one.',
         ],
         notes: [
           { kind: 'warning', text: 'Resending issues a new QR code, and the QR in any earlier email stops working.' },
-          { kind: 'tip', text: 'The **Resend** button on a confirmed booking\'s row in the console **Bookings** list does the same thing.' },
+          { kind: 'tip', text: 'The **Resend** icon on a confirmed booking\'s row in the console **Bookings** list does the same thing.' },
         ],
       },
       {
@@ -162,7 +162,7 @@ export const HELP_CATEGORIES: HelpCategory[] = [
         steps: [
           'Click **Bookings** in the sidebar.',
           'Search for the booking. **No-show** only appears on **confirmed** bookings that were never checked in.',
-          'In the **Actions** column, click **No-show**.',
+          'In the **Actions** column, click the **No-show** icon (a person with an X beside it, gold). Hover it first to confirm the tooltip reads **Mark as no-show**.',
           'The row now shows a red **NO-SHOW** badge, and **Booking Detail** shows **Marked as No-Show**.',
           'No-shows are counted in the `No-shows` column of the events CSV export.',
         ],
