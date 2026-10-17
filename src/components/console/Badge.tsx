@@ -43,9 +43,15 @@ export default function Badge({ children, variant, className = '' }: BadgeProps)
     ? (STATUS_COLORS[variant] || 'bg-gray-100 text-gray-600')
     : 'bg-gray-100 text-gray-600'
 
+  // whitespace-nowrap: a badge is one short label and must never break
+  // mid-label. Without it, two-word statuses wrapped inside the pill in a
+  // narrow table column -- 'checked in' rendered as 'checked' / 'in' on two
+  // lines in the bookings table (reported 2026-10-17). Cells holding several
+  // badges still wrap as a GROUP (they use flex-wrap); only the text inside
+  // one pill is kept on a single line.
   return (
     <span
-      className={['inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold', colorClass, className].join(' ')}
+      className={['inline-block whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-semibold', colorClass, className].join(' ')}
     >
       {children}
     </span>
