@@ -2,6 +2,8 @@
 
 import { useState } from 'react'
 
+import { SELECT_CHEVRON } from '@/lib/ui/select-chevron'
+
 interface WaitlistFormProps {
   eventId: string | number
 }
@@ -99,10 +101,14 @@ export function WaitlistForm({ eventId }: WaitlistFormProps) {
           </div>
           <div>
             <label className="block text-xs font-semibold text-lunar-green mb-1">Persons</label>
+            {/* appearance-none + brand chevron so this dropdown matches the
+                text inputs' height/radius/border exactly while staying a real
+                <select> (see src/lib/ui/select-chevron.ts). */}
             <select
               value={persons}
               onChange={(e) => setPersons(Number(e.target.value))}
-              className="w-full rounded-lg border border-border px-4 py-2.5 text-sm text-lunar-green bg-surface focus:outline-none focus:ring-2 focus:ring-lunar-green/30"
+              className="w-full appearance-none cursor-pointer rounded-lg border border-border bg-surface py-2.5 pl-4 text-sm text-lunar-green focus:outline-none focus:ring-2 focus:ring-lunar-green/30"
+              style={SELECT_CHEVRON}
             >
               {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
                 <option key={n} value={n}>{n}</option>

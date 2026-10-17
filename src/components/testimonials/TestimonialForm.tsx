@@ -4,6 +4,7 @@ import { useActionState } from 'react'
 
 import type { TestimonialSubmissionResult } from '@/app/(frontend)/testimonials/actions'
 import { submitTestimonial } from '@/app/(frontend)/testimonials/actions'
+import { SELECT_CHEVRON } from '@/lib/ui/select-chevron'
 
 export interface EventOption {
   id: string
@@ -96,7 +97,8 @@ export function TestimonialForm({ events }: TestimonialFormProps) {
           <select
             id="testimonial-event"
             name="event"
-            className={inputClass}
+            className={`${inputClass} appearance-none cursor-pointer`}
+            style={SELECT_CHEVRON}
           >
             <option value="">Select an experience&hellip;</option>
             {events.map((ev) => (
