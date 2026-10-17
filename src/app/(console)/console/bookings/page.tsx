@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState, type ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
 import Button from '@/components/console/Button'
 import Badge from '@/components/console/Badge'
@@ -71,6 +71,60 @@ function formatDateTime(iso: string | null): string {
     hour: '2-digit',
     minute: '2-digit',
   })
+}
+
+/**
+ * One icon-only row action.
+ *
+ * Icon buttons (rather than short text buttons) keep the Actions column on a
+ * single line -- three text buttons used to wrap onto two -- and each action
+ * gets its own colour so the row is scannable at a glance.
+ *
+ * The tooltip is the native `title` attribute, deliberately: the table lives
+ * in an `overflow-x-auto` wrapper (and the card clips its corners), so an
+ * absolutely-positioned CSS tooltip would be cut off at the row edges.
+ * `aria-label` carries the same text as the accessible name, and the SVG is
+ * aria-hidden so the icon is not announced twice.
+ */
+function RowAction({
+  label,
+  colour,
+  onClick,
+  disabled,
+  busy,
+  children,
+}: {
+  label: string
+  colour: string
+  onClick: () => void
+  disabled?: boolean
+  busy?: boolean
+  children: ReactNode
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      title={label}
+      aria-label={label}
+      className={[
+        'inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md transition-colors',
+        'focus:outline-2 focus:outline-offset-2 focus:outline-lunar-green',
+        'disabled:cursor-not-allowed disabled:opacity-40',
+        colour,
+      ].join(' ')}
+    >
+      {busy ? (
+        <span
+          aria-hidden="true"
+          className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"
+        />
+      ) : (
+        children
+      )}
+    </button>
+  )
 }
 
 export default function ConsoleBookingsPage() {
@@ -350,33 +404,51 @@ export default function ConsoleBookingsPage() {
                       <td className="px-4 py-3 text-xs text-text-light">{formatDateTime(b.checkedInAt)}</td>
                       <td className="px-4 py-3 text-xs text-text-light">{b.checkInStaffName || '-'}</td>
                       <td className="px-4 py-3 text-center" onClick={(e) => e.stopPropagation()}>
-                        <div className="flex items-center justify-center gap-1 flex-wrap">
+                        {/* No flex-wrap: icon buttons are narrow enough that
+                            every action stays on one line. */}
+                        <div className="flex items-center justify-center gap-1">
                           {b.status !== 'cancelled' && (
-                            <button
+                            <RowAction
+                              label="Cancel booking"
+                              colour="text-[#9C4E2F] hover:bg-terracotta/10"
                               onClick={() => handleAction(b, 'cancel')}
                               disabled={actionId === b.id}
-                              className="rounded-md border border-terracotta px-2 py-0.5 text-[10px] font-semibold text-[#9C4E2F] hover:bg-terracotta hover:text-white disabled:opacity-40 transition-colors"
+                              busy={actionId === b.id && actionType === 'cancel'}
                             >
-                              {actionId === b.id && actionType === 'cancel' ? '...' : 'Cancel'}
-                            </button>
+                              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                                <circle cx="12" cy="12" r="9" strokeLinecap="round" strokeLinejoin="round" />
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M5.64 5.64l12.72 12.72" />
+                              </svg>
+                            </RowAction>
                           )}
                           {b.status === 'confirmed' && (
-                            <button
+                            <RowAction
+                              label="Resend confirmation email"
+                              colour="text-lunar-green hover:bg-lunar-green/10"
                               onClick={() => handleAction(b, 'resend')}
                               disabled={actionId === b.id}
-                              className="rounded-md border border-lunar-green px-2 py-0.5 text-[10px] font-semibold text-lunar-green hover:bg-lunar-green hover:text-white disabled:opacity-40 transition-colors"
+                              busy={actionId === b.id && actionType === 'resend'}
                             >
-                              {actionId === b.id && actionType === 'resend' ? '...' : 'Resend'}
-                            </button>
+                              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M22 2L11 13" />
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M22 2l-7 20-4-9-9-4 20-7z" />
+                              </svg>
+                            </RowAction>
                           )}
                           {canNoShow && (
-                            <button
+                            <RowAction
+                              label="Mark as no-show"
+                              colour="text-accent-text hover:bg-accent-text/10"
                               onClick={() => handleAction(b, 'no-show')}
                               disabled={actionId === b.id}
-                              className="rounded-md border border-accent-text px-2 py-0.5 text-[10px] font-semibold text-accent-text hover:bg-accent-text hover:text-white disabled:opacity-40 transition-colors"
+                              busy={actionId === b.id && actionType === 'no-show'}
                             >
-                              {actionId === b.id && actionType === 'no-show' ? '...' : 'No-show'}
-                            </button>
+                              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                                <circle cx="9" cy="7" r="4" strokeLinecap="round" strokeLinejoin="round" />
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l5 5M22 8l-5 5" />
+                              </svg>
+                            </RowAction>
                           )}
                           {b.status === 'cancelled' && (
                             <span className="text-[10px] text-text-light">{'-'}</span>
