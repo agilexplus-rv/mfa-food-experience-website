@@ -8,6 +8,7 @@ import Card from '@/components/console/Card'
 import Modal from '@/components/console/Modal'
 import { Pagination } from '@/components/console/DataTable'
 import RichTextEditor from '@/components/console/editor/RichTextEditor'
+import RowAction from '@/components/console/RowAction'
 
 interface ServiceRow {
   id: string | number
@@ -219,12 +220,18 @@ export default function ConsoleServicesPage() {
                     </td>
                     <td className="px-4 py-3 text-center">
                       <div className="flex items-center justify-center gap-1">
-                        <button onClick={() => openEdit(sv)} className="rounded-md border border-lunar-green px-2 py-0.5 text-[10px] font-semibold text-lunar-green hover:bg-lunar-green hover:text-white transition-colors">
-                          Edit
-                        </button>
-                        <button onClick={() => setDeleteTarget(sv)} className="rounded-md border border-terracotta px-2 py-0.5 text-[10px] font-semibold text-[#9C4E2F] hover:bg-terracotta hover:text-white transition-colors">
-                          Delete
-                        </button>
+                        <RowAction
+                          icon="edit"
+                          tone="positive"
+                          label="Edit service"
+                          onClick={() => openEdit(sv)}
+                        />
+                        <RowAction
+                          icon="delete"
+                          tone="danger"
+                          label="Delete service"
+                          onClick={() => setDeleteTarget(sv)}
+                        />
                       </div>
                     </td>
                   </tr>

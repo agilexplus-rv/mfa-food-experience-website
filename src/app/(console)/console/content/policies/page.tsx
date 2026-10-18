@@ -9,6 +9,7 @@ import Link from 'next/link'
 import { Pagination } from '@/components/console/DataTable'
 import RichTextEditor from '@/components/console/editor/RichTextEditor'
 import { getExcerpt } from '@/lib/payload'
+import RowAction from '@/components/console/RowAction'
 
 interface PolicyRow {
   id: string | number
@@ -196,12 +197,12 @@ export default function PoliciesPage() {
                     <td className="px-4 py-3 text-sm text-text-light">{p.version || '-'}</td>
                     <td className="px-4 py-3 text-sm text-text-light">{formatDate(p.reviewedAt)}</td>
                     <td className="px-4 py-3 text-center">
-                      <button
+                      <RowAction
+                        icon="edit"
+                        tone="positive"
+                        label="Edit policy"
                         onClick={() => openEdit(p)}
-                        className="rounded-md border border-lunar-green px-2 py-0.5 text-[10px] font-semibold text-lunar-green hover:bg-lunar-green hover:text-white transition-colors"
-                      >
-                        Edit
-                      </button>
+                      />
                     </td>
                   </tr>
                 ))}

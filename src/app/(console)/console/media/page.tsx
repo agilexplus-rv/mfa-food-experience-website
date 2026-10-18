@@ -6,6 +6,7 @@ import Button from '@/components/console/Button'
 import Card from '@/components/console/Card'
 import Modal from '@/components/console/Modal'
 import { Pagination } from '@/components/console/DataTable'
+import RowAction from '@/components/console/RowAction'
 
 interface MediaRow {
   id: string | number
@@ -234,19 +235,20 @@ export default function MediaLibraryPage() {
                     <td className="px-4 py-2 text-xs text-text-light">{formatDate(m.createdAt)}</td>
                     <td className="px-4 py-2 text-center">
                       <div className="flex items-center justify-center gap-1">
-                        <button
+                        <RowAction
+                          icon="view"
+                          tone="positive"
+                          label="View details"
                           onClick={() => setDetailMedia(m)}
-                          className="rounded-md border border-lunar-green px-2 py-0.5 text-[10px] font-semibold text-lunar-green hover:bg-lunar-green hover:text-white transition-colors"
-                        >
-                          View
-                        </button>
-                        <button
+                        />
+                        <RowAction
+                          icon="delete"
+                          tone="danger"
+                          label="Delete media"
                           onClick={() => handleDelete(m)}
                           disabled={actionId === m.id}
-                          className="whitespace-nowrap rounded-md border border-terracotta px-2 py-0.5 text-[10px] font-semibold text-[#9C4E2F] hover:bg-terracotta hover:text-white disabled:opacity-40 transition-colors"
-                        >
-                          {actionId === m.id ? '...' : 'Delete'}
-                        </button>
+                          busy={actionId === m.id}
+                        />
                       </div>
                     </td>
                   </tr>

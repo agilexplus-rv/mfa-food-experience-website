@@ -7,6 +7,7 @@ import Button from '@/components/console/Button'
 import Card from '@/components/console/Card'
 import { FilterBar, FilterSelect } from '@/components/console/FilterBar'
 import { Pagination } from '@/components/console/DataTable'
+import RowAction from '@/components/console/RowAction'
 
 interface WaitlistEntry {
   id: string | number
@@ -303,13 +304,13 @@ export default function WaitlistPage() {
                     </td>
                     <td className="px-4 py-3 text-center">
                       {entry.status !== 'archived' ? (
-                        <button
+                        <RowAction
+                          icon="archive"
+                          tone="accent"
+                          label="Archive entry"
                           onClick={() => void archive([entry.id])}
                           disabled={archiving}
-                          className="rounded-md border border-lunar-green px-2 py-0.5 text-[10px] font-semibold text-lunar-green hover:bg-lunar-green hover:text-white disabled:opacity-40 transition-colors"
-                        >
-                          Archive
-                        </button>
+                        />
                       ) : (
                         <span className="text-[10px] text-text-light">{'-'}</span>
                       )}

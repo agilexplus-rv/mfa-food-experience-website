@@ -7,6 +7,7 @@ import Button from '@/components/console/Button'
 import Badge from '@/components/console/Badge'
 import Card from '@/components/console/Card'
 import { Pagination } from '@/components/console/DataTable'
+import RowAction from '@/components/console/RowAction'
 
 interface TestimonialRow {
   id: string | number
@@ -168,21 +169,23 @@ export default function TestimonialsModerationPage() {
                     <td className="px-4 py-3 text-center">
                       <div className="flex items-center justify-center gap-1">
                         {t.approved ? (
-                          <button
+                          <RowAction
+                            icon="reject"
+                            tone="danger"
+                            label="Reject testimonial"
                             onClick={() => handleToggle(t.id, false)}
                             disabled={actionId === t.id}
-                            className="rounded-md border border-terracotta px-2 py-0.5 text-[10px] font-semibold text-[#9C4E2F] hover:bg-terracotta hover:text-white disabled:opacity-40 transition-colors"
-                          >
-                            {actionId === t.id ? '...' : 'Reject'}
-                          </button>
+                            busy={actionId === t.id}
+                          />
                         ) : (
-                          <button
+                          <RowAction
+                            icon="approve"
+                            tone="positive"
+                            label="Approve testimonial"
                             onClick={() => handleToggle(t.id, true)}
                             disabled={actionId === t.id}
-                            className="rounded-md border border-lunar-green px-2 py-0.5 text-[10px] font-semibold text-lunar-green hover:bg-lunar-green hover:text-white disabled:opacity-40 transition-colors"
-                          >
-                            {actionId === t.id ? '...' : 'Approve'}
-                          </button>
+                            busy={actionId === t.id}
+                          />
                         )}
                       </div>
                     </td>

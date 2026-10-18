@@ -4,6 +4,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Badge from '@/components/console/Badge'
 import Button from '@/components/console/Button'
+import RowAction from '@/components/console/RowAction'
 
 interface StaffUser {
   id: string | number
@@ -295,59 +296,66 @@ export default function StaffPage() {
                     {new Date(u.createdAt).toLocaleDateString('en-MT')}
                   </td>
                   <td className="px-4 py-3 text-center">
-                    <div className="flex items-center justify-center gap-1.5 flex-wrap">
-                      <button
+                    <div className="flex items-center justify-center gap-1.5">
+                      {/* Disabled on your own row; the label then explains why,
+                          because an icon button has no visible text to fall back on. */}
+                      <RowAction
+                        icon="power"
+                        tone={u.active ? 'danger' : 'positive'}
+                        label={
+                          isMe(u)
+                            ? 'You cannot deactivate your own account'
+                            : u.active
+                              ? 'Deactivate user'
+                              : 'Activate user'
+                        }
                         onClick={() => handleToggleActive(u)}
                         disabled={togglingId === u.id || isMe(u)}
-                        title={isMe(u) ? 'You cannot deactivate your own account' : undefined}
-                        className={'rounded-md border px-2.5 py-1 text-xs font-semibold disabled:opacity-40 transition-colors ' + (
-                          u.active
-                            ? 'border-terracotta text-[#9C4E2F] hover:bg-terracotta hover:text-white'
-                            : 'border-lunar-green text-lunar-green hover:bg-lunar-green hover:text-white'
-                        )}
-                      >
-                        {togglingId === u.id ? '...' : u.active ? 'Deactivate' : 'Activate'}
-                      </button>
-                      <button
+                        busy={togglingId === u.id}
+                      />
+                      <RowAction
+                        icon="key"
+                        tone="accent"
+                        label="Reset password"
                         onClick={() => handleResetPassword(u)}
                         disabled={resettingPwId === u.id}
-                        className="rounded-md border border-accent-text text-accent-text px-2.5 py-1 text-xs font-semibold hover:bg-accent-text hover:text-white disabled:opacity-40 transition-colors"
-                      >
-                        {resettingPwId === u.id ? '...' : 'Reset PW'}
-                      </button>
+                        busy={resettingPwId === u.id}
+                      />
                       {!isMe(u) && (
-                        <button
+                        <RowAction
+                          icon="delete"
+                          tone="danger"
+                          label="Delete user"
                           onClick={() => handleDelete(u)}
                           disabled={deletingId === u.id}
-                          className="rounded-md border border-terracotta px-2.5 py-1 text-xs font-semibold text-[#9C4E2F] hover:bg-terracotta hover:text-white disabled:opacity-40 transition-colors"
-                        >
-                          {deletingId === u.id ? '...' : 'Delete'}
-                        </button>
+                          busy={deletingId === u.id}
+                        />
                       )}
                       {u.mfaEnabled && (
                         mfaConfirmIds.has(u.id) ? (
                           <span className="inline-flex items-center gap-1">
-                            <button
+                            <RowAction
+                              icon="approve"
+                              tone="positive"
+                              label="Confirm MFA reset"
                               onClick={() => handleResetMfa(u)}
                               disabled={resettingMfaId === u.id}
-                              className="rounded-md border border-terracotta bg-terracotta text-white px-2.5 py-1 text-xs font-semibold hover:opacity-85 disabled:opacity-40 transition-colors"
-                            >
-                              {resettingMfaId === u.id ? '...' : 'Confirm'}
-                            </button>
-                            <button
+                              busy={resettingMfaId === u.id}
+                            />
+                            <RowAction
+                              icon="reject"
+                              tone="neutral"
+                              label="Cancel MFA reset"
                               onClick={() => setMfaConfirmIds(prev => { const next = new Set(prev); next.delete(u.id); return next })}
-                              className="rounded-md border border-border text-text-light px-2 py-1 text-xs font-semibold hover:bg-surface transition-colors"
-                            >
-                              Cancel
-                            </button>
+                            />
                           </span>
                         ) : (
-                          <button
+                          <RowAction
+                            icon="shield"
+                            tone="danger"
+                            label="Reset MFA"
                             onClick={() => setMfaConfirmIds(prev => new Set(prev).add(u.id))}
-                            className="rounded-md border border-terracotta text-[#9C4E2F] px-2.5 py-1 text-xs font-semibold hover:bg-terracotta hover:text-white transition-colors"
-                          >
-                            Reset MFA
-                          </button>
+                          />
                         )
                       )}
                     </div>

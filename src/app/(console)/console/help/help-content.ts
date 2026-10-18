@@ -61,6 +61,7 @@ export const HELP_CATEGORIES: HelpCategory[] = [
         ],
         notes: [
           { kind: 'tip', text: 'Search matches part of a word, so a surname or the last few characters of a reference is enough.' },
+          { kind: 'tip', text: 'Row actions are **icons** in the **Actions** column, each in its own colour — hover one to read its name. **Edit** is a pencil, **Delete** a bin, **Cancel** a slashed circle, **Resend** a paper plane, **No-show** a person with an X, **Attendees** two people, **View** a magnifier, **Publish**/**Unpublish** an eye, **Approve** a tick, **Reject** an X, **Archive** a box, **Enable**/**Disable** a power symbol, **Reset password** a key, **Reset MFA** a shield and **Check in** a clipboard with a tick.' },
         ],
       },
       {
@@ -282,7 +283,7 @@ export const HELP_CATEGORIES: HelpCategory[] = [
           'Optionally choose a status from **All Statuses**, and choose tonight\'s event from **All Events** to list only its guests.',
           'Click **Search**.',
           'Read the **Dietary**, **Status**, **Checked In** and **Checked In By** columns. Hover over a dietary note to see the full text.',
-          'To admit a guest, click **Check In** in the **Actions** column. The row changes to **checked in** and briefly shows **✓ Checked in**.',
+          'To admit a guest, click the **Check In** icon in the **Actions** column. The row changes to **checked in** and briefly shows **✓ Checked in**.',
           'Use **Previous** and **Next** under the table to move between pages.',
         ],
         notes: [
@@ -335,7 +336,7 @@ export const HELP_CATEGORIES: HelpCategory[] = [
         ],
         notes: [
           { kind: 'tip', text: 'A series can have at most 52 events. Each one can be edited or cancelled on its own afterwards.' },
-          { kind: 'tip', text: 'To turn an existing single event into a series, click **Edit**, set **Repeat** and **Repeat until**, then save. New dates are only added from today onwards and start with no bookings.' },
+          { kind: 'tip', text: 'To turn an existing single event into a series, click the **Edit** icon, set **Repeat** and **Repeat until**, then save. New dates are only added from today onwards and start with no bookings.' },
         ],
       },
       {
@@ -377,7 +378,7 @@ export const HELP_CATEGORIES: HelpCategory[] = [
         roles: ADMIN,
         path: '/console/events',
         steps: [
-          'Click **Events** in the sidebar and click **Edit** on the event.',
+          'Click **Events** in the sidebar and click the **Edit** icon on the event.',
           'To stop online sales but keep the event, tick **Fully Booked Override**. The public site shows it as fully booked and guests can join the waitlist.',
           'To cancel the event, set **Status** to **Cancelled**. After it has run, you can set **Completed**.',
           'For a series, choose **This event only** or **This and future events**.',
@@ -397,7 +398,7 @@ export const HELP_CATEGORIES: HelpCategory[] = [
         steps: [
           'Click **Events** in the sidebar.',
           'Find the event. **Cap.** is total seats, **Booked** is seats taken (pending, confirmed and checked-in bookings), and **Rem.** is seats left.',
-          'For guest-level detail, click **Attendees** on the row.',
+          'For guest-level detail, click the **Attendees** icon on the row.',
           'For a spreadsheet of every event, click **Export CSV** (see Reports & Audit).',
           'On event night, door staff see live **checked in** counts on the scanner.',
         ],
@@ -430,7 +431,7 @@ export const HELP_CATEGORIES: HelpCategory[] = [
         path: '/console/events',
         steps: [
           'Click **Events** in the sidebar.',
-          'Click **Delete** on the event\'s row.',
+          'Click the **Delete** icon on the event\'s row.',
           'Read the **Delete Event** box. If the event has bookings, it cannot be deleted. Cancel them first, or set the event\'s **Status** to **Cancelled** instead (this cancels and fully refunds all its bookings).',
           'If there are no bookings, click **Delete Event** to confirm.',
         ],
@@ -493,7 +494,7 @@ export const HELP_CATEGORIES: HelpCategory[] = [
           'Tick the box on each entry to archive, or tick the box in the table header to select every entry on the page. Archived entries cannot be ticked.',
           'Click **Archive selected (N)**, where N is the number of ticked entries.',
           'Confirm the browser prompt. A green message says how many entries were archived.',
-          'To archive a single entry, click **Archive** on its row instead.',
+          'To archive a single entry, click the **Archive** icon on its row instead.',
         ],
         notes: [
           { kind: 'warning', text: 'Archived guests are no longer notified about free seats, and there is no un-archive button.' },
@@ -567,9 +568,9 @@ export const HELP_CATEGORIES: HelpCategory[] = [
         path: '/console/coupons',
         steps: [
           'Click **Coupons** in the sidebar.',
-          'To change a coupon, click **Edit** on its row, update the fields and click **Save Changes**.',
-          'To stop a coupon working right away, click **Disable**. Its status changes to **Disabled**.',
-          'To switch it back on, click **Enable**.',
+          'To change a coupon, click the **Edit** icon on its row, update the fields and click **Save Changes**.',
+          'To stop a coupon working right away, click the **Disable** icon. Its status changes to **Disabled**.',
+          'To switch it back on, click the **Enable** icon.',
         ],
         notes: [
           { kind: 'warning', text: 'Changing the **Coupon Code** invalidates the old code, and guests who have it can no longer use it.' },
@@ -623,9 +624,9 @@ export const HELP_CATEGORIES: HelpCategory[] = [
         path: '/console/content/news',
         steps: [
           'Click **Content** in the sidebar, then the **News** card.',
-          'To change an article, click **Edit**, make your changes and click **Save Changes**.',
-          'To take it off the website without deleting it, click **Unpublish**. **Publish** puts it back.',
-          'To remove it for good, click **Delete** and confirm the browser prompt.',
+          'To change an article, click the **Edit** icon, make your changes and click **Save Changes**.',
+          'To take it off the website without deleting it, click the **Unpublish** icon. **Publish** puts it back.',
+          'To remove it for good, click the **Delete** icon and confirm the browser prompt.',
         ],
         notes: [
           { kind: 'warning', text: 'Deleted articles cannot be recovered. Use **Unpublish** if you might need it again.' },
@@ -659,7 +660,7 @@ export const HELP_CATEGORIES: HelpCategory[] = [
           'Choose **Pending** from the filter to see new submissions, then click **Refresh**.',
           'Read the **Testimonial** text, **Name** and **Event**.',
           'Click **Approve** to show it on the website.',
-          'To take an approved testimonial down, click **Reject**. It goes back to pending and is hidden.',
+          'To take an approved testimonial down, click the **Reject** icon. It goes back to pending and is hidden.',
         ],
       },
       {
@@ -726,10 +727,10 @@ export const HELP_CATEGORIES: HelpCategory[] = [
         steps: [
           'Click **Staff** in the sidebar and find the person.',
           'To change their role, pick **Door Staff** or **Admin** in their **Role** dropdown and confirm the prompt.',
-          'To block sign-in, click **Deactivate**. **Activate** restores access.',
-          'To send a password-reset email, click **Reset PW**.',
-          'If they lost their authenticator app, click **Reset MFA**, then **Confirm**. They will set MFA up again at their next sign-in.',
-          'To remove an account permanently, click **Delete** and confirm the prompt.',
+          'To block sign-in, click the **Deactivate** icon. **Activate** restores access.',
+          'To send a password-reset email, click the **Reset PW** icon.',
+          'If they lost their authenticator app, click the **Reset MFA** icon, then **Confirm**. They will set MFA up again at their next sign-in.',
+          'To remove an account permanently, click the **Delete** icon and confirm the prompt.',
         ],
         notes: [
           { kind: 'warning', text: '**Delete** cannot be undone. Prefer **Deactivate**, which you can reverse with **Activate**.' },
@@ -811,7 +812,7 @@ export const HELP_CATEGORIES: HelpCategory[] = [
           'Click **Change password** and wait for **Your password has been changed.**',
         ],
         notes: [
-          { kind: 'tip', text: 'Forgotten your password? Ask an admin to click **Reset PW** for you on the **Staff** page.' },
+          { kind: 'tip', text: 'Forgotten your password? Ask an admin to click the **Reset PW** icon for you on the **Staff** page.' },
         ],
       },
       {

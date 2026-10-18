@@ -10,6 +10,7 @@ import Modal from '@/components/console/Modal'
 import { Pagination } from '@/components/console/DataTable'
 import RichTextEditor from '@/components/console/editor/RichTextEditor'
 import { getExcerpt } from '@/lib/payload'
+import RowAction from '@/components/console/RowAction'
 
 interface NewsRow {
   id: string | number
@@ -84,6 +85,9 @@ export default function NewsManagementPage() {
   const [formError, setFormError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [actionId, setActionId] = useState<string | number | null>(null)
+  // Which row action is running. actionId alone is not enough: Publish and
+  // Delete render side by side, so they would both show a spinner without this.
+  const [actionKind, setActionKind] = useState<'publish' | 'delete' | null>(null)
 
   // Media options for image picker
   const [mediaOpts, setMediaOpts] = useState<MediaOption[]>([])
@@ -193,6 +197,7 @@ export default function NewsManagementPage() {
 
   const handleTogglePublish = async (n: NewsRow) => {
     setActionId(n.id)
+    setActionKind('publish')
     try {
       const res = await fetch(`/console/api/news/${n.id}`, {
         method: 'PATCH',
@@ -206,12 +211,14 @@ export default function NewsManagementPage() {
       alert(err instanceof Error ? err.message : 'Action failed')
     } finally {
       setActionId(null)
+      setActionKind(null)
     }
   }
 
   const handleDelete = async (n: NewsRow) => {
     if (!confirm(`Delete "${n.title}"? This cannot be undone.`)) return
     setActionId(n.id)
+    setActionKind('delete')
     try {
       const res = await fetch(`/console/api/news/${n.id}`, { method: 'DELETE' })
       const data = await res.json().catch(() => null)
@@ -221,6 +228,7 @@ export default function NewsManagementPage() {
       alert(err instanceof Error ? err.message : 'Action failed')
     } finally {
       setActionId(null)
+      setActionKind(null)
     }
   }
 
@@ -281,28 +289,30 @@ export default function NewsManagementPage() {
                     <td className="px-4 py-3 text-sm text-text-light">{formatDate(n.date)}</td>
                     <td className="px-4 py-3 text-xs text-text-light">{n.published ? 'Yes' : 'No'}</td>
                     <td className="px-4 py-3 text-center">
-                      <div className="flex items-center justify-center gap-1 flex-wrap">
-                        <button
+                      <div className="flex items-center justify-center gap-1">
+                        <RowAction
+                          icon="edit"
+                          tone="positive"
+                          label="Edit news item"
                           onClick={() => openEdit(n)}
                           disabled={actionId === n.id}
-                          className="rounded-md border border-lunar-green px-2 py-0.5 text-[10px] font-semibold text-lunar-green hover:bg-lunar-green hover:text-white disabled:opacity-40 transition-colors"
-                        >
-                          Edit
-                        </button>
-                        <button
+                        />
+                        <RowAction
+                          icon={n.published ? 'unpublish' : 'publish'}
+                          tone={n.published ? 'accent' : 'positive'}
+                          label={n.published ? 'Unpublish news item' : 'Publish news item'}
                           onClick={() => handleTogglePublish(n)}
                           disabled={actionId === n.id}
-                          className="rounded-md border border-accent-text px-2 py-0.5 text-[10px] font-semibold text-accent-text hover:bg-accent-text hover:text-white disabled:opacity-40 transition-colors"
-                        >
-                          {actionId === n.id ? '...' : n.published ? 'Unpublish' : 'Publish'}
-                        </button>
-                        <button
+                          busy={actionId === n.id && actionKind === 'publish'}
+                        />
+                        <RowAction
+                          icon="delete"
+                          tone="danger"
+                          label="Delete news item"
                           onClick={() => handleDelete(n)}
                           disabled={actionId === n.id}
-                          className="whitespace-nowrap rounded-md border border-terracotta px-2 py-0.5 text-[10px] font-semibold text-[#9C4E2F] hover:bg-terracotta hover:text-white disabled:opacity-40 transition-colors"
-                        >
-                          {actionId === n.id ? '...' : 'Delete'}
-                        </button>
+                          busy={actionId === n.id && actionKind === 'delete'}
+                        />
                       </div>
                     </td>
                   </tr>
