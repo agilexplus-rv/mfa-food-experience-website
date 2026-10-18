@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useCallback, useEffect, useState } from 'react'
+import RowAction from '@/components/console/RowAction'
 
 interface BookingRow {
   id: string | number
@@ -606,47 +607,51 @@ export default function DashboardPage() {
                       </td>
                       {canCheckIn && (
                         <td className="px-4 py-3 text-center">
-                          <div className="flex items-center justify-center gap-1 flex-wrap">
+                          <div className="flex items-center justify-center gap-1">
                             {justCheckedInId === b.id && b.status === 'checked_in' && (
                               <span className="text-[10px] font-bold text-lunar-green" role="status">
                                 {'\u2713'} Checked in
                               </span>
                             )}
                             {b.status !== 'checked_in' && b.status !== 'cancelled' && (
-                              <button
+                              <RowAction
+                                icon="checkIn"
+                                tone="positive"
+                                label="Check in this booking"
                                 onClick={() => handleCheckIn(b)}
                                 disabled={checkingInId === b.id}
-                                className="rounded-md bg-lunar-green px-2 py-0.5 text-[10px] font-semibold text-white hover:bg-primary-light disabled:opacity-40 transition-colors"
-                              >
-                                {checkingInId === b.id ? '...' : 'Check In'}
-                              </button>
+                                busy={checkingInId === b.id}
+                              />
                             )}
                             {user?.role === 'admin' && b.status !== 'cancelled' && (
-                              <button
+                              <RowAction
+                                icon="cancel"
+                                tone="danger"
+                                label="Cancel booking"
                                 onClick={() => handleCancel(b)}
                                 disabled={cancellingId === b.id}
-                                className="rounded-md border border-terracotta px-2 py-0.5 text-[10px] font-semibold text-terracotta hover:bg-terracotta hover:text-white disabled:opacity-40 transition-colors"
-                              >
-                                {cancellingId === b.id ? '...' : 'Cancel'}
-                              </button>
+                                busy={cancellingId === b.id}
+                              />
                             )}
                             {user?.role === 'admin' && b.status === 'confirmed' && (
-                              <button
+                              <RowAction
+                                icon="resend"
+                                tone="positive"
+                                label="Resend confirmation email"
                                 onClick={() => handleResendConfirmation(b.id)}
                                 disabled={resendingId === b.id}
-                                className="rounded-md border border-lunar-green px-2 py-0.5 text-[10px] font-semibold text-lunar-green hover:bg-lunar-green hover:text-white disabled:opacity-40 transition-colors"
-                              >
-                                {resendingId === b.id ? '...' : 'Resend'}
-                              </button>
+                                busy={resendingId === b.id}
+                              />
                             )}
                             {canNoShow && (
-                              <button
+                              <RowAction
+                                icon="noShow"
+                                tone="accent"
+                                label="Mark as no-show"
                                 onClick={() => handleNoShow(b.id)}
                                 disabled={noShowId === b.id}
-                                className="rounded-md border border-accent-text px-2 py-0.5 text-[10px] font-semibold text-accent-text hover:bg-accent-text hover:text-white disabled:opacity-40 transition-colors"
-                              >
-                                {noShowId === b.id ? '...' : 'No-show'}
-                              </button>
+                                busy={noShowId === b.id}
+                              />
                             )}
                             {b.status === 'cancelled' && (
                               <span className="text-[10px] text-text-light">{'-'}</span>

@@ -6,6 +6,7 @@ import Badge from '@/components/console/Badge'
 import Button from '@/components/console/Button'
 import Card from '@/components/console/Card'
 import Modal from '@/components/console/Modal'
+import RowAction from '@/components/console/RowAction'
 
 interface CouponRow {
   id: string | number
@@ -288,23 +289,20 @@ export default function CouponsPage() {
                     </td>
                     <td className="px-4 py-3 text-center">
                       <div className="flex items-center justify-center gap-1">
-                        <button
+                        <RowAction
+                          icon="edit"
+                          tone="positive"
+                          label="Edit coupon"
                           onClick={() => openEdit(c)}
-                          className="rounded-md border border-lunar-green px-2.5 py-1 text-xs font-semibold text-lunar-green hover:bg-lunar-green hover:text-white transition-colors"
-                        >
-                          Edit
-                        </button>
-                        <button
+                        />
+                        <RowAction
+                          icon="power"
+                          tone={c.active ? 'danger' : 'positive'}
+                          label={c.active ? 'Disable coupon' : 'Enable coupon'}
                           onClick={() => handleToggleActive(c)}
                           disabled={togglingId === c.id}
-                          className={'rounded-md border px-2.5 py-1 text-xs font-semibold disabled:opacity-40 transition-colors ' + (
-                            c.active
-                              ? 'border-terracotta text-[#9C4E2F] hover:bg-terracotta hover:text-white'
-                              : 'border-lunar-green text-lunar-green hover:bg-lunar-green hover:text-white'
-                          )}
-                        >
-                          {togglingId === c.id ? '...' : c.active ? 'Disable' : 'Enable'}
-                        </button>
+                          busy={togglingId === c.id}
+                        />
                       </div>
                     </td>
                   </tr>

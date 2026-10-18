@@ -9,6 +9,7 @@ import Card from '@/components/console/Card'
 import Modal from '@/components/console/Modal'
 import { Pagination } from '@/components/console/DataTable'
 import RichTextEditor from '@/components/console/editor/RichTextEditor'
+import RowAction from '@/components/console/RowAction'
 
 interface EventRow {
   id: string | number
@@ -372,18 +373,24 @@ export default function ConsoleEventsPage() {
                     <td className="px-4 py-3"><Badge variant={ev.status}>{ev.status}</Badge></td>
                     <td className="px-4 py-3 text-center">
                       <div className="flex items-center justify-center gap-1">
-                        <button onClick={() => openEdit(ev)} className="rounded-md border border-lunar-green px-2 py-0.5 text-[10px] font-semibold text-lunar-green hover:bg-lunar-green hover:text-white transition-colors">
-                          Edit
-                        </button>
-                        <button
+                        <RowAction
+                          icon="edit"
+                          tone="positive"
+                          label="Edit event"
+                          onClick={() => openEdit(ev)}
+                        />
+                        <RowAction
+                          icon="attendees"
+                          tone="positive"
+                          label="View attendees"
                           onClick={() => window.location.href = '/console/events/' + ev.id + '/attendees'}
-                          className="rounded-md border border-accent-text px-2 py-0.5 text-[10px] font-semibold text-accent-text hover:bg-accent-text hover:text-white transition-colors"
-                        >
-                          Attendees
-                        </button>
-                        <button onClick={() => setDeleteTarget(ev)} className="rounded-md border border-terracotta px-2 py-0.5 text-[10px] font-semibold text-[#9C4E2F] hover:bg-terracotta hover:text-white transition-colors">
-                          Delete
-                        </button>
+                        />
+                        <RowAction
+                          icon="delete"
+                          tone="danger"
+                          label="Delete event"
+                          onClick={() => setDeleteTarget(ev)}
+                        />
                       </div>
                     </td>
                   </tr>
