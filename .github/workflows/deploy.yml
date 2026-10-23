@@ -102,6 +102,24 @@ jobs:
           AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
         shell: bash
 
+      - name: Store the app's secrets in the Container App
+        # Secrets live in GitHub environment secrets and in Container App
+        # secrets, never in plain variables or plain environment values. The
+        # vars fallback only covers the switch-over; remove it once the
+        # variables are deleted.
+        run: |
+          az containerapp secret set \
+            --resource-group "${{ vars.RESOURCE_GROUP }}" \
+            --name "${{ vars.CONTAINER_APP_NAME }}" \
+            --secrets \
+              "database-url=${{ secrets.DATABASE_URL || vars.DATABASE_URL }}" \
+              "payload-secret=${{ secrets.PAYLOAD_SECRET || vars.PAYLOAD_SECRET }}" \
+              "viva-client-secret=${{ secrets.VIVA_CLIENT_SECRET || 'unset' }}" \
+              "viva-api-key=${{ secrets.VIVA_API_KEY || 'unset' }}" \
+              "viva-webhook-secret=${{ secrets.VIVA_WEBHOOK_SECRET || 'unset' }}" \
+            --output none
+        shell: bash
+
       - name: Deploy to Azure Container Apps
         run: |
           # HOSTNAME=0.0.0.0 forces the Next.js standalone server to bind all
@@ -114,17 +132,17 @@ jobs:
             --image "${{ vars.ACR_FQDN }}/mfa-food-experience:${{ github.sha }}" \
             --set-env-vars \
               "NEXT_PUBLIC_SERVER_URL=${{ vars.NEXT_PUBLIC_SERVER_URL }}" \
-              "DATABASE_URL=${{ vars.DATABASE_URL }}" \
-              "PAYLOAD_SECRET=${{ vars.PAYLOAD_SECRET }}" \
+              "DATABASE_URL=secretref:database-url" \
+              "PAYLOAD_SECRET=secretref:payload-secret" \
               "CRON_SECRET=secretref:cron-secret" \
               "HOSTNAME=0.0.0.0" \
               "PORT=3000" \
               "VIVA_CLIENT_ID=${{ secrets.VIVA_CLIENT_ID }}" \
-              "VIVA_CLIENT_SECRET=${{ secrets.VIVA_CLIENT_SECRET }}" \
-              "VIVA_API_KEY=${{ secrets.VIVA_API_KEY }}" \
+              "VIVA_CLIENT_SECRET=secretref:viva-client-secret" \
+              "VIVA_API_KEY=secretref:viva-api-key" \
               "VIVA_SOURCE_CODE=${{ vars.VIVA_SOURCE_CODE }}" \
               "VIVA_MERCHANT_ID=${{ vars.VIVA_MERCHANT_ID }}" \
-              "VIVA_WEBHOOK_SECRET=${{ secrets.VIVA_WEBHOOK_SECRET }}" \
+              "VIVA_WEBHOOK_SECRET=secretref:viva-webhook-secret" \
               "VIVA_DEMO_MODE=${{ vars.VIVA_DEMO_MODE }}" \
             --output none
         shell: bash
