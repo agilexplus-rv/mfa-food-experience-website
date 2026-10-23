@@ -40,16 +40,33 @@ try {
 
 let failures = 0
 
-// ── Rule 1: No secrets.* references, except VIVA_* payment creds ──
+// ── Rule 1: Azure sign-in is OIDC only; app secrets come from secrets.* ──
+// Azure credentials (client secrets, credential JSON) never appear: OIDC uses
+// vars.* identifiers. The app's own secrets (database URL, Payload secret,
+// VIVA_* payment credentials) DO come from environment secrets -- a plain
+// variable is readable by anyone with access to the repo's settings.
+const APP_SECRETS = ['DATABASE_URL', 'PAYLOAD_SECRET']
 const secretsRef = /\bsecrets\.\w+\b/g
 const secretsMatches = (content.match(secretsRef) || []).filter(
-  (s) => !s.startsWith('secrets.VIVA_')
+  (s) => !s.startsWith('secrets.VIVA_') && !APP_SECRETS.includes(s.slice(8))
 )
 if (secretsMatches.length > 0) {
   console.error(
-    `FAIL: deploy.yml references secrets.* — OIDC uses vars.*, never secrets ` +
-    `(VIVA_* payment credentials are exempt):\n  ` +
+    `FAIL: deploy.yml references secrets.* other than the app's own secrets ` +
+    `(${APP_SECRETS.join(', ')}, VIVA_*). Azure sign-in uses OIDC with vars.*:\n  ` +
     secretsMatches.map((s) => `  ${s}`).join('\n  ')
+  )
+  failures++
+}
+
+// ── Rule 1b: app secrets reach the Container App only as secret references ──
+const plainSecret = /"(DATABASE_URL|PAYLOAD_SECRET|VIVA_CLIENT_SECRET|VIVA_API_KEY|VIVA_WEBHOOK_SECRET)=(?!secretref:)/g
+const plainMatches = content.match(plainSecret) || []
+if (plainMatches.length > 0) {
+  console.error(
+    'FAIL: deploy.yml sets app secrets as plain environment values; use ' +
+    '`az containerapp secret set` and `NAME=secretref:<name>`:\n    ' +
+    plainMatches.join('\n    ')
   )
   failures++
 }
