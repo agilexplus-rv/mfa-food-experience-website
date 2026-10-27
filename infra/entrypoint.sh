@@ -14,6 +14,10 @@ echo "=== Running Payload migrations ==="
 ./node_modules/.bin/payload migrate
 
 echo "=== Starting Next.js server (background, then seed) ==="
+# A fresh random key for this start only: the seed endpoint runs only with it,
+# so nobody outside the container can trigger the seed.
+SEED_INTERNAL_TOKEN=$(node -e "process.stdout.write(require('crypto').randomBytes(32).toString('hex'))")
+export SEED_INTERNAL_TOKEN
 node server.js &
 SERVER_PID=$!
 
@@ -28,7 +32,7 @@ for i in $(seq 1 30); do
 done
 
 echo "=== Seeding database (idempotent — skips existing data) ==="
-curl -sf -X POST http://localhost:3000/seed-internal 2>&1 || echo "Seed endpoint returned non-zero (may be OK if already seeded)"
+curl -sf -X POST -H "x-seed-token: ${SEED_INTERNAL_TOKEN}" http://localhost:3000/seed-internal 2>&1 || echo "Seed endpoint returned non-zero (may be OK if already seeded)"
 
 echo "=== Seed complete, bringing server to foreground ==="
 wait $SERVER_PID

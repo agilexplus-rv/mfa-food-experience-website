@@ -11,7 +11,8 @@
     "db:generate": "payload generate:types",
     "db:migrate": "payload migrate",
     "db:seed": "npx tsx src/payload/seed.ts",
-    "postinstall": "node scripts/patch-multipart.mjs"
+    "postinstall": "node scripts/patch-multipart.mjs",
+    "test:seed-guard": "node --experimental-strip-types scripts/seed-guard.test.mjs"
   },
   "engines": {
     "node": ">=22"
