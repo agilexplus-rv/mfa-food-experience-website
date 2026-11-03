@@ -1,19 +1,108 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-import { isVivaWebhookConfigured, isVivaDemo } from '@/lib/env'
 import { finalizeBookingFromVivaTransaction } from '@/lib/bookings/finalize'
-import { getPayload } from 'payload'
-import type { Payload } from 'payload'
-import config from '@payload-config'
 
-let _payload: Payload | null = null
-async function payload(): Promise<Payload> {
-  if (!_payload) _payload = await getPayload({ config })
-  return _payload
+/**
+ * VIVA's webhook source addresses, confirmed by VIVA technical support.
+ *
+ * VIVA does NOT sign notification POSTs: their documented model is source-IP
+ * allowlisting plus re-reading the transaction from their API (which we do
+ * below, and which VIVA explicitly recommend over trusting the payload).
+ * Before this, we required a shared-secret header that VIVA never sends —
+ * so every notification from a live account would have been rejected with
+ * 401 and retried hourly for 24 hours.
+ *
+ * Both the live and demo ranges are allowed unconditionally. Both lists are
+ * VIVA-owned infrastructure, so allowing the inactive set grants no access
+ * to anyone outside VIVA, and it removes a failure mode where the
+ * demo/live flag and the account state disagree mid-switch.
+ */
+const VIVA_WEBHOOK_SOURCES = [
+  // Production
+  '51.138.37.238',
+  '40.127.253.112/28',
+  '51.105.129.192/28',
+  '20.54.89.16',
+  '4.223.76.50',
+  '51.12.157.0/28',
+  // Demo
+  '20.50.240.57',
+  '40.74.20.78',
+  '195.167.87.181',
+  '195.167.87.180',
+  '20.13.195.185',
+  '135.225.16.50',
+]
+
+/** Dotted-quad IPv4 to uint32, or null when it is not a bare IPv4 address. */
+function ipv4ToInt(ip: string): number | null {
+  const m = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.exec(ip)
+  if (!m) return null
+  const parts = [Number(m[1]), Number(m[2]), Number(m[3]), Number(m[4])]
+  if (parts.some((p) => p > 255)) return null
+  return ((parts[0] << 24) | (parts[1] << 16) | (parts[2] << 8) | parts[3]) >>> 0
+}
+
+/** True when `ip` (as uint32) falls inside `cidr` (a bare IP means /32). */
+function inCidr(ip: number, cidr: string): boolean {
+  const [base, bitsRaw] = cidr.split('/')
+  const baseInt = ipv4ToInt(base)
+  if (baseInt === null) return false
+  const bits = bitsRaw === undefined ? 32 : Number(bitsRaw)
+  if (!Number.isInteger(bits) || bits < 0 || bits > 32) return false
+  const mask = bits === 0 ? 0 : (0xffffffff << (32 - bits)) >>> 0
+  return (ip & mask) === (baseInt & mask)
 }
 
 /**
- * POST /api/webhooks/viva: Transaction Payment Created webhook.
+ * The originating client IP.
+ *
+ * Takes the LAST X-Forwarded-For hop, not the first: the first entry is
+ * whatever the caller chose to send, so allowlisting on it would be trivially
+ * spoofable by anyone claiming to be a VIVA address. The last entry is the one
+ * appended by our own ingress (Azure Container Apps), which the caller cannot
+ * control.
+ */
+function clientIp(headers: Headers): string | null {
+  const xff = headers.get('x-forwarded-for')
+  if (xff) {
+    const hops = xff.split(',').map((h) => h.trim()).filter(Boolean)
+    const last = hops[hops.length - 1]
+    if (last) return normalizeIp(last)
+  }
+  const real = headers.get('x-real-ip')?.trim()
+  return real ? normalizeIp(real) : null
+}
+
+/** Strip an IPv4-mapped IPv6 prefix and any :port / [] decoration. */
+function normalizeIp(raw: string): string {
+  const noPort = raw.replace(/^\[/, '').replace(/\]:?\d*$/, '').replace(/:\d+$/, '')
+  return noPort.startsWith('::ffff:') ? noPort.slice(7) : noPort
+}
+
+/**
+ * Whether this request plausibly came from VIVA.
+ *
+ * A local loopback/private address is also accepted outside production, so the
+ * endpoint can be exercised during development. A production build sets
+ * NODE_ENV=production, so that branch is dead in both deployed environments.
+ */
+function isVivaSource(req: NextRequest): boolean {
+  const ip = clientIp(req.headers)
+  if (!ip) return false
+  const asInt = ipv4ToInt(ip)
+  if (asInt === null) return false
+  if (VIVA_WEBHOOK_SOURCES.some((cidr) => inCidr(asInt, cidr))) return true
+  if (process.env.NODE_ENV !== 'production') {
+    return ['10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16', '127.0.0.0/8'].some((cidr) =>
+      inCidr(asInt, cidr),
+    )
+  }
+  return false
+}
+
+/**
+ * POST /api/webhooks/viva: VIVA notification receiver.
  *
  * VIVA sends a JSON payload with EventData containing:
  * - OrderCode: the order created at checkout
@@ -52,25 +141,12 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  // ── Auth check: verify whenever a secret is configured; demo mode may run without one ──
-  if (!isVivaDemo() || isVivaWebhookConfigured()) {
-    if (!isVivaWebhookConfigured()) {
-      return NextResponse.json(
-        { error: 'webhook_not_configured', message: 'VIVA_WEBHOOK_SECRET is not set.' },
-        { status: 503 },
-      )
-    }
-
-    const expectedSecret = process.env.VIVA_WEBHOOK_SECRET
-    const providedSecret = req.headers.get('x-viva-secret')
-    if (!providedSecret || providedSecret !== expectedSecret) {
-      // Also check Authorization: Bearer header as some VIVA configs use this
-      const authHeader = req.headers.get('authorization')
-      if (!authHeader || authHeader !== `Bearer ${expectedSecret}`) {
-        console.warn('[webhooks/viva] Invalid webhook auth')
-        return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
-      }
-    }
+  // ── Auth: VIVA source-IP allowlist (they do not sign POSTs) ──
+  if (!isVivaSource(req)) {
+    console.warn('[webhooks/viva] Rejected: source IP not in the VIVA allowlist', {
+      ip: clientIp(req.headers),
+    })
+    return NextResponse.json({ error: 'forbidden_source' }, { status: 401 })
   }
 
   // ── Parse payload ──
@@ -82,6 +158,7 @@ export async function POST(req: NextRequest) {
   }
 
   const data = body as {
+    EventTypeId?: number
     EventData?: {
       OrderCode?: number
       TransactionId?: string
@@ -99,6 +176,21 @@ export async function POST(req: NextRequest) {
       ResponseCode?: string
       ReferenceNumber?: number
     }
+  }
+
+  // ── Only successful payments (EventTypeId 1796) confirm a booking ──
+  // VIVA recommends subscribing to several events: 1796 payments, 1797 refunds,
+  // 1798 failed payments, 4865 order cancellations. We deliberately act on 1796
+  // only. A refund event can itself carry a completed status, so without this
+  // gate the handler would try to finalise a booking from a reversal's
+  // transaction, fail the order-code match and answer 400 -- which VIVA then
+  // retries 24 times, hourly. Anything we do not act on gets a 200.
+  if (typeof data.EventTypeId !== 'number') {
+    return NextResponse.json({ error: 'missing_event_type' }, { status: 400 })
+  }
+  if (data.EventTypeId !== 1796) {
+    console.info('[webhooks/viva] Ignoring event type', data.EventTypeId)
+    return NextResponse.json({ received: true, ignored: 'event_type' }, { status: 200 })
   }
 
   const eventData = data.EventData

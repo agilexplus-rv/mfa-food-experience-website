@@ -157,6 +157,16 @@ export interface CreateOrderInput {
   merchantTrns: string
   currencyCode?: number // ISO 4217 numeric, 978 = EUR
   paymentTimeout?: number // seconds, default 300
+  /**
+   * Lets VIVA email the CUSTOMER a payment confirmation. It does NOT toggle
+   * server-to-server webhooks -- those require separate registration in the
+   * VIVA portal (Settings > API Access > Webhooks). Confirmed by VIVA
+   * technical support.
+   *
+   * Defaults to false: we send our own confirmation, which carries the QR
+   * ticket. Leaving this on meant the customer received two emails, and only
+   * ours was actionable at the door.
+   */
   paymentNotification?: boolean
   preauth?: boolean
   allowRecurring?: boolean
@@ -219,7 +229,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
     merchantTrns: input.merchantTrns,
     currencyCode: input.currencyCode ?? 978,
     paymentTimeout: input.paymentTimeout ?? 300,
-    paymentNotification: input.paymentNotification ?? true,
+    paymentNotification: input.paymentNotification ?? false,
     preauth: input.preauth ?? false,
     allowRecurring: input.allowRecurring ?? false,
     ...(input.disableWallet !== undefined ? { disableWallet: input.disableWallet } : {}),
@@ -250,6 +260,61 @@ export async function getTransaction(
     }
     throw err
   }
+}
+
+/** A transaction as returned by the by-order-code lookup (only the fields we use). */
+export interface VivaOrderTransaction {
+  transactionId?: string
+  statusId?: string
+  amount?: number
+  orderCode?: number | string
+  merchantTrns?: string
+}
+
+/**
+ * "Retrieve Transactions by Order Code" (GET /api/transactions/?ordercode=...).
+ *
+ * Lives on the merchant host (www. / demo.vivapayments.com), like the webhook
+ * verification key, NOT on the api. host used for checkout calls. Basic auth
+ * is MerchantId:ApiKey.
+ *
+ * Used ONLY by the reconciliation cron, to find a completed transaction for a
+ * booking that is still pending. Every caller must treat a failure here as
+ * "not resolved yet" and carry on: this lookup is a safety net behind the
+ * webhook, never the thing a customer waits on.
+ */
+export async function getOrderTransactions(orderCode: string): Promise<VivaOrderTransaction[]> {
+  const merchantId = process.env.VIVA_MERCHANT_ID
+  const apiKey = process.env.VIVA_API_KEY
+  if (!merchantId || !apiKey) {
+    throw new VivaNotConfiguredError()
+  }
+
+  const base = process.env.VIVA_DEMO_MODE === 'true'
+    ? 'https://demo.vivapayments.com'
+    : 'https://www.vivapayments.com'
+  const credentials = Buffer.from(`${merchantId}:${apiKey}`).toString('base64')
+
+  const res = await fetch(`${base}/api/transactions/?ordercode=${encodeURIComponent(orderCode)}`, {
+    headers: { Authorization: `Basic ${credentials}`, Accept: 'application/json' },
+    // Never let one booking stall the whole sweep.
+    signal: AbortSignal.timeout(10_000),
+  })
+  if (!res.ok) {
+    const text = await res.text().catch(() => '')
+    throw new Error(`VIVA order-transactions lookup failed (${res.status}): ${text}`)
+  }
+
+  const data = (await res.json()) as unknown
+  // Tolerate the shapes VIVA has used: a bare array, or an object wrapping one.
+  const list = Array.isArray(data)
+    ? data
+    : Array.isArray((data as { Transactions?: unknown }).Transactions)
+      ? (data as { Transactions: unknown[] }).Transactions
+      : Array.isArray((data as { transactions?: unknown }).transactions)
+        ? (data as { transactions: unknown[] }).transactions
+        : []
+  return list as VivaOrderTransaction[]
 }
 
 /**

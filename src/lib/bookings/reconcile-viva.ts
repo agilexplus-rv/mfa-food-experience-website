@@ -7,11 +7,12 @@ const LOOKUP_TIMEOUT_MS = 8000
 /**
  * Pull-based fallback for the VIVA "Transaction Payment Created" webhook.
  *
- * The webhook is the primary way a booking flips pending -> confirmed,
- * but VIVA's demo environment does not reliably deliver webhooks (and in
- * production a delivery can be delayed or dropped). Without a fallback
- * the confirmation page polls a booking that will never change and the
- * visitor waits forever.
+ * The webhook is the primary way a booking flips pending -> confirmed, but a
+ * delivery can be delayed or dropped. (VIVA have confirmed that demo DOES
+ * deliver webhooks: the earlier "demo has no webhooks" conclusion was a
+ * registration/verification problem on our side, since fixed.) Without a
+ * fallback the confirmation page polls a booking that will never change and
+ * the visitor waits forever.
  *
  * Given the ?t={TransactionId}&s={OrderCode} VIVA appended to the success
  * redirect, we ask the VIVA API for the transaction and finalise through
