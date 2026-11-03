@@ -1,0 +1,80 @@
+# reconcile-viva.yml — scheduled VIVA payment reconciliation.
+#
+# The VIVA webhook is the primary way a paid booking flips pending ->
+# confirmed. This calls /api/cron/reconcile-viva as a safety net: it sweeps
+# pending VIVA bookings, asks VIVA for the order's transactions, and
+# finalises any completed one through the same guards as the webhook.
+#
+# Why a GitHub schedule rather than a Container App job: the three existing
+# mfa-cron-* jobs are `Manual`-trigger and nothing in this repo starts them,
+# so they are inert. Driving the endpoint from here keeps the schedule in
+# version control and visible, with no new Azure resource.
+#
+# Trade-offs to be aware of:
+#   - GitHub's scheduler is best-effort: runs can be delayed by several
+#     minutes under load, and scheduled workflows are disabled after 60 days
+#     of repository inactivity. Fine for a safety net behind the webhook
+#     (VIVA itself retries a failed notification hourly, 24 times).
+#   - Schedules only run from the default branch.
+#
+name: Reconcile VIVA payments
+
+on:
+  schedule:
+    # Every 10 minutes. GitHub's shortest supported granularity is 5.
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Which environment to reconcile'
+        type: choice
+        required: true
+        default: test
+        options:
+          - test
+          - prod
+
+concurrency:
+  group: reconcile-viva-${{ github.event.inputs.environment || 'test' }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  reconcile:
+    name: Reconcile (${{ github.event.inputs.environment || 'test' }})
+    runs-on: ubuntu-latest
+    # Picks up that environment's CRON_SECRET and CRON_BASE_URL.
+    environment: ${{ github.event.inputs.environment || 'test' }}
+    steps:
+      - name: Call the reconcile endpoint
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          # Set CRON_BASE_URL as an environment variable per environment,
+          # e.g. https://foodexperience.mt for prod.
+          BASE_URL: ${{ vars.CRON_BASE_URL || 'https://foodexperience.agilexplus.dev' }}
+        run: |
+          if [ -z "${CRON_SECRET}" ]; then
+            echo "::error::CRON_SECRET is not set for this environment; cannot authenticate to the cron endpoint."
+            exit 1
+          fi
+
+          url="${BASE_URL%/}/api/cron/reconcile-viva"
+          echo "POST-check: ${url}"
+
+          # -f so an HTTP error fails the job and shows up in Actions.
+          # --max-time : the sweep is bounded (50 bookings, 10s per VIVA
+          # lookup), so anything beyond this is a hang worth failing on.
+          code=$(curl -sS --max-time 120 -o response.json -w '%{http_code}' \
+            -H "x-cron-secret: ${CRON_SECRET}" \
+            "${url}")
+
+          echo "HTTP ${code}"
+          cat response.json || true
+          echo
+
+          if [ "${code}" != "200" ]; then
+            echo "::error::Reconcile endpoint returned HTTP ${code}"
+            exit 1
+          fi
