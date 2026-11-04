@@ -6,12 +6,36 @@
 # seed script is also run (it is idempotent — skips when data already exists).
 set -euo pipefail
 
-echo "=== Running Payload migrations ==="
-# Lexical v0.41 TOP-LEVEL AWAIT PATCH: the Dockerfile replaces the dynamic
-# `const mod = await …` dev/prod imports in lexical `.mjs` files with static
-# `import * as mod from` — otherwise tsx's CJS require hook hits Node v22's
-# ERR_REQUIRE_ASYNC_MODULE guard.
-./node_modules/.bin/payload migrate
+# ── Migrations ────────────────────────────────────────────────────
+# Incident 2026-11-04: the database was stopped underneath this container
+# several times. Because migrations ran here, under `set -e`, every boot died
+# before Next.js existed and Container Apps crash-looped the replica — a
+# stopped database became a total outage.
+#
+# Migrations still run here by default (so a deploy remains self-contained),
+# but they are now attempted in bounded retries rather than once. A brief
+# database blip therefore costs a few seconds of start time instead of a crash
+# loop, and a hard failure prints one greppable marker before exiting.
+#
+# The durable fix is to run migrations as a deploy-time job and set
+# SKIP_BOOT_MIGRATIONS=true (see docs/incident-2026-11-04-test-database-outage.md).
+if [ "${SKIP_BOOT_MIGRATIONS:-false}" = "true" ]; then
+  echo "=== Skipping boot migrations (SKIP_BOOT_MIGRATIONS=true) ==="
+else
+  echo "=== Running Payload migrations ==="
+  attempt=1
+  max_attempts=5
+  until ./node_modules/.bin/payload migrate; do
+    if [ "$attempt" -ge "$max_attempts" ]; then
+      echo "=== MIGRATION_FAILED: giving up after ${max_attempts} attempts ===" >&2
+      exit 1
+    fi
+    echo "=== Migration attempt ${attempt}/${max_attempts} failed; retrying in 15s ===" >&2
+    attempt=$((attempt + 1))
+    sleep 15
+  done
+  echo "=== Migrations complete ==="
+fi
 
 echo "=== Starting Next.js server (background, then seed) ==="
 # A fresh random key for this start only: the seed endpoint runs only with it,
