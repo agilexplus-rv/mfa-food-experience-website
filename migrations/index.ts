@@ -7,6 +7,8 @@ import * as migration_20260928_001_add_payment_deadline from './20260928_001_add
 import * as migration_20260928_002_waitlist_lifecycle from './20260928_002_waitlist_lifecycle';
 import * as migration_20260928_003_data_protection_policy from './20260928_003_data_protection_policy';
 import * as migration_20261013_001_event_description_imagery from './20261013_001_event_description_imagery';
+import * as migration_20261104_001_social_platform_enum from './20261104_001_social_platform_enum';
+import * as migration_20261104_002_official_contact_email from './20261104_002_official_contact_email';
 
 export const migrations = [
   {
@@ -53,5 +55,15 @@ export const migrations = [
     up: migration_20261013_001_event_description_imagery.up,
     down: migration_20261013_001_event_description_imagery.down,
     name: '20261013_001_event_description_imagery'
+  },
+  {
+    up: migration_20261104_001_social_platform_enum.up,
+    down: migration_20261104_001_social_platform_enum.down,
+    name: '20261104_001_social_platform_enum'
+  },
+  {
+    up: migration_20261104_002_official_contact_email.up,
+    down: migration_20261104_002_official_contact_email.down,
+    name: '20261104_002_official_contact_email'
   },
 ];
