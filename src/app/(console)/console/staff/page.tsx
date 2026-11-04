@@ -204,7 +204,7 @@ export default function StaffPage() {
             type="email"
             value={inviteEmail}
             onChange={(e) => setInviteEmail(e.target.value)}
-            placeholder="staff@foodagency.mt"
+            placeholder="name@gov.mt"
             className="flex-1 rounded-lg border border-border px-4 py-2.5 text-sm text-lunar-green placeholder:text-text-light/50 focus:outline-none focus:ring-2 focus:ring-lunar-green/30"
             style={{ boxSizing: 'border-box' }}
             onKeyDown={(e) => { if (e.key === 'Enter') handleInvite() }}

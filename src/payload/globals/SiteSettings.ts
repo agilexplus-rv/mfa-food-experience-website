@@ -49,7 +49,7 @@ export const SiteSettings: GlobalConfig = {
       label: 'Contact form recipient email(s)',
       admin: {
         description:
-          'One or more email addresses to receive contact-form submissions, separated by semicolons (e.g. info@foodagency.mt; bookings@foodagency.mt). Leave empty to use the ADMIN_ALERT_EMAIL / FROM_EMAIL environment default.',
+          'One or more email addresses to receive contact-form submissions, separated by semicolons (e.g. foodexperience.mfa@gov.mt). Leave empty to use the ADMIN_ALERT_EMAIL / FROM_EMAIL environment default.',
       },
     },
     {

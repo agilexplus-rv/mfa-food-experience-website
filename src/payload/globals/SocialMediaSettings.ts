@@ -7,7 +7,7 @@ import { globalAuditHook } from '@/lib/audit/helper'
  *
  * Replaces the previously hardcoded SOCIALS array in SiteFooter.tsx
  * (which used placeholder "#" hrefs). Each platform entry has:
- *   - platform:  select (instagram, facebook, x)
+ *   - platform:  select (facebook, instagram, tiktok, youtube, linkedin, x)
  *   - url:       text (the full https:// URL)
  *   - published: checkbox (visible/hidden in the footer)
  *
@@ -42,9 +42,11 @@ export const SocialMediaSettings: GlobalConfig = {
           'Configure each social media platform. When "Published" is off, the platform icon is hidden from the footer entirely.',
       },
       defaultValue: [
-        { platform: 'instagram', url: '', published: false },
         { platform: 'facebook', url: '', published: false },
-        { platform: 'x', url: '', published: false },
+        { platform: 'instagram', url: '', published: false },
+        { platform: 'tiktok', url: '', published: false },
+        { platform: 'youtube', url: '', published: false },
+        { platform: 'linkedin', url: '', published: false },
       ],
       fields: [
         {
@@ -53,8 +55,11 @@ export const SocialMediaSettings: GlobalConfig = {
           label: 'Platform',
           required: true,
           options: [
-            { label: 'Instagram', value: 'instagram' },
             { label: 'Facebook', value: 'facebook' },
+            { label: 'Instagram', value: 'instagram' },
+            { label: 'TikTok', value: 'tiktok' },
+            { label: 'YouTube', value: 'youtube' },
+            { label: 'LinkedIn', value: 'linkedin' },
             { label: 'X', value: 'x' },
           ],
           admin: { width: '33%' },

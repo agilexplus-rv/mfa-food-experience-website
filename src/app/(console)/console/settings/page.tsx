@@ -18,7 +18,7 @@ const SECTIONS: SettingsSection[] = [
   },
   {
     title: 'Social Media',
-    description: 'Configure social media links (Instagram, Facebook, X) shown in the site footer',
+    description: 'Configure social media links (Facebook, Instagram, TikTok, YouTube, LinkedIn) shown in the site footer',
     href: '/console/settings/social-media',
     icon: 'SM',
   },

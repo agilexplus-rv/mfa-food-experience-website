@@ -52,6 +52,14 @@ export default function SocialMediaSettingsPage() {
     })
   }
 
+  const addPlatform = () => {
+    setPlatforms(prev => [...prev, { id: '', platform: '', url: '', published: false }])
+  }
+
+  const removePlatform = (index: number) => {
+    setPlatforms(prev => prev.filter((_, i) => i !== index))
+  }
+
   const handleSave = async () => {
     setSaving(true)
     setError(null)
@@ -60,7 +68,16 @@ export default function SocialMediaSettingsPage() {
       const res = await fetch('/console/api/social-media-settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ platforms }),
+        // A row added in this session has no id yet; omit it so Payload
+        // treats it as a new array row instead of an empty-string id.
+        body: JSON.stringify({
+          platforms: platforms.map(p => ({
+            ...(p.id ? { id: p.id } : {}),
+            platform: p.platform,
+            url: p.url,
+            published: p.published,
+          })),
+        }),
       })
       if (!res.ok) {
         const data = await res.json().catch(() => null)
@@ -124,8 +141,11 @@ export default function SocialMediaSettingsPage() {
                   style={{ boxSizing: 'border-box' }}
                 >
                   <option value="">Select...</option>
-                  <option value="instagram">Instagram</option>
                   <option value="facebook">Facebook</option>
+                  <option value="instagram">Instagram</option>
+                  <option value="tiktok">TikTok</option>
+                  <option value="youtube">YouTube</option>
+                  <option value="linkedin">LinkedIn</option>
                   <option value="x">X</option>
                 </select>
               </div>
@@ -151,8 +171,18 @@ export default function SocialMediaSettingsPage() {
                   Published
                 </label>
               </div>
+              <button
+                type="button"
+                onClick={() => removePlatform(i)}
+                className="rounded-lg border border-border px-3 py-2 text-xs font-semibold text-text-light hover:border-terracotta hover:text-terracotta focus:outline-2 focus:outline-offset-2 focus:outline-terracotta"
+                aria-label={`Remove ${entry.platform || 'platform'} entry`}
+              >
+                Remove
+              </button>
             </div>
           ))}
+
+          <Button variant="secondary" size="sm" onClick={addPlatform}>Add platform</Button>
         </Card>
 
         <div className="flex gap-3">

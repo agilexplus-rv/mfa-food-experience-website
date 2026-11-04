@@ -11,6 +11,8 @@
  * termsDefault.ts).
  */
 
+import { OFFICIAL_EMAIL } from '@/lib/contact'
+
 /**
  * Inline markup in the strings below: **bold**, [label](url), and "\n" for a
  * line break. The draft's tables are written out as bullet lists, as neither
@@ -37,10 +39,10 @@ const DEFAULT_DATA_PROTECTION_POLICY: PolicyBlock[] = [
     '**Company:** [COMPANY LEGAL NAME], trading as Malta Food Agency',
     '**Registered address:** [REGISTERED ADDRESS]',
     '**Company registration no.:** [COMPANY REGISTRATION NUMBER]',
-    '**Email:** [PRIVACY CONTACT EMAIL]',
+    `**Email:** ${OFFICIAL_EMAIL}`,
     '**Telephone:** [TELEPHONE NUMBER]',
   ),
-  p('**Data Protection Officer (DPO) / privacy contact:** [DPO NAME], [DPO EMAIL], [DPO POSTAL ADDRESS]'),
+  p(`**Data Protection Officer (DPO) / privacy contact:** [DPO NAME], dpo.mfa@gov.mt, [DPO POSTAL ADDRESS]`),
 
   h2('2. Whose data this policy covers'),
   ul(
@@ -101,7 +103,7 @@ const DEFAULT_DATA_PROTECTION_POLICY: PolicyBlock[] = [
     'Our staff may archive waitlist entries, for example once an experience has taken place. Archived entries are no longer used for notifications.',
     '**Retention.** Waitlist entries are kept for a limited period, which we set in our booking system (currently [6] months from the date you joined; it can be set between 1 and 36 months). After that period, your entry is automatically expired and taken off the waitlist.',
   ),
-  p('**Opting out.** You can ask to be removed from a waitlist at any time through our [contact form](/contact) or by emailing [PRIVACY CONTACT EMAIL]. We will remove your entry and stop contacting you about it.'),
+  p(`**Opting out.** You can ask to be removed from a waitlist at any time through our [contact form](/contact) or by emailing ${OFFICIAL_EMAIL}. We will remove your entry and stop contacting you about it.`),
 
   h2('7. How long we keep your data'),
   p('We keep personal data only for as long as we need it for the purposes above.'),
@@ -178,9 +180,9 @@ const DEFAULT_DATA_PROTECTION_POLICY: PolicyBlock[] = [
   h2('14. Contact us'),
   p('For any question about this policy, or to exercise your rights:'),
   ul(
-    '**Email:** [PRIVACY CONTACT EMAIL]',
+    `**Email:** ${OFFICIAL_EMAIL}`,
     '**Post:** [COMPANY LEGAL NAME], [REGISTERED ADDRESS]',
-    '**Data Protection Officer:** [DPO NAME], [DPO EMAIL]',
+    '**Data Protection Officer:** [DPO NAME], dpo.mfa@gov.mt',
   ),
 
   h2('15. Changes to this policy'),
