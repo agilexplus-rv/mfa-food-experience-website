@@ -120,6 +120,109 @@ jobs:
             --output none
         shell: bash
 
+      - name: Guard prod environment configuration
+        # On 2026-11-04 the prod environment still pointed RESOURCE_GROUP at
+        # mfa-food-experience-test with zero secrets, so a prod dispatch would
+        # have deployed onto the TEST app believing it was foodexperience.mt.
+        # That must fail loudly instead.
+        if: needs.resolve-env.outputs.environment == 'prod'
+        run: |
+          fail() { echo "::error::$1"; exit 1; }
+
+          [ "${{ vars.RESOURCE_GROUP }}" != "mfa-food-experience-test" ] \
+            || fail "prod RESOURCE_GROUP points at the TEST resource group"
+          [ "${{ vars.CONTAINER_APP_NAME }}" != "mfa-food-experience" ] \
+            || fail "prod CONTAINER_APP_NAME is the TEST container app"
+          [ -n "${{ vars.NEXT_PUBLIC_SERVER_URL }}" ] \
+            || fail "prod NEXT_PUBLIC_SERVER_URL is not set"
+          [ "${{ vars.VIVA_DEMO_MODE }}" = "false" ] \
+            || fail "prod VIVA_DEMO_MODE must be 'false'"
+
+          echo "prod configuration looks sane"
+        shell: bash
+
+      - name: Apply migrations (deploy-time job)
+        # Migrations belong here, not in the container entrypoint: a failure
+        # then fails THIS deploy while the previous revision keeps serving,
+        # instead of crash-looping the site (incident 2026-11-04).
+        #
+        # Gated on vars.MIGRATE_JOB_ENABLED so this can be rolled out without
+        # risking the deploy path: until it is set to 'true' the entrypoint
+        # keeps migrating at boot and nothing here runs.
+        if: vars.MIGRATE_JOB_ENABLED == 'true'
+        id: migrate
+        run: |
+          set -euo pipefail
+
+          ENV_ID=$(az containerapp show \
+            --resource-group "${{ vars.RESOURCE_GROUP }}" \
+            --name "${{ vars.CONTAINER_APP_NAME }}" \
+            --query properties.managedEnvironmentId -o tsv)
+          ENV_NAME="${ENV_ID##*/}"
+
+          JOB="mfa-migrate-${{ needs.resolve-env.outputs.environment }}"
+          IMAGE="${{ vars.ACR_FQDN }}/mfa-food-experience:${{ github.sha }}"
+
+          create() {
+            az containerapp job create \
+              --name "$JOB" \
+              --resource-group "${{ vars.RESOURCE_GROUP }}" \
+              --environment "$ENV_NAME" \
+              --trigger-type Manual \
+              --replica-timeout 900 \
+              --replica-retry-limit 0 \
+              --image "$IMAGE" \
+              --cpu 1 --memory 2Gi \
+              --secrets \
+                "database-url=${{ secrets.DATABASE_URL }}" \
+                "payload-secret=${{ secrets.PAYLOAD_SECRET }}" \
+              --env-vars \
+                "DATABASE_URL=secretref:database-url" \
+                "PAYLOAD_SECRET=secretref:payload-secret" \
+              --command "./infra/migrate.sh" \
+              --output none
+          }
+
+          # Create on first use, update on every later deploy so the job always
+          # runs this commit's image.
+          if az containerapp job show --name "$JOB" \
+               --resource-group "${{ vars.RESOURCE_GROUP }}" -o none 2>/dev/null; then
+            az containerapp job update \
+              --name "$JOB" \
+              --resource-group "${{ vars.RESOURCE_GROUP }}" \
+              --image "$IMAGE" \
+              --secrets \
+                "database-url=${{ secrets.DATABASE_URL }}" \
+                "payload-secret=${{ secrets.PAYLOAD_SECRET }}" \
+              --output none
+          else
+            create
+          fi
+
+          az containerapp job start \
+            --name "$JOB" \
+            --resource-group "${{ vars.RESOURCE_GROUP }}" \
+            --output none
+
+          echo "Waiting for the migration job to finish..."
+          for i in $(seq 1 60); do
+            STATUS=$(az containerapp job execution list \
+              --name "$JOB" \
+              --resource-group "${{ vars.RESOURCE_GROUP }}" \
+              --query "[0].properties.status" -o tsv 2>/dev/null || echo "")
+            case "$STATUS" in
+              Succeeded) echo "Migrations applied."; exit 0 ;;
+              Failed|Degraded)
+                echo "::error::Migration job finished with status $STATUS"
+                exit 1 ;;
+            esac
+            sleep 10
+          done
+
+          echo "::error::Migration job did not finish within 10 minutes"
+          exit 1
+        shell: bash
+
       - name: Deploy to Azure Container Apps
         run: |
           # HOSTNAME=0.0.0.0 forces the Next.js standalone server to bind all
@@ -144,5 +247,17 @@ jobs:
               "VIVA_MERCHANT_ID=${{ vars.VIVA_MERCHANT_ID }}" \
               "VIVA_WEBHOOK_SECRET=secretref:viva-webhook-secret" \
               "VIVA_DEMO_MODE=${{ vars.VIVA_DEMO_MODE }}" \
+            --output none
+        shell: bash
+
+      - name: Stop migrating at container start
+        # Only reached when the migration job above ran and succeeded, so the
+        # schema is already current for this image.
+        if: vars.MIGRATE_JOB_ENABLED == 'true'
+        run: |
+          az containerapp update \
+            --resource-group "${{ vars.RESOURCE_GROUP }}" \
+            --name "${{ vars.CONTAINER_APP_NAME }}" \
+            --set-env-vars "SKIP_BOOT_MIGRATIONS=true" \
             --output none
         shell: bash
