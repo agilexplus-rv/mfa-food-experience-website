@@ -24,9 +24,22 @@ export async function Hero() {
       overrideAccess: true,
       depth: 1,
     })
-    const img = settings.heroBackgroundImage as { url?: string; alt?: string } | string | null | undefined
+    const img = settings.heroBackgroundImage as
+      | { url?: string; alt?: string; updatedAt?: string }
+      | string
+      | null
+      | undefined
     if (img && typeof img === 'object' && img.url) {
-      bgImage = { url: img.url, alt: img.alt }
+      // Version the URL with the media document's updatedAt. Media files are
+      // served from /api/media/file/<filename> with no cache headers and no
+      // validators, so replacing the file behind an existing media item keeps
+      // the same URL and browsers keep serving the old bytes. A changed
+      // updatedAt gives the browser a URL it has never cached.
+      const version = img.updatedAt ? `v=${encodeURIComponent(img.updatedAt)}` : ''
+      const url = version
+        ? `${img.url}${img.url.includes('?') ? '&' : '?'}${version}`
+        : img.url
+      bgImage = { url, alt: img.alt }
     }
   } catch {
     // If the global doesn't exist yet (e.g. before migration), render default.

@@ -97,15 +97,63 @@ export default function SiteSettingsPage() {
     fetchMedia()
   }
 
-  const handleSelectMedia = (item: MediaItem) => {
+  /**
+   * Persist the hero image on its own, as soon as it is chosen.
+   *
+   * Selecting or uploading an image used to only update component state and
+   * the card then labelled it "Current", so it looked applied while the Global
+   * still held the previous image. The site kept showing the old hero, and
+   * reloading the console snapped back to the saved one. Only the hero field
+   * is sent; Payload merges global updates, so the other settings are left
+   * untouched (and an invalid recipient address cannot block the hero save).
+   */
+  const saveHero = async (mediaId: string | null): Promise<boolean> => {
+    setSaving(true)
+    setError(null)
+    setSuccess(false)
+    try {
+      const res = await fetch('/console/api/site-settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ heroBackgroundImage: mediaId }),
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => null)
+        throw new Error(data?.error || 'Could not save the hero image')
+      }
+      setSuccess(true)
+      setTimeout(() => setSuccess(false), 3000)
+      return true
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not save the hero image')
+      return false
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleSelectMedia = async (item: MediaItem) => {
+    const previous = { id: form.heroBackgroundImageId, image: currentImage }
     setCurrentImage(item)
     setForm((f) => ({ ...f, heroBackgroundImageId: String(item.id) }))
     setShowPicker(false)
+    const saved = await saveHero(String(item.id))
+    if (!saved) {
+      // Put the UI back in step with what is actually stored.
+      setCurrentImage(previous.image)
+      setForm((f) => ({ ...f, heroBackgroundImageId: previous.id }))
+    }
   }
 
-  const handleClearImage = () => {
+  const handleClearImage = async () => {
+    const previous = { id: form.heroBackgroundImageId, image: currentImage }
     setCurrentImage(null)
     setForm((f) => ({ ...f, heroBackgroundImageId: null }))
+    const saved = await saveHero(null)
+    if (!saved) {
+      setCurrentImage(previous.image)
+      setForm((f) => ({ ...f, heroBackgroundImageId: previous.id }))
+    }
   }
 
   const handleUpload = async (file: File) => {
@@ -119,7 +167,7 @@ export default function SiteSettingsPage() {
       const data = await res.json()
       if (data.ok && data.id) {
         await fetchMedia()
-        handleSelectMedia({ id: String(data.id), alt: file.name, url: data.url, filename: data.filename })
+        await handleSelectMedia({ id: String(data.id), alt: file.name, url: data.url, filename: data.filename })
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Upload failed')
@@ -221,7 +269,7 @@ export default function SiteSettingsPage() {
                 />
               </div>
               <p className="mt-2 text-xs text-text-light">
-                Current: {currentImage.filename || currentImage.id}
+                {saving ? 'Saving hero image…' : `Current: ${currentImage.filename || currentImage.id}`}
               </p>
             </div>
           ) : currentImage ? (
@@ -239,7 +287,7 @@ export default function SiteSettingsPage() {
           )}
 
           <div className="flex flex-wrap gap-3">
-            <Button variant="secondary" size="sm" onClick={openPicker}>Select from Media</Button>
+            <Button variant="secondary" size="sm" onClick={openPicker} disabled={saving || uploading}>Select from Media</Button>
             <label
               className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-bold transition-colors bg-lunar-green/10 text-lunar-green hover:bg-lunar-green/20"
             >
@@ -257,7 +305,7 @@ export default function SiteSettingsPage() {
               />
             </label>
             {currentImage && (
-              <Button variant="secondary" size="sm" onClick={handleClearImage}>Clear</Button>
+              <Button variant="secondary" size="sm" onClick={() => void handleClearImage()} disabled={saving || uploading}>Clear</Button>
             )}
           </div>
         </Card>
@@ -329,7 +377,8 @@ export default function SiteSettingsPage() {
                 {mediaList.map((item) => (
                   <button
                     key={item.id}
-                    onClick={() => handleSelectMedia(item)}
+                    onClick={() => void handleSelectMedia(item)}
+                    disabled={saving}
                     className="group rounded-lg border border-border p-3 text-left hover:border-lunar-green hover:shadow-md transition-all"
                   >
                     {item.url ? (
