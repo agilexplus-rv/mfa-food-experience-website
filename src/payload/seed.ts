@@ -8,6 +8,8 @@
 
 import type { Payload } from 'payload'
 
+import { OFFICIAL_EMAIL } from '@/lib/contact'
+
 export async function seed(p?: Payload) {
   // When called from onInit, the caller passes a Payload instance.
   // In standalone mode (npm run db:seed), create our own.
@@ -167,7 +169,7 @@ export async function seed(p?: Payload) {
                 type: 'paragraph',
                 children: [
                   { type: 'text', text: 'Cancellation requests must be submitted in writing to ' },
-                  { type: 'text', text: 'bookings@foodagency.mt', format: 'bold' },
+                  { type: 'text', text: OFFICIAL_EMAIL, format: 'bold' },
                   { type: 'text', text: ' and are subject to the following terms:' },
                 ],
               },
@@ -361,7 +363,7 @@ export async function seed(p?: Payload) {
                 type: 'paragraph',
                 children: [
                   { type: 'text', text: 'Email: ' },
-                  { type: 'text', text: 'info@foodagency.mt', format: 'bold' },
+                  { type: 'text', text: OFFICIAL_EMAIL, format: 'bold' },
                 ],
               },
               {
@@ -679,7 +681,7 @@ export async function seed(p?: Payload) {
             type: 'paragraph',
             children: [
               { type: 'text', text: 'We welcome feedback on the accessibility of this site. If you encounter a barrier, please contact us at ' },
-              { type: 'text', text: 'dpo.mfa@gov.mt', format: 'bold' },
+              { type: 'text', text: OFFICIAL_EMAIL, format: 'bold' },
               { type: 'text', text: '. We aim to respond within five working days.' },
             ],
           },

@@ -265,13 +265,13 @@ export default function SiteSettingsPage() {
         <Card padding>
           <h2 className="text-sm font-bold text-lunar-green mb-2">Contact Form Recipients</h2>
           <p className="text-xs text-text-light mb-4">
-            Email address(es) that receive messages sent via the public Contact page. Separate multiple addresses with a semicolon (e.g. info@foodagency.mt; bookings@foodagency.mt). Leave empty to use the server&apos;s default admin alert address.
+            Email address(es) that receive messages sent via the public Contact page. Separate multiple addresses with a semicolon (e.g. foodexperience.mfa@gov.mt). Leave empty to use the server&apos;s default admin alert address.
           </p>
           <input
             type="text"
             value={form.contactFormRecipients}
             onChange={(e) => setForm((f) => ({ ...f, contactFormRecipients: e.target.value }))}
-            placeholder="info@foodagency.mt; bookings@foodagency.mt"
+            placeholder="foodexperience.mfa@gov.mt"
             className="w-full rounded-lg border border-border bg-soft-beige/40 px-4 py-2.5 text-sm text-lunar-green placeholder:text-text-light/60 focus:border-lunar-green focus:outline-2 focus:outline-offset-1 focus:outline-lunar-green"
           />
         </Card>

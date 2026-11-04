@@ -3,6 +3,7 @@ import config from '@payload-config'
 import { Logo } from "@/components/brand/Logo"
 import type { ReactElement } from "react"
 import Link from "next/link"
+import { OFFICIAL_EMAIL, OFFICIAL_EMAIL_MAILTO } from "@/lib/contact"
 
 /**
  * SiteFooter: Lunar Green background, Soft Beige text.
@@ -79,6 +80,62 @@ function FacebookIcon() {
   )
 }
 
+function TikTokIcon() {
+  return (
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5" />
+    </svg>
+  )
+}
+
+function YouTubeIcon() {
+  return (
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <rect x="2" y="5" width="20" height="14" rx="4" ry="4" />
+      <path d="m10 9 5 3-5 3z" />
+    </svg>
+  )
+}
+
+function LinkedInIcon() {
+  return (
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <rect x="3" y="3" width="18" height="18" rx="3" ry="3" />
+      <path d="M8 11v5M8 8v.01M12 16v-5M16 16v-3a2 2 0 0 0-4 0" />
+    </svg>
+  )
+}
+
 function XIcon() {
   return (
     <svg
@@ -98,14 +155,20 @@ function XIcon() {
 }
 
 const ICON_MAP: Record<string, () => ReactElement> = {
-  instagram: InstagramIcon,
   facebook: FacebookIcon,
+  instagram: InstagramIcon,
+  tiktok: TikTokIcon,
+  youtube: YouTubeIcon,
+  linkedin: LinkedInIcon,
   x: XIcon,
 }
 
 const PLATFORM_LABELS: Record<string, string> = {
-  instagram: 'Instagram',
   facebook: 'Facebook',
+  instagram: 'Instagram',
+  tiktok: 'TikTok',
+  youtube: 'YouTube',
+  linkedin: 'LinkedIn',
   x: 'X',
 }
 
@@ -146,6 +209,12 @@ export async function SiteFooter() {
               Authentic Maltese culinary and cultural experiences, hosted by
               the Malta Food Agency.
             </p>
+            <a
+              href={OFFICIAL_EMAIL_MAILTO}
+              className="max-w-xs break-words text-sm font-semibold text-soft-beige transition-colors hover:text-matte-gold focus:outline-2 focus:outline-offset-1 focus:outline-matte-gold"
+            >
+              {OFFICIAL_EMAIL}
+            </a>
             {socialLinks.length > 0 && (
               <div className="flex items-center gap-4 text-soft-beige">
                 {socialLinks.map((link) => {
@@ -154,7 +223,7 @@ export async function SiteFooter() {
                   const label = PLATFORM_LABELS[link.platform] || link.platform
                   return (
                     <a
-                      key={link.platform}
+                      key={`${link.platform}-${link.url}`}
                       href={link.url}
                       aria-label={label}
                       className="transition-colors hover:text-terracotta focus:outline-2 focus:outline-offset-2 focus:outline-matte-gold"

@@ -745,7 +745,7 @@ export const HELP_CATEGORIES: HelpCategory[] = [
         steps: [
           'Click **Settings** in the sidebar, then **Site Settings**.',
           'Under **Homepage Hero Background Image**, click **Select from Media** to pick an image, or **Upload New**. Click **Clear** to go back to the text-only hero.',
-          'Under **Contact Form Recipients**, enter the email address(es) that receive Contact-page messages, separated by semicolons (e.g. `info@foodagency.mt; bookings@foodagency.mt`).',
+          'Under **Contact Form Recipients**, enter the email address(es) that receive Contact-page messages, separated by semicolons (e.g. `foodexperience.mfa@gov.mt`).',
           'Under **Waitlist Data Retention (months)**, enter how long to keep waitlist entries: a whole number from 1 to 36 (default 6).',
           'Click **Save Settings**.',
           'Open the public homepage to check the result.',

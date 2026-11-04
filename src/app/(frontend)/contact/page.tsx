@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { ContactForm } from './ContactForm'
+import { OFFICIAL_EMAIL, OFFICIAL_EMAIL_MAILTO } from '@/lib/contact'
 
 export const metadata: Metadata = {
   title: 'Contact | Malta Food Experience',
@@ -60,6 +61,15 @@ export default function ContactPage() {
               Pitkali Road, Ta&apos; Qali<br />
               Attard, Malta
             </address>
+            <p className="mt-4 text-lg leading-relaxed text-text-light">
+              Email:{' '}
+              <a
+                href={OFFICIAL_EMAIL_MAILTO}
+                className="break-all font-semibold text-terracotta underline-offset-2 hover:underline focus:outline-2 focus:outline-offset-2 focus:outline-terracotta"
+              >
+                {OFFICIAL_EMAIL}
+              </a>
+            </p>
           </div>
 
           <div className="overflow-hidden rounded-xl border border-border bg-surface shadow-sm">

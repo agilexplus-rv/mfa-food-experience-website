@@ -12,7 +12,8 @@
     "db:migrate": "payload migrate",
     "db:seed": "npx tsx src/payload/seed.ts",
     "postinstall": "node scripts/patch-multipart.mjs",
-    "test:seed-guard": "node --experimental-strip-types scripts/seed-guard.test.mjs"
+    "test:seed-guard": "node --experimental-strip-types scripts/seed-guard.test.mjs",
+    "test:contact-email": "npx tsx scripts/update-contact-email.test.mjs"
   },
   "engines": {
     "node": ">=22"

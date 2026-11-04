@@ -8,6 +8,8 @@
  * with the Global config.
  */
 
+import { OFFICIAL_EMAIL } from '@/lib/contact'
+
 export interface TermsSection {
   heading: string
   paragraphs: string[]
@@ -123,7 +125,7 @@ export const DEFAULT_TERMS_SECTIONS: TermsSection[] = [
     ],
     bullets: [
       'Malta Food Agency, Pitkali Road, Ta\u2019 Qali, Attard, Malta',
-      'Email: bookings@foodagency.mt',
+      `Email: ${OFFICIAL_EMAIL}`,
       'Telephone: +356 2292 4000',
       'Data protection enquiries: dpo.mfa@gov.mt',
     ],
