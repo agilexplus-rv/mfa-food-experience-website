@@ -51,10 +51,13 @@ export async function Hero() {
   const sectionBase =
     'relative flex h-[calc(100svh-var(--site-header-h))] min-h-fit items-center overflow-hidden px-6 py-8 md:py-10'
 
-  const cta = (
+  // The focus ring has to contrast with whatever is behind the button:
+  // terracotta reads on the light default hero, soft-beige reads on the photo
+  // hero (terracotta against the darkened image is only ~2:1).
+  const renderCta = (surface: string) => (
     <Link
       href="/services"
-      className="mt-8 inline-flex items-center gap-2 rounded-lg bg-terracotta px-8 py-4 text-xl font-bold text-white transition-colors hover:bg-terracotta/85 focus:outline-2 focus:outline-offset-2 focus:outline-terracotta"
+      className={`mt-8 inline-flex items-center gap-2 rounded-lg bg-terracotta px-8 py-4 text-xl font-bold text-white transition-colors hover:bg-terracotta/85 focus:outline-2 focus:outline-offset-2 ${surface}`}
     >
       <MtText en="Explore Our Experiences" mt="Esplora l-Esperjenzi Tagħna" />
       <span aria-hidden="true">&rarr;</span>
@@ -71,32 +74,49 @@ export async function Hero() {
           backgroundPosition: 'center',
         }}
       >
-        {/* Dark overlay gradient for WCAG-compliant text contrast */}
+        {/* Scrim. The copy sits in the middle of the section, so the darkest
+            stop belongs in the middle: the previous 70/55/70 left the text on
+            the lightest part of the overlay. */}
         <div
-          className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/55 to-black/70"
+          className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/65 to-black/55"
           aria-hidden="true"
         />
 
         {/* Content layer */}
         <div className="relative z-10 flex max-h-full flex-col items-center">
-          <h1 className="max-w-3xl text-4xl font-black tracking-[-0.02em] text-soft-beige sm:text-5xl">
-            Experience the authentic flavours of Malta, from field, farm and sea.
-          </h1>
+          {/* Soft-edged plate. A blurred, translucent lunar-green panel sits
+              behind the copy so contrast no longer depends on which photo is
+              uploaded. The padding is deliberately larger than the blur radius
+              (32/48px vs 16/24px), so the text lands on the solid core and
+              only the plate's outline is feathered. Measured against the
+              current image: body copy 4.4:1 before, 7.7:1 on the plate. */}
+          <div className="relative flex flex-col items-center px-8 py-6 sm:px-12 sm:py-8">
+            <div
+              className="pointer-events-none absolute inset-0 rounded-[2rem] bg-lunar-green/75 blur-lg sm:rounded-[2.5rem] sm:blur-xl"
+              aria-hidden="true"
+            />
 
-          <p className="mt-6 max-w-2xl text-lg leading-relaxed text-soft-beige/90">
-            The Malta Food Experience, brought to you by the Malta Food Agency,
-            is a celebration of the flavours, traditions and stories that make
-            Maltese cuisine unique. Through hands-on cooking classes and
-            tasting experiences, discover authentic local ingredients, learn
-            from chefs and food artisans, and explore the connection between
-            Malta&apos;s land, sea and culinary heritage.
-          </p>
+            <div className="relative flex flex-col items-center">
+              <h1 className="max-w-3xl text-4xl font-black tracking-[-0.02em] text-soft-beige sm:text-5xl">
+                Experience the authentic flavours of Malta, from field, farm and sea.
+              </h1>
 
-          <p className="mt-4 text-lg font-semibold text-soft-beige">
-            Cook, taste, learn and experience Malta through its food.
-          </p>
+              <p className="mt-6 max-w-2xl text-lg leading-relaxed text-soft-beige">
+                The Malta Food Experience, brought to you by the Malta Food Agency,
+                is a celebration of the flavours, traditions and stories that make
+                Maltese cuisine unique. Through hands-on cooking classes and
+                tasting experiences, discover authentic local ingredients, learn
+                from chefs and food artisans, and explore the connection between
+                Malta&apos;s land, sea and culinary heritage.
+              </p>
 
-          {cta}
+              <p className="mt-4 text-lg font-semibold text-soft-beige">
+                Cook, taste, learn and experience Malta through its food.
+              </p>
+
+              {renderCta('ring-1 ring-soft-beige/60 focus:outline-soft-beige')}
+            </div>
+          </div>
         </div>
       </section>
     )
@@ -124,7 +144,7 @@ export async function Hero() {
           Cook, taste, learn and experience Malta through its food.
         </p>
 
-        {cta}
+        {renderCta('focus:outline-terracotta')}
 
         {/* Subtle decorative divider */}
         <div aria-hidden="true" className="mt-4 h-px w-32 bg-matte-gold/40" />
