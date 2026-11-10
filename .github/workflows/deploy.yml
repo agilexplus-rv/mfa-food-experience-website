@@ -114,6 +114,9 @@ jobs:
             --secrets \
               "database-url=${{ secrets.DATABASE_URL || vars.DATABASE_URL }}" \
               "payload-secret=${{ secrets.PAYLOAD_SECRET || vars.PAYLOAD_SECRET }}" \
+              "cron-secret=${{ secrets.CRON_SECRET || 'unset' }}" \
+              "smtp-pass=${{ secrets.SMTP_PASS || 'unset' }}" \
+              "nextauth-secret=${{ secrets.NEXTAUTH_SECRET || 'unset' }}" \
               "viva-client-secret=${{ secrets.VIVA_CLIENT_SECRET || 'unset' }}" \
               "viva-api-key=${{ secrets.VIVA_API_KEY || 'unset' }}" \
               "viva-webhook-secret=${{ secrets.VIVA_WEBHOOK_SECRET || 'unset' }}" \
@@ -238,6 +241,13 @@ jobs:
               "DATABASE_URL=secretref:database-url" \
               "PAYLOAD_SECRET=secretref:payload-secret" \
               "CRON_SECRET=secretref:cron-secret" \
+              "SMTP_HOST=${{ vars.SMTP_HOST }}" \
+              "SMTP_PORT=${{ vars.SMTP_PORT }}" \
+              "SMTP_USER=${{ vars.SMTP_USER }}" \
+              "SMTP_PASS=secretref:smtp-pass" \
+              "FROM_EMAIL=${{ vars.FROM_EMAIL }}" \
+              "FROM_NAME=${{ vars.FROM_NAME }}" \
+              "NEXTAUTH_SECRET=secretref:nextauth-secret" \
               "HOSTNAME=0.0.0.0" \
               "PORT=3000" \
               "VIVA_CLIENT_ID=${{ secrets.VIVA_CLIENT_ID }}" \
