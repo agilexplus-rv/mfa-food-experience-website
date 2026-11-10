@@ -45,7 +45,13 @@ let failures = 0
 // vars.* identifiers. The app's own secrets (database URL, Payload secret,
 // VIVA_* payment credentials) DO come from environment secrets -- a plain
 // variable is readable by anyone with access to the repo's settings.
-const APP_SECRETS = ['DATABASE_URL', 'PAYLOAD_SECRET']
+const APP_SECRETS = [
+  'DATABASE_URL',
+  'PAYLOAD_SECRET',
+  'CRON_SECRET',
+  'SMTP_PASS',
+  'NEXTAUTH_SECRET',
+]
 const secretsRef = /\bsecrets\.\w+\b/g
 const secretsMatches = (content.match(secretsRef) || []).filter(
   (s) => !s.startsWith('secrets.VIVA_') && !APP_SECRETS.includes(s.slice(8))

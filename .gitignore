@@ -43,6 +43,11 @@ next-env.d.ts
 .vercel
 .env*
 
+# Commercial documents — pricing must never enter this public repo
+docs/proposals/
+docs/proposal-ongoing-care.md
+docs/invoices/
+
 # Local dev artifacts
 .db_token
 .payload_secret
