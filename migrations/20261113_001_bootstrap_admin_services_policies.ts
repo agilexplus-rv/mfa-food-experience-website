@@ -40,7 +40,8 @@ export async function up({ db }: MigrateUpArgs): Promise<void> {
 
   await db.execute(sql`
     INSERT INTO "policies" ("slug", "title", "body")
-    SELECT 'privacy-notice', 'Privacy Notice', $p1${
+    SELECT 'privacy-notice', 'Privacy Notice', $p1$
+      {
       "root": {
         "type": "root", "format": "", "indent": 0, "version": 1, "direction": "ltr",
         "children": [
@@ -64,7 +65,8 @@ export async function up({ db }: MigrateUpArgs): Promise<void> {
 
   await db.execute(sql`
     INSERT INTO "policies" ("slug", "title", "body")
-    SELECT 'cookie-policy', 'Cookie Policy', $p2${
+    SELECT 'cookie-policy', 'Cookie Policy', $p2$
+      {
       "root": {
         "type": "root", "format": "", "indent": 0, "version": 1, "direction": "ltr",
         "children": [
@@ -84,7 +86,8 @@ export async function up({ db }: MigrateUpArgs): Promise<void> {
 
   await db.execute(sql`
     INSERT INTO "policies" ("slug", "title", "body")
-    SELECT 'accessibility-statement', 'Accessibility Statement', $p3${
+    SELECT 'accessibility-statement', 'Accessibility Statement', $p3$
+      {
       "root": {
         "type": "root", "format": "", "indent": 0, "version": 1, "direction": "ltr",
         "children": [
@@ -104,7 +107,8 @@ export async function up({ db }: MigrateUpArgs): Promise<void> {
 
   await db.execute(sql`
     INSERT INTO "policies" ("slug", "title", "body")
-    SELECT 'customer-policy', 'Customer Policy', $p4${
+    SELECT 'customer-policy', 'Customer Policy', $p4$
+      {
       "root": {
         "type": "root", "format": "", "indent": 0, "version": 1, "direction": "ltr",
         "children": [
@@ -130,7 +134,8 @@ export async function up({ db }: MigrateUpArgs): Promise<void> {
 
   await db.execute(sql`
     INSERT INTO "policies" ("slug", "title", "body")
-    SELECT 'provider-info', 'Provider Information', $p5${
+    SELECT 'provider-info', 'Provider Information', $p5$
+      {
       "root": {
         "type": "root", "format": "", "indent": 0, "version": 1, "direction": "ltr",
         "children": [
