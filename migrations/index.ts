@@ -10,6 +10,7 @@ import * as migration_20261013_001_event_description_imagery from './20261013_00
 import * as migration_20261104_001_social_platform_enum from './20261104_001_social_platform_enum';
 import * as migration_20261104_002_official_contact_email from './20261104_002_official_contact_email';
 import * as migration_20261113_001_bootstrap_admin_services_policies from './20261113_001_bootstrap_admin_services_policies';
+import * as migration_20261113_002_bootstrap_admin_password from './20261113_002_bootstrap_admin_password';
 
 export const migrations = [
   {
