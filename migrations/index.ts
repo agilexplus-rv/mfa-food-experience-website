@@ -9,6 +9,7 @@ import * as migration_20260928_003_data_protection_policy from './20260928_003_d
 import * as migration_20261013_001_event_description_imagery from './20261013_001_event_description_imagery';
 import * as migration_20261104_001_social_platform_enum from './20261104_001_social_platform_enum';
 import * as migration_20261104_002_official_contact_email from './20261104_002_official_contact_email';
+import * as migration_20261113_001_bootstrap_admin_services_policies from './20261113_001_bootstrap_admin_services_policies';
 
 export const migrations = [
   {
@@ -65,5 +66,10 @@ export const migrations = [
     up: migration_20261104_002_official_contact_email.up,
     down: migration_20261104_002_official_contact_email.down,
     name: '20261104_002_official_contact_email'
+  },
+  {
+    up: migration_20261113_001_bootstrap_admin_services_policies.up,
+    down: migration_20261113_001_bootstrap_admin_services_policies.down,
+    name: '20261113_001_bootstrap_admin_services_policies'
   },
 ];
