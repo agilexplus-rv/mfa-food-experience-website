@@ -9,8 +9,10 @@ import type { MetadataRoute } from 'next'
  * excluded — booking confirmation and payment-return URLs carry references and
  * must never end up in an index.
  */
+export const dynamic = 'force-dynamic'
+
 export default function robots(): MetadataRoute.Robots {
-  const base = (process.env.NEXT_PUBLIC_SERVER_URL || 'https://foodexperience.mt').replace(/\/$/, '')
+  const base = (process.env.SERVER_URL || process.env.NEXT_PUBLIC_SERVER_URL || 'https://foodexperience.mt').replace(/\/$/, '')
   return {
     rules: [
       {

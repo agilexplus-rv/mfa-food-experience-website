@@ -15,7 +15,8 @@ import { listVisibleServices } from '@/lib/services/queries'
  * Every dynamic lookup is individually guarded: a database hiccup must cost
  * the dynamic entries, never the whole sitemap.
  */
-export const revalidate = 3600
+// Per-request so the base URL comes from the runtime, not the build.
+export const dynamic = 'force-dynamic'
 
 const LEGAL_SLUGS = [
   'cancellation-policy',
@@ -38,7 +39,7 @@ const STATIC_PAGES: Array<{ path: string; priority: number }> = [
 ]
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const base = (process.env.NEXT_PUBLIC_SERVER_URL || 'https://foodexperience.mt').replace(/\/$/, '')
+  const base = (process.env.SERVER_URL || process.env.NEXT_PUBLIC_SERVER_URL || 'https://foodexperience.mt').replace(/\/$/, '')
   const now = new Date()
 
   const entries: MetadataRoute.Sitemap = STATIC_PAGES.map((page) => ({
