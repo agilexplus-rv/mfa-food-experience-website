@@ -9,9 +9,50 @@ import "./globals.css"
 
 export const dynamic = 'force-dynamic'
 
+const SITE_URL = process.env.NEXT_PUBLIC_SERVER_URL || "https://foodexperience.mt"
+const SITE_DESCRIPTION =
+  "Authentic Maltese culinary and cultural experiences hosted by the Malta Food Agency. Hands-on cooking classes and tasting experiences in Malta, available in English and Maltese."
+
 export const metadata: Metadata = {
-  title: "Malta Food Experience",
-  description: "Authentic Maltese culinary and cultural experiences hosted by the Malta Food Agency.",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: "Malta Food Experience",
+    template: "%s | Malta Food Experience",
+  },
+  description: SITE_DESCRIPTION,
+  applicationName: "Malta Food Experience",
+  authors: [{ name: "Malta Food Agency" }],
+  publisher: "Malta Food Agency",
+  keywords: [
+    "Malta food experience",
+    "Maltese cooking class",
+    "cooking class Malta",
+    "food tasting Malta",
+    "Malta food tour",
+    "Malta Food Agency",
+  ],
+  alternates: { canonical: "/" },
+  robots: { index: true, follow: true },
+  openGraph: {
+    type: "website",
+    siteName: "Malta Food Experience",
+    title: "Malta Food Experience",
+    description: SITE_DESCRIPTION,
+    url: "/",
+    locale: "en_MT",
+    images: [
+      {
+        url: "/brand/logos/Malta%20Food%20-%20Primary-01.png",
+        alt: "Malta Food Experience",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Malta Food Experience",
+    description: SITE_DESCRIPTION,
+    images: ["/brand/logos/Malta%20Food%20-%20Primary-01.png"],
+  },
   icons: {
     icon: [
       { url: '/brand/logos/Malta%20Food%20-%20Primary.svg', type: 'image/svg+xml' },
