@@ -9,7 +9,10 @@ import "./globals.css"
 
 export const dynamic = 'force-dynamic'
 
-const SITE_URL = process.env.NEXT_PUBLIC_SERVER_URL || "https://foodexperience.mt"
+// Prefer the runtime SERVER_URL: NEXT_PUBLIC_* is inlined at build time and
+// therefore records whichever environment built the image.
+const SITE_URL =
+  process.env.SERVER_URL || process.env.NEXT_PUBLIC_SERVER_URL || "https://foodexperience.mt"
 const SITE_DESCRIPTION =
   "Authentic Maltese culinary and cultural experiences hosted by the Malta Food Agency. Hands-on cooking classes and tasting experiences in Malta, available in English and Maltese."
 
